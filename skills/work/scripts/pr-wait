@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """pr-wait: watch one GitHub pull request and print one line per real event.
 
-  pr-wait <pr> [--repo owner/name] [--until green|ready|any-change] [--interval 20]
+Adapted from t3dotgg/tstack (skills/babysit-pr/scripts/pr-wait at 6efae36),
+MIT License, Copyright (c) 2026 Theo Browne; see pr-wait.LICENSE. Changes here:
+the lock also works on Windows, merge-queue and auto-merge drops are events,
+and --until merged waits for the merge itself.
+
+  pr-wait <pr> [--repo owner/name] [--until green|ready|merged|any-change] [--interval 20]
 
 <pr> is a PR number or PR URL. Without --repo, the repo comes from the URL or
 from the current checkout. Stdout carries only events, one line each, so a
@@ -13,13 +18,15 @@ Progress and errors that do not end the run go to stderr.
               the base branch requires none)
   ready      green, Greptile or Macroscope reviewed the current head, and no
               review thread is unresolved (default)
+  merged      the PR merged; any event before that ends the run with exit 1
   any-change  stop after the first poll that prints an event
 
 Exit codes
   0  the --until condition is met, or the PR merged
   1  the condition cannot be met without action: a required check failed, the
-     branch conflicts with its base, the PR closed, `ready` is blocked by
-     unresolved threads or a BEHIND branch, or GitHub stayed unreachable
+     branch conflicts with its base, the PR closed, the PR dropped out of the
+     merge queue or auto-merge, `ready` is blocked by unresolved threads or a
+     BEHIND branch, `merged` saw any event, or GitHub stayed unreachable
   2  bad arguments, unknown PR, or another pr-wait already watches this PR
 
 Events
@@ -30,7 +37,8 @@ Events
   - Greptile, Macroscope, or CodeRabbit finished on the head, or a Greptile or
     Macroscope summary changed after that
   - the base branch moved and the new commits touch files in this PR
-  - merge state became BEHIND or DIRTY
+  - merge state became BEHIND or DIRTY (BEHIND is skipped while in the merge queue)
+  - the PR left the merge queue or lost auto-merge without merging
   - the PR merged or closed
 
 CodeRabbit is advisory: pr-wait reports it but never waits for it. Comment
@@ -46,7 +54,6 @@ reports only what comes after.
 from __future__ import annotations
 
 import argparse
-import fcntl
 import hashlib
 import html
 import json
@@ -59,6 +66,12 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, NoReturn
 
+try:
+    import fcntl
+except ImportError:  # Windows
+    fcntl = None
+    import msvcrt
+
 GATING_BOTS = ("greptile", "macroscope")
 ADVISORY_BOTS = ("coderabbit",)
 # CI and deploy bots report through checks. Their PR comments are status reports.
@@ -67,6 +80,8 @@ STATE_DIR = Path.home() / ".local" / "state" / "pr-wait"
 # A state file older than this describes an old session. Start a fresh baseline
 # instead of replaying hours of comments as new events.
 STALE_STATE_SECONDS = 6 * 3600
+# Windows locks a byte range. Lock one byte well past the pid so the pid stays writable and readable.
+WINDOWS_LOCK_OFFSET = 1 << 20
 MAX_FAILED_POLLS = 10
 TRANSIENT = re.compile(
     r"HTTP (5\d\d|429)|rate limit|timed? ?out|connection (reset|refused)|EOF|"
@@ -83,7 +98,8 @@ query($owner: String!, $name: String!, $number: Int!) {
   viewer { login }
   repository(owner: $owner, name: $name) {
     pullRequest(number: $number) {
-      url state headRefOid baseRefName mergeStateStatus
+      url state headRefOid baseRefName mergeStateStatus isInMergeQueue
+      autoMergeRequest { enabledAt }
       author { login }
       baseRef { target { oid } }
       comments(last: 100) { nodes { id url body author { login __typename } } }
@@ -207,19 +223,24 @@ def parse_target(raw: str | None, repo: str | None) -> tuple[str, int]:
 def lock(repo: str, pr: int) -> Any:
     """Hold a per-PR lock for the life of the process. The OS drops it on exit."""
     STATE_DIR.mkdir(parents=True, exist_ok=True)
-    handle = open(STATE_DIR / f"{repo.replace('/', '__')}__{pr}.lock", "a+")
+    handle = open(STATE_DIR / f"{repo.replace('/', '__')}__{pr}.lock", "a+b")
     try:
-        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
+        if fcntl:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        else:
+            handle.seek(WINDOWS_LOCK_OFFSET)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+    except OSError:
         handle.seek(0)
-        pid = handle.read().strip() or "unknown"
+        pid = handle.read(32).decode(errors="replace").strip() or "unknown"
+        kill = f"kill {pid}" if fcntl else f"taskkill /PID {pid} /F"
         fail(
             f"pid {pid} already watches {repo}#{pr}, so this watcher exits to avoid "
-            f"duplicate events. If no events reach you from it, run `kill {pid}` and start again."
+            f"duplicate events. If no events reach you from it, run `{kill}` and start again."
         )
     handle.seek(0)
     handle.truncate()
-    handle.write(str(os.getpid()))
+    handle.write(str(os.getpid()).encode())
     handle.flush()
     return handle
 
@@ -254,6 +275,8 @@ class Watcher:
         # First run for this PR: record what exists and report nothing.
         self.baseline = state is None
         self.state: Json = state or {"reported": [], "summaries": {}, "base_oid": None, "merge_state": None}
+        self.state.setdefault("armed", False)
+        self.state.setdefault("drops", 0)
         self.reported: set[str] = set(self.state["reported"])
         self.printed: set[str] = set()
         self.events = 0
@@ -468,11 +491,25 @@ class Watcher:
         merge_state = pr["mergeStateStatus"]
         dirty_line = f"merge state is DIRTY: the branch conflicts with {base}, rebase it"
         behind_line = f"merge state is BEHIND: update the branch from {base} before merging"
+        in_queue = bool(pr["isInMergeQueue"])
+        # The merge queue brings a BEHIND branch up to date on its own.
+        stuck_behind = merge_state == "BEHIND" and not in_queue
         if merge_state != "UNKNOWN":
-            if merge_state in ("BEHIND", "DIRTY") and self.state["merge_state"] != merge_state:
+            if (merge_state == "DIRTY" or stuck_behind) and self.state["merge_state"] != merge_state:
                 line = dirty_line if merge_state == "DIRTY" else behind_line
                 self.emit(f"merge:{merge_state}:{head}:{base_oid}", line)
             self.state["merge_state"] = merge_state
+
+        # Merge queue and auto-merge. Once either is on, losing both without a
+        # merge means GitHub dropped the PR and it has to be re-queued.
+        dropped_line = ""
+        if in_queue or pr["autoMergeRequest"]:
+            self.state["armed"] = True
+        elif self.state["armed"]:
+            self.state["armed"] = False
+            self.state["drops"] += 1
+            dropped_line = f"dropped from the merge queue or auto-merge on {short}: fix why, then re-queue with `gh pr merge --auto`"
+            self.emit(f"drop:{self.state['drops']}", dropped_line)
 
         # One summary line per head once all checks finish.
         counts: dict[str, int] = {}
@@ -500,11 +537,18 @@ class Watcher:
                 self.finish(1, [dirty_line])
             if fail_lines:
                 self.finish(1, fail_lines)
+            if dropped_line:
+                self.finish(1, [dropped_line])
+            if self.until == "merged":
+                if stuck_behind:
+                    self.finish(1, [behind_line])
+                if self.events:
+                    self.finish(1)
             if green and self.until == "green":
                 self.reported.add(checks_key)
                 self.finish(0, [f"green on {short}: {summary}{self.behind(base, base_oid, head)}"])
             # ready waits for Greptile or Macroscope, never for CodeRabbit.
-            if green and reviewed:
+            if self.until == "ready" and green and reviewed:
                 if unresolved:
                     self.finish(1, [f"blocked by {len(unresolved)} unresolved threads on {short}: {' '.join(unresolved)}"])
                 if merge_state == "BEHIND":
@@ -541,7 +585,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="pr-wait", description="Watch a GitHub PR and print one line per real event.")
     parser.add_argument("pr", nargs="?", help="PR number or URL")
     parser.add_argument("--repo", help="owner/name (default: from the URL or the current checkout)")
-    parser.add_argument("--until", choices=("green", "ready", "any-change"), default="ready")
+    parser.add_argument("--until", choices=("green", "ready", "merged", "any-change"), default="ready")
     parser.add_argument("--interval", type=int, default=20, help="seconds between polls (default 20, min 5)")
     args = parser.parse_args()
     repo, pr = parse_target(args.pr, args.repo)

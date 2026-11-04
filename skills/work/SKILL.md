@@ -69,23 +69,11 @@ When a child fails, or two come back with the same error, don't send the same br
 
 ## 6. Merge
 
-If the user asked for a PR, push the work branch and open one. Every PR this work opens, a coder's included, is yours until it merges; link each with `link_pull_request` (`link_pull_requests` for several) as your next call.
+If the user asked for a PR, push the work branch and open one. Every PR this work opens, a coder's included, is yours until it merges: follow the `babysit-pr` skill for each. Its fixes go to the coder whose slice they fall in (Follow-ups), and you merge that coder's branch and push.
 
-Watch each PR with one watcher at a time; every watcher on the account shares one GitHub rate limit.
+Once every PR has merged, remove the coders' worktrees and branches.
 
-1. Call `write_pull_request_guides` for every PR. The guide is an independent review pass; if the call fails because guides are off, skip the pass and say so in the report.
-2. Call `watch_pull_request` and end your turn. T3 wakes you on failed checks, passed required checks, new comments or reviews, and conflicts; the watch stays on, so call it once.
-3. On each wake, read the PR's state yourself (`gh pr view --json state,mergeStateStatus,statusCheckRollup`) and the guide with `read_pull_request_guide` until its run has finished:
-   - A failed check: find the root cause and send the fix to the coder whose code broke it. Fix the code; never weaken, skip, or delete a test to get it green.
-   - A review comment or guide finding: decide it, send the change to that slice's coder, and reply on the PR.
-   - A conflict, or BEHIND when the base requires an up-to-date branch: send it to a coder to merge the default branch into its branch.
-   - Guide finished and handled (or skipped): turn on auto-merge (`gh pr merge --auto`), then go to step 4. When GitHub refuses because the PR is already clean, merge it now instead.
-4. The watch doesn't wake on a merge-queue drop, so switch watchers: call `unwatch_pull_request`, run [scripts/pr-wait](scripts/pr-wait) with `python <this skill's folder>/scripts/pr-wait <PR URL> --until merged` and `run_in_background`, pass its task ID to `t3_background_wait`, and end your turn.
-5. `pr-wait` exits 0 when the PR merges. It exits 1 on the first thing that needs you, named in its last line: a failed check, a conflict or BEHIND branch, a new comment or review, or a drop from the merge queue or auto-merge. Handle it as in step 3; for a drop, fix why and re-queue with `gh pr merge --auto`. Then start `pr-wait` again; it remembers what it already reported. Exit 2 means another `pr-wait` already watches the PR: leave that one running.
-6. When T3 reports "Stopped watching, could not read it", the rate limit is usually spent: check `gh api rate_limit --jq .resources.graphql` and wait for its `reset` before watching again.
-7. Once the PR has merged, remove the coders' worktrees and branches.
-
-**Done when** `gh pr view` reports `MERGED`.
+**Done when** `gh pr view` reports `MERGED` for every PR.
 
 ## 7. Report
 

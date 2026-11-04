@@ -1,0 +1,5 @@
+interface:
+  display_name: "Babysit PR"
+  short_description: "Own a PR until it merges"
+policy:
+  allow_implicit_invocation: true

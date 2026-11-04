@@ -69,20 +69,11 @@ When a child fails, or two come back with the same error, don't send the same br
 
 ## 6. Merge
 
-If the user asked for a PR, push the work branch and open one. Every PR this work opens, a coder's included, is yours until it merges; link each with `link_pull_request` (`link_pull_requests` for several) as your next call.
+If the user asked for a PR, push the work branch and open one. Every PR this work opens, a coder's included, is yours until it merges: follow the `babysit-pr` skill for each. Its fixes go to the coder whose slice they fall in (Follow-ups), and you merge that coder's branch and push.
 
-1. Call `write_pull_request_guides` for every PR. The guide is an independent review pass; if the call fails because guides are off, skip the pass and say so in the report.
-2. Call `watch_pull_request`. T3 wakes you on failed checks, passed required checks, new comments or reviews, and conflicts; the watch stays on, so call it once.
-3. The watch doesn't wake on a merge-queue drop, so poll for that yourself: run [scripts/wait-pr.sh](scripts/wait-pr.sh) `<owner/repo> <number>` with `run_in_background`, pass its task ID to `t3_background_wait`, and end your turn. It prints `MERGED`, `CLOSED`, `DROPPED` (out of the merge queue or auto-merge without merging), or `TIMEOUT` after 10 minutes. Start it again each time it exits while the PR is open.
-4. On each wake, read the PR's state yourself (`gh pr view --json state,mergeStateStatus,statusCheckRollup`) and the guide with `read_pull_request_guide` until its run has finished:
-   - Guide finished: treat its findings like review comments, then turn on auto-merge (`gh pr merge --auto`). With the guide pass skipped, turn it on right away. When GitHub refuses because the PR is already clean, nothing is left to wait for: merge it now.
-   - A failed check: find the root cause and send the fix to the coder whose code broke it. Fix the code; never weaken, skip, or delete a test to get it green.
-   - A review comment or guide finding: decide it, send the change to that slice's coder, and reply on the PR.
-   - A conflict: send it to a coder to merge the default branch into its branch.
-   - `DROPPED`: find why from the checks and the PR timeline, get it fixed, push, and re-queue with `gh pr merge --auto`.
-5. Repeat until the PR has merged. Then call `unwatch_pull_request` and remove the coders' worktrees and branches.
+Once every PR has merged, remove the coders' worktrees and branches.
 
-**Done when** `gh pr view` reports `MERGED`.
+**Done when** `gh pr view` reports `MERGED` for every PR.
 
 ## 7. Report
 

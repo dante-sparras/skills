@@ -29,7 +29,7 @@ npx skills update
 | --- | --- |
 | [moa](skills/moa/SKILL.md) | Mixture of Agents: sends one task to several independent agents, possibly on different models, and aggregates their answers. For reviews, designs, plans, hard bugs, and choosing between patches. |
 | [setup-repo](skills/setup-repo/SKILL.md) | Sets up an existing repo, or scaffolds a new project, with the standard baseline: AGENTS.md, CONTRIBUTING.md, `.github/` templates and workflows, docs, license, and GitHub settings. |
-| [work](skills/work/SKILL.md) | Runs a task with Opus as lead: Haiku subagents explore in parallel, Sonnet subagents write the code in their own worktrees (at most 3 at a time), and Opus plans, reviews, and checks the result. Claude Code only; start with `/work <task>`. |
+| [work](skills/work/SKILL.md) | Runs a task with Opus as lead in T3 Code: Haiku explorers read in parallel, Sonnet coders write the code in their own worktrees (at most 3 at a time), and Opus plans, decides, and sees the PR through to merge. T3 Code only; start with `/work <task>`. |
 
 ## Adding a skill
 

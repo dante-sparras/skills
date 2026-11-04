@@ -402,6 +402,8 @@ npx -y skills@1.7.4 remove <every Except skill, space-separated> -y
 
 Never add `-g` or drop `--copy`: the skill folders and `skills-lock.json` are committed to the repo.
 
+Then copy `.agents/skills/work/subagents/*.md` into `.claude/agents/`, so Claude Code loads the subagents the `work` skill spawns. They're committed with the skills.
+
 ### Run `setup-matt-pocock-skills`
 
 Read the installed `.agents/skills/setup-matt-pocock-skills/SKILL.md` and do what it says, questions included. Afterwards, move anything it wrote into `CLAUDE.md` to `AGENTS.md`, and reset `CLAUDE.md` to `@AGENTS.md`. If it chose triage label names other than the defaults in step 6's Labels table, use them in `bug_report.yml`, `feature_request.yml`, and `stale-needs-info.yml` too.

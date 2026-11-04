@@ -20,7 +20,7 @@ Every step below sends fixes the same way. Fix the cause in the code; never weak
 Link each PR with `link_pull_request` (`link_pull_requests` for several) as your next call after opening it. Watch each PR with one watcher at a time; every watcher on the account shares one GitHub rate limit.
 
 1. Call `write_pull_request_guides` for every PR. The guide is an independent review pass; if the call fails because guides are off, skip the pass and say so in your report.
-2. Call `watch_pull_request` and end your turn. T3 wakes you on failed checks, passed required checks, new comments or reviews, and conflicts; the watch stays on, so call it once.
+2. Handle what is already there as in step 3; a PR with no checks can be ready at once. While it isn't merged, call `watch_pull_request` and end your turn. T3 wakes you on failed checks, passed required checks, new comments or reviews, and conflicts; the watch stays on, so call it once.
 3. On each wake, read the PR's state yourself (`gh pr view --json state,mergeStateStatus,statusCheckRollup`) and the guide with `read_pull_request_guide` until its run has finished:
    - A failed check: find the root cause and fix it.
    - A review comment or guide finding: decide it, fix what holds up, and reply with a reason to what doesn't.

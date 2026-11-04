@@ -56,6 +56,15 @@ Before you finish:
 - Hand an explorer the task, the plan, and `git diff <default>...HEAD`, and ask which requirements, edge cases, tests, or docs are missing. Fix what it finds with another coder wave.
 - Delete the merged coder branches.
 
-## 6. Report
+## 6. Merge
 
-What changed, the decisions and why, the check results, and anything left undone. If the user asked for a PR, open it from the work branch.
+If the user asked for a PR, open it from the work branch. Every PR this work opens, a coder's included, is yours until it merges:
+
+- Turn on auto-merge (`gh pr merge --auto`).
+- When a check fails, find the root cause and send a coder to fix it. Never weaken, skip, or delete a test to get it green.
+- If the merge queue drops the PR, fix why and re-queue it.
+- Don't finish until it has merged.
+
+## 7. Report
+
+What changed, the decisions and why, the check results, the merged PR, and anything left undone.

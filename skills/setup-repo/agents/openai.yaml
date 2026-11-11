@@ -1,5 +1,0 @@
-interface:
-  display_name: "Setup Repo"
-  short_description: "Give a repo the standard baseline"
-policy:
-  allow_implicit_invocation: false

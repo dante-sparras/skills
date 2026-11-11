@@ -1,5 +1,0 @@
-interface:
-  display_name: "Work"
-  short_description: "Opus leads, Haiku explores, Sonnet codes"
-policy:
-  allow_implicit_invocation: false

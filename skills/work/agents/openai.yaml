@@ -1,0 +1,5 @@
+interface:
+  display_name: "Work"
+  short_description: "Implementers build, the checks prove, two reviewers approve"
+policy:
+  allow_implicit_invocation: false

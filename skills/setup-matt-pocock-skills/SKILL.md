@@ -22,7 +22,7 @@ Look at the current repo to understand its starting state. Read whatever exists,
 
 - `git remote -v` and `.git/config`: is this a GitHub repo? Which one?
 - `AGENTS.md` at the repo root: does it exist? Is there already an `## Agent skills` section in it?
-- `GLOSSARY.md` and `GLOSSARY-MAP.md` at the repo root, and the legacy `CONTEXT.md` / `CONTEXT-MAP.md`. If a legacy file exists, offer to `git mv` it to its `GLOSSARY` name and rewrite those names in `docs/agents/domain.md`.
+- `GLOSSARY.md` and `GLOSSARY-MAP.md` at the repo root
 - `docs/agents/`: does this skill's prior output already exist?
 - Is the `triage` skill installed? (a `triage` skill folder alongside this one, or `triage` in your available skills.) This decides whether Section B runs at all.
 - Monorepo signals: a `pnpm-workspace.yaml`, a `workspaces` field in `package.json`, or a populated `packages/*` with its own `src/`. These are present only in a genuinely large multi-package repo. Their absence means single-context, which is almost every repo.

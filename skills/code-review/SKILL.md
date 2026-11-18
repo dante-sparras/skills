@@ -1,14 +1,15 @@
 ---
 name: code-review
-description: "Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes: Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?). Runs both reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to \"review since X\"."
+description: "Adversarial review of the changes since a fixed point (commit, branch, tag, or merge-base). Parallel reviewers from different model families each try to break the change and report on three separate axes: Breakage (wrong behavior, edge cases, blast radius), Spec (does it do what the issue or spec asked?), and Standards (does it follow this repo's documented standards?). Behavior findings survive only when a rerun proves them. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to \"review since X\"."
 ---
 
-Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
+Adversaries try to break the diff between `HEAD` and a fixed point the user supplies. Each one reports on three axes:
 
-- **Standards**: does the code conform to this repo's documented coding standards?
-- **Spec**: does the code faithfully implement the originating issue / spec?
+- **Breakage**: does the change do something wrong that the spec never mentions? Edge cases, error paths, and callers outside the diff that it breaks.
+- **Spec**: does the change faithfully implement the originating issue or spec?
+- **Standards**: does the change follow this repo's documented coding standards?
 
-Both axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings. Start every sub-agent with a fresh context window.
+The reviewers run in parallel with fresh context, on different model families where the harness allows. A Breakage or Spec finding survives only when you rerun its command and the output shows the failure. Report the findings. Do not apply fixes.
 
 The issue tracker should have been provided to you. If not, tell the user to run `/setup-skills`.
 
@@ -18,27 +19,33 @@ The issue tracker should have been provided to you. If not, tell the user to run
 
 Whatever the user said is the fixed point (a commit SHA, branch name, tag, `main`, `HEAD~5`, etc.). If they didn't specify one, ask for it.
 
-Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison is against the merge-base). Also note the list of commits via `git log <fixed-point>..HEAD --oneline`.
+Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison is against the merge-base). Also note the list of commits via `git log <fixed-point>..HEAD --oneline`. When the working tree has uncommitted changes the user wants reviewed, save `git diff HEAD` to a patch file outside the repo.
 
-Before going further, confirm the fixed point resolves (`git rev-parse <fixed-point>`) and the diff is non-empty. A bad ref or empty diff should fail here, not inside two parallel sub-agents.
+Before going further, confirm the fixed point resolves (`git rev-parse <fixed-point>`) and the diff is non-empty. A bad ref or empty diff should fail here, not inside the reviewers.
 
-### 2. Identify the spec source
+### 2. State the intent
+
+Restate in two or three sentences what the change is for, from the user's message, the commit messages, and the PR description. Ask the user when the intent is unclear. Every reviewer gets this restatement, and a finding counts only when it breaks it.
+
+### 3. Identify the spec source
 
 Look for the originating spec, in this order:
 
 1. Issue references in the commit messages (`#123`, `Closes #45`, etc.), fetched via the workflow in the tracker doc.
 2. A path the user passed as an argument.
 3. A spec file under `docs/` or `specs/` matching the branch name or feature.
-4. If nothing is found, ask the user where the spec is. If they say there isn't one, the **Spec** sub-agent will skip and report "no spec available".
+4. If nothing is found, ask the user where the spec is. If they say there isn't one, the reviewers skip the Spec axis and the report says "no spec available".
 
-### 3. Identify the standards sources
+### 4. Identify the standards and what tooling already checks
 
-Search the repo for every file that documents how code should be written. When `CODING_STANDARDS.md` or `CONTRIBUTING.md` exists, it must be on the list.
+Search the repo for every file that documents how code should be written. When `CODING_STANDARDS.md` or `CONTRIBUTING.md` exists, it must be on the list. Note `GLOSSARY.md` (or each context's glossary under `GLOSSARY-MAP.md`) when it exists.
+
+Then read the repo's check command: its `package.json` or build-tool `lint`, `typecheck`, and `test` scripts, its pre-commit hooks, and its CI workflows. List what they enforce. Reviewers skip anything on that list, because a check already fails on it.
 
 On top of whatever the repo documents, the Standards axis always carries the **smell baseline** below: a fixed set of Fowler code smells (_Refactoring_, ch.3) that applies even when a repo documents nothing. Two rules bind it:
 
 - **The repo overrides.** A documented repo standard always wins. Where it endorses something the baseline would flag, suppress the smell.
-- **Always a judgement call.** Each smell is a labelled heuristic ("possible Feature Envy"), never a hard violation. Like any standard here, skip anything tooling already enforces.
+- **Always a judgement call.** Each smell is a labelled heuristic ("possible Feature Envy"), never a hard violation.
 
 Each smell reads *what it is* → *how to fix*. Match it against the diff:
 
@@ -55,37 +62,61 @@ Each smell reads *what it is* → *how to fix*. Match it against the diff:
 - **Middle Man**: a class or function that mostly just delegates onward. → cut it, call the real target direct.
 - **Refused Bequest**: a subclass or implementer that ignores or overrides most of what it inherits. → drop the inheritance, use composition.
 
-### 4. Spawn both sub-agents in parallel
+### 5. Pick the panel
 
-Issue both sub-agent calls together, in the foreground, and aggregate the reports they return.
+The panel is a list of seats. Each seat is one model, and each seat gets one reviewer, so the seat count is the panel size.
 
-**Standards sub-agent prompt** should include:
+1. Use the seats the user names. Otherwise check which providers and models the harness can launch (in T3 Code, call `orchestrator_capabilities`) and pick two or three seats: your own model, plus the strongest model of each other family on offer, such as Claude and Grok.
+2. A family is the leading word of the model ID: `claude-opus-5-5` is `claude`, `grok-4.7` is `grok`, `gpt-6.1-sol` is `gpt`. Fable counts as Claude. Compare models, not providers, because one provider can serve another's models.
+3. If the harness rejects a seat, use another model from the same provider, then your own model, and say which seat changed and why. Never drop a seat silently. Keep at least two reviewers.
+4. When only one family can run, fill the panel from that family: different models where the catalog has them, otherwise the same model in two fresh contexts. The report says the panel was single-family, because agreement between seats on the same model shows the prompt is stable, not that the finding is right.
 
-- The full diff command and commit list.
-- The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full (the sub-agent has no other access to it).
-- The brief: "Report, per file/hunk where relevant, (a) every place the diff violates a documented standard: cite the standard (file + the rule), and (b) any baseline smell you spot: name it and quote the hunk. Distinguish hard violations from judgement calls: documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
+### 6. Launch the reviewers in parallel
 
-**Spec sub-agent prompt** should include:
+Spawn every reviewer in one message, one call per seat, each with a fresh context and its own git worktree at `HEAD` (the harness's worktree isolation, or `git worktree add`). In T3 Code that is one `delegate_task` per seat with `mode: "async"` and the seat's `target`, omitted for your own model. In Claude Code it is one Agent call per seat with the seat's `model` and `isolation: "worktree"`. When step 1 saved a patch, require each reviewer to apply it in its worktree before probing, because a new worktree copies no uncommitted edits.
 
-- The diff command and commit list.
-- The path or fetched contents of the spec.
-- The brief: "Report: (a) requirements the spec asked for that are missing or partial, (b) behaviour in the diff that wasn't asked for (scope creep), and (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Under 400 words."
+Every reviewer gets the same prompt:
 
-If the spec is missing, skip the Spec sub-agent and note this in the final report.
+- The diff command, the commit list, and the patch path if there is one.
+- The intent from step 2, and the spec path or fetched contents from step 3.
+- The standards files and the tooling list from step 4, the glossary path, and the smell baseline pasted in full (the reviewer has no other access to it).
+- This brief:
 
-### 5. Aggregate
+> Break this change. Read the diff, then the code around it and the callers it touches. Try each of these: inputs and states the author did not test (empty, huge, concurrent, malformed, repeated), error and retry paths, a spec requirement that is missing, partial, or wrong, and code outside the diff that depends on what changed.
+>
+> Prove each Breakage and Spec finding with a run against the real code, such as a failing test, a repro script, or command output that shows the wrong behavior. Keep repros in your own worktree and do not edit the reviewed checkout. Report each one with a title, the exact command, the output it printed, and the output the intent or spec requires. A Spec finding also quotes the spec line. Leave out any Breakage or Spec finding you did not run.
+>
+> For Standards, cite the documented rule (file and rule) for each breach, and name each baseline smell with the hunk it applies to. Smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything the tooling list already enforces. Use the glossary's terms for domain concepts, and flag a new name for a concept the glossary already names.
+>
+> No findings is a valid result. Report under `## Breakage`, `## Spec`, and `## Standards`, under 600 words.
 
-Present the two reports under `## Standards` and `## Spec` headings, verbatim or lightly cleaned. Do **not** merge or rerank findings, because the two axes are deliberately separate (see _Why two axes_).
+Collect every reviewer's report. If one returns nothing, continue with the rest and note the dropout.
+
+### 7. Verify
+
+Rerun each Breakage and Spec finding's command yourself. Keep a finding when the output shows the failure and the failure breaks the intent or the spec. Drop the rest. Merge findings that share a root cause, and list every reviewer that found it.
+
+Standards findings are not rerun. Keep each one that cites a real rule or names a smell against a real hunk. Merge duplicates the same way.
 
 Mark each mechanical finding (a fixed syntax pattern, a banned API, an import shape, a file-location rule) as a candidate for the `correct` skill to turn into a check, not as a review rule.
 
-End with a one-line summary: total findings per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes: that's the reranking the separation exists to prevent.
+### 8. Report
 
-## Why two axes
+- **Intent**: the restatement from step 2.
+- **Panel**: each seat's model and family, any seat that fell back and why, and whether the families actually differed.
+- `## Breakage`, `## Spec`, `## Standards`: each verified finding with its command and output (Breakage and Spec) or its rule or smell (Standards), and the reviewers that found it. Say "no verified findings" for an empty axis, and "no spec available" when step 3 found none.
+- **Dropped**: for each reviewer, the count of dropped findings and why.
 
-A change can pass one axis and fail the other:
+Do **not** merge or rerank findings across axes (see _Why separate axes_). Agreement across families is stronger evidence than agreement within one, so say which kind each shared finding has.
+
+End with a one-line summary: verified findings per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes: that's the reranking the separation exists to prevent.
+
+## Why separate axes
+
+A change can pass one axis and fail another:
 
 - Code that follows every standard but implements the wrong thing → **Standards pass, Spec fail.**
 - Code that does exactly what the issue asked but breaks the project's conventions → **Spec pass, Standards fail.**
+- Code that meets the spec and the standards but corrupts state on a retry the spec never mentioned → **Spec and Standards pass, Breakage fail.**
 
-Reporting them separately stops one axis from masking the other.
+Reporting them separately stops one axis from masking another.

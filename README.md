@@ -3,11 +3,10 @@ Dante's agent skills
 
 ## Upstream
 
-The skills below are copied unchanged from [mattpocock/skills](https://github.com/mattpocock/skills) at commit [`5863806dd4e15c63174bee4e7515a4256792ecfa`](https://github.com/mattpocock/skills/tree/5863806dd4e15c63174bee4e7515a4256792ecfa). Each one lives in `skills/<name>/`.
+The skills below started as copies of [mattpocock/skills](https://github.com/mattpocock/skills) at commit [`5863806dd4e15c63174bee4e7515a4256792ecfa`](https://github.com/mattpocock/skills/tree/5863806dd4e15c63174bee4e7515a4256792ecfa) and have been edited since. Each one lives in `skills/<name>/`.
 
 ### Engineering
 
-- [ask-matt](./skills/ask-matt/SKILL.md)
 - [code-review](./skills/code-review/SKILL.md)
 - [codebase-design](./skills/codebase-design/SKILL.md)
 - [diagnosing-bugs](./skills/diagnosing-bugs/SKILL.md)
@@ -20,7 +19,7 @@ The skills below are copied unchanged from [mattpocock/skills](https://github.co
 - [prototype](./skills/prototype/SKILL.md)
 - [research](./skills/research/SKILL.md)
 - [retro](./skills/retro/SKILL.md)
-- [setup-matt-pocock-skills](./skills/setup-matt-pocock-skills/SKILL.md)
+- [setup-skills](./skills/setup-skills/SKILL.md)
 - [tdd](./skills/tdd/SKILL.md)
 - [to-spec](./skills/to-spec/SKILL.md)
 - [to-tickets](./skills/to-tickets/SKILL.md)
@@ -30,7 +29,6 @@ The skills below are copied unchanged from [mattpocock/skills](https://github.co
 
 ### Productivity
 
-- [grill-me](./skills/grill-me/SKILL.md)
 - [grilling](./skills/grilling/SKILL.md)
 - [handoff](./skills/handoff/SKILL.md)
 - [teach](./skills/teach/SKILL.md)

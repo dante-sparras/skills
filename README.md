@@ -29,7 +29,6 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 
 ### Productivity
 
-- [grill-me](./skills/grill-me/SKILL.md)
 - [grilling](./skills/grilling/SKILL.md)
 - [handoff](./skills/handoff/SKILL.md)
 - [teach](./skills/teach/SKILL.md)

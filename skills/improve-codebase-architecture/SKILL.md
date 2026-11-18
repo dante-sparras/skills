@@ -24,7 +24,7 @@ This command is _informed_ by the project's domain model and built on a shared d
 
 Read the project's domain glossary (`GLOSSARY.md`) first.
 
-Then spawn a sub-agent with a fresh context window to walk the codebase. Don't follow rigid heuristics. Explore organically and note where you experience friction:
+Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) and start a fresh `explorer` to walk the codebase. Ask it to look for friction:
 
 - Where does understanding one concept require bouncing between many small modules?
 - Where are modules **shallow**, with an interface nearly as complex as the implementation?
@@ -65,4 +65,4 @@ Side effects happen inline as decisions crystallize. Call the Skill tool with "d
 
 - **Naming a deepened module after a concept not in `GLOSSARY.md`?** Add the term to `GLOSSARY.md`. Create the file lazily if it doesn't exist.
 - **Sharpening a fuzzy term during the conversation?** Update `GLOSSARY.md` right there.
-- **Want to explore alternative interfaces for the deepened module?** Call the Skill tool with "codebase-design" and use its design-it-twice parallel sub-agent pattern.
+- **Want to explore alternative interfaces for the deepened module?** Use [Design It Twice](../codebase-design/DESIGN-IT-TWICE.md) to run parallel `implementer` agents.

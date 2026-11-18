@@ -9,7 +9,7 @@ Adversaries try to break the diff between `HEAD` and a fixed point the user supp
 - **Spec**: does the change faithfully implement the originating issue or spec?
 - **Standards**: does the change follow this repo's documented coding standards?
 
-The reviewers run in parallel with fresh context, on different model families where the harness allows. A Breakage or Spec finding survives only when you rerun its command and the output shows the failure. Report the findings. Do not apply fixes.
+Run the available reviewers with fresh context, one per configured model family. A Breakage or Spec finding survives only when you rerun its command and the output shows the failure. Report the findings. Do not apply fixes.
 
 The issue tracker should have been provided to you. If not, tell the user to run `/setup-skills`.
 
@@ -64,16 +64,15 @@ Each smell reads *what it is* → *how to fix*. Match it against the diff:
 
 ### 5. Pick the panel
 
-The panel is a list of seats. Each seat is one model, and each seat gets one reviewer, so the seat count is the panel size.
+Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) for the `reviewer`.
 
-1. Use the seats the user names. Otherwise check which providers and models the harness can launch (in T3 Code, call `orchestrator_capabilities`) and pick two or three seats: your own model, plus the strongest model of each other family on offer, such as Claude and Grok.
-2. A family is the leading word of the model ID: `claude-opus-5-5` is `claude`, `grok-4.7` is `grok`, `gpt-6.1-sol` is `gpt`. Fable counts as Claude. Compare models, not providers, because one provider can serve another's models.
-3. If the harness rejects a seat, use another model from the same provider, then your own model, and say which seat changed and why. Never drop a seat silently. Keep at least two reviewers.
-4. When only one family can run, fill the panel from that family: different models where the catalog has them, otherwise the same model in two fresh contexts. The report says the panel was single-family, because agreement between seats on the same model shows the prompt is stable, not that the finding is right.
+1. Run one reviewer per model family represented by the runnable default and backup. Compare model families across providers. For example, `claude-opus-5-5` and `anthropic/claude-opus-5-5` are both Claude, as is Fable.
+2. Run the default first for its family. Run the backup in parallel when it adds a family. If the default is unavailable or hits a usage limit, promote the backup. Reuse its review if it already started.
+3. When the role resolves to inheritance, run one reviewer on the current model. Report any fallback and the families that returned reviews.
 
 ### 6. Launch the reviewers in parallel
 
-Spawn every reviewer in one message, one call per seat, each with a fresh context and its own git worktree at `HEAD` (the harness's worktree isolation, or `git worktree add`). In T3 Code that is one `delegate_task` per seat with `mode: "async"` and the seat's `target`, omitted for your own model. In Claude Code it is one Agent call per seat with the seat's `model` and `isolation: "worktree"`. When step 1 saved a patch, require each reviewer to apply it in its worktree before probing, because a new worktree copies no uncommitted edits.
+Launch reviewers in parallel, each with a fresh context and an isolated worktree at `HEAD`. In T3, use `delegate_task` with `mode: "async"` and `isolation: "worktree"`. Outside T3, use the native agent tool with worktree isolation. When step 1 saved a patch, require each reviewer to apply it before probing.
 
 Every reviewer gets the same prompt:
 

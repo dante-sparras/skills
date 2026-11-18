@@ -19,7 +19,7 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 - [prototype](./skills/prototype/SKILL.md)
 - [research](./skills/research/SKILL.md)
 - [retro](./skills/retro/SKILL.md)
-- [setup-matt-pocock-skills](./skills/setup-matt-pocock-skills/SKILL.md)
+- [setup-skills](./skills/setup-skills/SKILL.md)
 - [tdd](./skills/tdd/SKILL.md)
 - [to-spec](./skills/to-spec/SKILL.md)
 - [to-tickets](./skills/to-tickets/SKILL.md)

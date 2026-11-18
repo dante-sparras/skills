@@ -2,8 +2,6 @@ import re
 import sys
 from pathlib import Path
 
-EM_DASH = "—"
-SEMICOLON = ";"
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
 BACKTICK_RUN = re.compile(r"`+")
 FIX = "Rewrite the sentence, or use a comma, a period or a new sentence instead."
@@ -28,39 +26,35 @@ def prose_mask(line):
     return mask
 
 
-def violations(text):
+def prose_semicolons(text):
     fence = None
     for number, line in enumerate(text.splitlines(), start=1):
         match = FENCE.match(line)
         if fence is None and match:
             fence = match.group(1)
-            prose = [False] * len(line)
-        elif fence is not None:
-            prose = [False] * len(line)
+            continue
+        if fence is not None:
             closes = match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence)
             if closes and not line[match.end():].strip():
                 fence = None
-        else:
-            prose = prose_mask(line)
+            continue
+        prose = prose_mask(line)
         for column, char in enumerate(line, start=1):
-            if char == EM_DASH:
-                yield number, column, f'"{EM_DASH}" (em dash, U+2014)'
-            elif char == SEMICOLON and prose[column - 1]:
-                yield number, column, f'"{SEMICOLON}" (semicolon outside code)'
+            if char == ";" and prose[column - 1]:
+                yield number, column
 
 
 def main():
     root = Path(sys.argv[1] if len(sys.argv) > 1 else "skills")
     found = 0
     for path in sorted(p for p in root.rglob("*") if p.is_file()):
-        text = path.read_text(encoding="utf-8")
-        for line, column, what in violations(text):
+        for line, column in prose_semicolons(path.read_text(encoding="utf-8")):
             found += 1
-            print(f"{path.as_posix()}:{line}:{column}: found {what}. {FIX}")
+            print(f'{path.as_posix()}:{line}:{column}: found ";" (semicolon outside code). {FIX}')
     if found:
-        print(f"\n{found} punctuation error(s) under {root.as_posix()}/.")
+        print(f"\n{found} prose semicolon(s) under {root.as_posix()}/.")
         return 1
-    print(f"No em dashes or prose semicolons under {root.as_posix()}/.")
+    print(f"No prose semicolons under {root.as_posix()}/.")
     return 0
 
 

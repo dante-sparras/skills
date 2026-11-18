@@ -12,21 +12,11 @@ set -euo pipefail
 # Wizard library: delightful, consistent UX, identical across every wizard.
 # ──────────────────────────────────────────────────────────────────────────
 
-if [[ -t 1 ]] && command -v tput >/dev/null 2>&1 && [[ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]]
-then
-  BOLD=$(tput bold)
-  DIM=$(tput dim)
-  RESET=$(tput sgr0)
-  BLUE=$(tput setaf 4)
-  GREEN=$(tput setaf 2)
-  YELLOW=$(tput setaf 3)
+if [[ -t 1 ]] && command -v tput >/dev/null 2>&1 && [[ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]]; then
+  BOLD=$(tput bold); DIM=$(tput dim); RESET=$(tput sgr0)
+  BLUE=$(tput setaf 4); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3)
 else
-  BOLD=""
-  DIM=""
-  RESET=""
-  BLUE=""
-  GREEN=""
-  YELLOW=""
+  BOLD=""; DIM=""; RESET=""; BLUE=""; GREEN=""; YELLOW=""
 fi
 
 # Author sets this at the top of the stages section.
@@ -42,10 +32,7 @@ SKIPPED=()        # things we couldn't do (e.g. gh missing)
 # output isn't a terminal, so piped logs stay readable.
 _clear() {
   [[ -t 1 ]] || return 0
-  if command -v tput >/dev/null 2>&1 && tput clear 2>/dev/null
-  then
-    return 0
-  fi
+  if command -v tput >/dev/null 2>&1 && tput clear 2>/dev/null; then return 0; fi
   printf '\033[2J\033[3J\033[H'
 }
 
@@ -54,7 +41,7 @@ banner() {
   _clear
   printf '\n%s%s  %s%s\n' "$BOLD" "$BLUE" "$1" "$RESET"
   printf '%s  %s stages%s\n\n' "$DIM" "$TOTAL_STAGES" "$RESET"
-  printf '%s  You drive the browser, and this wizard tells you exactly what to do and\n' "$DIM"
+  printf '%s  You drive the browser; this wizard tells you exactly what to do and\n' "$DIM"
   printf '  captures the values you copy back. Stop any time with Ctrl-C and re-run\n'
   printf '  later, since it remembers values already saved.%s\n' "$RESET"
   pause "Ready to start?"
@@ -70,40 +57,21 @@ stage() {
 }
 
 # say "..." prints a plain instruction line.
-say() {
-  printf '  %s\n' "$1"
-}
+say()  { printf '  %s\n' "$1"; }
 # step "..." is a numbered-feeling action the human takes in the browser.
-step() {
-  printf '  %s•%s %s\n' "$BLUE" "$RESET" "$1"
-}
-note() {
-  printf '  %s%s%s\n' "$DIM" "$1" "$RESET"
-}
-warn() {
-  printf '  %s⚠ %s%s\n' "$YELLOW" "$1" "$RESET"
-}
+step() { printf '  %s•%s %s\n' "$BLUE" "$RESET" "$1"; }
+note() { printf '  %s%s%s\n' "$DIM" "$1" "$RESET"; }
+warn() { printf '  %s⚠ %s%s\n' "$YELLOW" "$1" "$RESET"; }
 
 # open_url URL opens it in the human's browser, cross-platform incl. WSL.
 open_url() {
   local url="$1"
   printf '  %s↗ opening%s %s\n' "$GREEN" "$RESET" "$url"
-  {
-    if command -v wslview >/dev/null 2>&1
-    then
-      wslview "$url"
-    elif command -v explorer.exe >/dev/null 2>&1
-    then
-      explorer.exe "$url"
-    elif command -v xdg-open >/dev/null 2>&1
-    then
-      xdg-open "$url"
-    elif command -v open >/dev/null 2>&1
-    then
-      open "$url"
-    else
-      false
-    fi
+  { if   command -v wslview     >/dev/null 2>&1; then wslview "$url"
+    elif command -v explorer.exe >/dev/null 2>&1; then explorer.exe "$url"
+    elif command -v xdg-open    >/dev/null 2>&1; then xdg-open "$url"
+    elif command -v open        >/dev/null 2>&1; then open "$url"
+    else false; fi
   } >/dev/null 2>&1 || warn "couldn't open a browser, so visit it manually: $url"
 }
 
@@ -113,7 +81,7 @@ pause() {
   read -r _ || true
 }
 
-# confirm "question" is a y/N gate that returns success on yes.
+# confirm "question" is a y/N gate; returns success on yes.
 confirm() {
   local reply=""
   printf '  %s? %s [y/N] ' "$YELLOW" "$1"
@@ -125,17 +93,12 @@ confirm() {
 # quotes or a plain dotenv double-quoted value undone.
 _existing() {
   [[ -f "$ENV_FILE" ]] || return 1
-  local line value sq="'\\''"
-  line=$(grep -E "^${1}=" "$ENV_FILE" | tail -n1) || return 1
+  local line value sq="'\\''"; line=$(grep -E "^${1}=" "$ENV_FILE" | tail -n1) || return 1
   value="${line#*=}"
-  if [[ "$value" == \'*\' ]]
-  then
+  if [[ "$value" == \'*\' ]]; then value="${value:1:${#value}-2}"; value="${value//"$sq"/\'}"
+  elif [[ "$value" == \"*\" ]]; then
     value="${value:1:${#value}-2}"
-    value="${value//"$sq"/\'}"
-  elif [[ "$value" == \"*\" ]]
-  then
-    value="${value:1:${#value}-2}"
-    [[ "$value" == *[\\\$\"]* ]] && return 1   # escapes, $ or ": can't decode safely, so ask again
+    [[ "$value" == *[\\\$\"]* ]] && return 1   # escapes, $ or ": can't decode safely; ask again
   fi
   printf '%s' "$value"
 }
@@ -150,10 +113,7 @@ ask() {
   p="  $s$BOLD$e$prompt$s$RESET$e "
   [[ -n "$current" ]] && p+="$s$DIM$e[Enter keeps current]$s$RESET$e "
   read -e -r -p "$p" input || rc=1
-  if (( rc )) && [[ -z "$input" ]]
-  then
-    return 1
-  fi
+  if (( rc )) && [[ -z "$input" ]]; then return 1; fi
   [[ -z "$input" && -n "$current" ]] && input="$current"
   printf -v "$key" '%s' "$input"
 }
@@ -162,24 +122,20 @@ ask() {
 ask_secret() {
   local key="$1" prompt="$2" current input rc=0
   current=$(_existing "$key" || true)
-  if [[ -n "$current" ]]
-  then
+  if [[ -n "$current" ]]; then
     printf '  %s%s%s %s[Enter keeps current]%s ' "$BOLD" "$prompt" "$RESET" "$DIM" "$RESET"
   else
     printf '  %s%s%s ' "$BOLD" "$prompt" "$RESET"
   fi
   read -rs input || rc=1
   printf '\n'
-  if (( rc )) && [[ -z "$input" ]]
-  then
-    return 1
-  fi
+  if (( rc )) && [[ -z "$input" ]]; then return 1; fi
   [[ -z "$input" && -n "$current" ]] && input="$current"
   printf -v "$key" '%s' "$input"
 }
 
 # write_env KEY VALUE upserts KEY='VALUE' into ENV_FILE (replaces any existing
-# line) and sets $KEY. Idempotent. Creates ENV_FILE at mode 0600. Writes through
+# line) and sets $KEY. Idempotent. Creates ENV_FILE at mode 0600; writes through
 # a symlink and keeps an existing file's mode.
 write_env() {
   local key="$1" value="$2" tmp sq="'\\''"
@@ -198,32 +154,28 @@ write_env() {
 # to a warning (and records it) if gh is unavailable or unauthenticated.
 set_secret() {
   local name="$1" value="$2"
-  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1
-  then
-    if printf '%s' "$value" | gh secret set "$name" >/dev/null 2>&1
-    then
+  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+    if printf '%s' "$value" | gh secret set "$name" >/dev/null 2>&1; then
       WRITTEN_SECRET+=("$name")
       printf '  %s✓ set%s GitHub secret %s\n' "$GREEN" "$RESET" "$name"
       return
     fi
   fi
   SKIPPED+=("GitHub secret $name (set it manually: gh secret set $name)")
-  warn "skipped GitHub secret $name: gh not ready, so set it later"
+  warn "skipped GitHub secret $name: gh not ready; set it later"
 }
 
 # set_var NAME VALUE sets a GitHub Actions repo variable (non-secret).
 set_var() {
   local name="$1" value="$2"
-  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1
-  then
-    if gh variable set "$name" --body "$value" >/dev/null 2>&1
-    then
+  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+    if gh variable set "$name" --body "$value" >/dev/null 2>&1; then
       printf '  %s✓ set%s GitHub variable %s\n' "$GREEN" "$RESET" "$name"
       return
     fi
   fi
   SKIPPED+=("GitHub variable $name")
-  warn "skipped GitHub variable $name, gh not ready, so set it later"
+  warn "skipped GitHub variable $name, gh not ready; set it later"
 }
 
 # finish clears, then shows a closing summary of everything configured.
@@ -232,14 +184,9 @@ finish() {
   printf '\n%s%s  ✓ Setup complete%s\n' "$BOLD" "$GREEN" "$RESET"
   (( ${#WRITTEN_ENV[@]} ))    && note "wrote ${#WRITTEN_ENV[@]} value(s) to $ENV_FILE: ${WRITTEN_ENV[*]}"
   (( ${#WRITTEN_SECRET[@]} )) && note "set ${#WRITTEN_SECRET[@]} GitHub secret(s): ${WRITTEN_SECRET[*]}"
-  if (( ${#SKIPPED[@]} ))
-  then
-    printf '\n'
-    warn "still to do by hand:"
-    for s in "${SKIPPED[@]}"
-    do
-      note "  - $s"
-    done
+  if (( ${#SKIPPED[@]} )); then
+    printf '\n'; warn "still to do by hand:"
+    for s in "${SKIPPED[@]}"; do note "  - $s"; done
   fi
   printf '\n'
 }
@@ -247,9 +194,8 @@ finish() {
 # ──────────────────────────────────────────────────────────────────────────
 # STAGES: author this section. One stage() per step the human takes.
 # Replace the example below. Set TOTAL_STAGES to match the stages you write.
-# Keep every stage inside run_wizard and the closing block as is: bash then
-# parses the whole block before the first prompt, so an edit mid-run can't
-# break it.
+# Keep every stage inside run_wizard and the last line as is: bash then parses
+# the whole file before the first prompt, so an edit mid-run can't break it.
 # ──────────────────────────────────────────────────────────────────────────
 
 run_wizard() {
@@ -274,7 +220,4 @@ set_secret STRIPE_SECRET_KEY "$STRIPE_SECRET_KEY"   # CI needs this one
 finish
 }
 
-{
-  run_wizard "$@"
-  exit
-}
+run_wizard "$@"; exit

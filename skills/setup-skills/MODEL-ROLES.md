@@ -12,7 +12,7 @@
 | `coordinator` | Claude Opus 5.5, high | Grok 4.7, high |
 | `implementer` | Claude Opus 5.5, high | Grok 4.7, high |
 | `reviewer` | Claude Opus 5.5, high | Grok 4.7, high |
-| `explorer` | Grok 4.7, high | Claude Opus 5.5, high |
+| `explorer` | Grok 4.7, high | Claude Haiku 5.5, high |
 
 Both files use a `roles` object keyed by role name. Each role holds a default and backup with `providerInstanceId`, `model`, and `effort`. Store the catalog's exact provider and model IDs and the chosen effort value.
 

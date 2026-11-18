@@ -8,7 +8,7 @@ You have been provided a spec. This spec should have tickets associated with it,
 
 The issue tracker should have been provided to you. If not, tell the user to run `/setup-skills`.
 
-The goal is the entire spec implemented on a single **integration branch**, with every ticket resolved the way the issue tracker closes work.
+The goal is the entire spec implemented on a single **integration branch**, or landed through the repository's queue when it has a landing contract, with every ticket resolved the way the issue tracker closes work.
 
 The tickets are not a list of steps. They are a **task graph** with blocking relationships between them. This means there is always a **frontier** of tickets which are ready to be grabbed.
 
@@ -28,7 +28,9 @@ The coordinator starts here.
 
 2. If the tickets need codebase or documentation research, start an `explorer`. Have it save notes outside the repo where the implementers can read them.
 
-3. Create the integration branch. If the issue tracker closes work through PRs, or the user asks for one, open a draft PR after the first merge in step 5 (a branch with no commits ahead of main can't open one), marked as closing the spec and tickets.
+3. Run `python3 <skills>/land/scripts/land.py status` in the repository. If it prints a landing contract, other threads land on this repository through its queue, so an integration branch would go around it. Run the tickets through [coordinate](../coordinate/SKILL.md) instead of steps 3 to 6 and step 9: the frontier tickets are its tasks, and each lands as its own PR that closes its ticket. Pass it the research notes from step 2 as context pointers. Then continue at step 7: review the spec's landed commits and its open queue PRs together, and give the fixes to coordinate as one more task.
+
+   Otherwise create the integration branch. If the issue tracker closes work through PRs, or the user asks for one, open a draft PR after the first merge in step 5 (a branch with no commits ahead of main can't open one), marked as closing the spec and tickets.
 
 4. Use the `implementer` role for each fresh ticket worker, each in its own worktree on its own branch. Each worker:
    - confirms its worktree is based on the integration branch before starting, and resets onto it if not

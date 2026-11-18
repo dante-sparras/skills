@@ -1,0 +1,3 @@
+interface:
+  display_name: "Coordinate"
+  short_description: "Run parallel T3 worker threads on one repo through land"

@@ -126,6 +126,7 @@ If a correct seam exists:
 3. Apply the fix.
 4. Watch it pass.
 5. Re-run the Phase 1 feedback loop against the original (un-minimised) scenario.
+6. Ask whether a type, a lint, or a CI check could have caught this bug before it shipped. If one could, call the Skill tool with `correct`.
 
 ## Phase 6: Cleanup
 

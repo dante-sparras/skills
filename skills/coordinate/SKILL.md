@@ -1,62 +1,59 @@
 ---
 name: coordinate
-description: "Run many T3 worker threads on one repository at once: group tasks, claim leases with land, launch implementer threads, review each result on its exact SHA, and submit passed work to the land queue. Use for 'coordinate', 'run these tasks in parallel threads', 'fan this out to workers', or when implement-spec's tickets run on a repository with a landing contract."
+description: "Run many T3 owner threads on one repository at once, one PR each, parallel off trunk, verified on the exact head and handed to the user to merge. Use for 'coordinate', 'run these tasks in parallel threads', 'one PR per task', or when implement-spec runs its tickets as separate PRs."
 ---
 
 # Coordinate
 
-This thread is the coordinator of one **run**: a set of tasks on one repository. It groups the tasks, claims leases, launches one worker thread per task, reviews every result, and submits passed work to the queue. It never writes code. Code changes and conflict fixes are worker tasks.
+You own the verdicts, never the PRs. Each task gets one owner thread that carries its PR from build to verified. Nothing is handed to the user until a verifier that never wrote the code has proven the head that would merge. The user merges every PR.
 
 | Term | Meaning |
 | --- | --- |
-| Run | One coordinator's set of tasks. Its name is a short slug, and it is the holder prefix `<run>/`. |
-| Task | One unit of work for one worker, with the paths it will change. Its holder is `<run>/<task>`. |
-| Playbook | The skill a worker follows for its task: `tdd`, `diagnosing-bugs`, `implement`, or another listed skill. |
+| Run | One coordinator's set of tasks on one repository, named by a short slug. |
+| Task | One change with its own evidence and its own PR. |
+| Owner | The worker thread that builds one task's PR, reports its heads, and never merges. |
 
 For a spec with tickets, start from [implement-spec](../implement-spec/SKILL.md). Its coordinator runs this skill with the frontier tickets as tasks.
 
-Every change lands through the [land skill](../land/SKILL.md). Read it before step 1. Several coordinators can share one repository, because the queue and its leases keep them apart. `L` below is `python3 <skills>/land/scripts/land.py --repo <checkout>`.
+Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) before launching anything. Owners use the `implementer` role and verifiers the `reviewer` role, each default first and backup once on failure. When the user asks for the coordinator in its own thread, launch that thread with the `coordinator` role's model.
 
 ## The run file
 
-Keep `${XDG_STATE_HOME:-~/.local/state}/skills/coordinate/<run>/tasks.md`, outside the repository. It holds one table row per task: id, summary, paths, playbook, lease, worker thread, branch, reviewed SHA, review rounds, entry, and state. Update the row after every step below. After a compaction, or when another thread takes over the run, read this file and `$L status --holder <run>/` before acting.
+Keep `${XDG_STATE_HOME:-~/.local/state}/skills/coordinate/<run>/run.md`, outside the repository. It holds the plan and one row per task: id, files it may touch, what it depends on, owner thread, branch, PR, last reported head, verdict and the head it covers, and a stuck-after time. Whoever launches a thread records it there before doing anything else. After a compaction, or when another thread takes over the run, read this file before acting.
 
 ## Steps
 
-1. **Set up.** Run `$L status`. With no contract, ask the user for the landing mode (default `human`) and the repository's check commands, then run `$L init`. Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role). Workers use the `implementer` role and reviewers the `reviewer` role, each default first and backup once on failure. When the user asks for the coordinator in its own thread, launch that thread with the `coordinator` role's model.
+1. **Plan.** Write the tasks into the run file before launching any. For each task, list the files it may touch, the one change it builds, how it will be verified, and the tasks it waits for. Merge tasks whose files overlap into one task, because two owners never share a file. A task whose files no running task touches is independent.
 
-2. **Group.** Read every task together before launching any. Merge tasks that will change the same paths into one task, and keep unrelated tasks apart. Give each task a done criterion a reviewer can check, a playbook, and the paths it will change.
-
-3. **Claim.** Run `$L lease claim --holder <run>/<task> --paths <paths>`. On an overlap, fold the task into the task that holds the paths, or hold it until that lease is released. On a cap refusal, hold it until a lease is released.
-
-4. **Launch.** Start each claimed task with `t3_thread_launch`. Use the title `<run> <task>: <summary>`, a new worktree branched from `<remote>/<trunk>` with `startFromOrigin` true, a branch named `<type>/<run>-<task>`, and the `implementer` role's provider, model, and effort as its model selection. The message is the brief:
+2. **Launch owners in parallel off trunk, never stacked,** so each PR merges on its own. Stack a PR only when it builds on another PR: base it on that PR's branch, and it rebases onto its parent's branch while the stack root rebases onto trunk. Start each owner with `t3_thread_launch`: title `<run> <task>: <summary>`, a new worktree branched from `<remote>/<trunk>` (or the parent's branch) with `startFromOrigin` true, a Conventional Branch name, and the `implementer` role's provider, model, and effort as its model selection. The message is the brief:
 
    ```text
-   Task <run>/<task>: <summary>
-   Done when: <criterion>
+   You own task <run>/<task>: <summary>.
+   Done when: <verification>
    Context: <pointers to the issue, spec, notes, or commits>
-   Playbook: call the Skill tool with `<playbook>`.
-   Change only these leased paths: <paths>. If the task needs another path, stop and say which.
-   Work only in this worktree. Keep history linear with no merge commits.
-   Run builds and tests through `python3 <skills>/land/scripts/land.py slot -- <cmd>`, and benchmarks through `slot --exclusive --`.
-   Writers never integrate. A worker commits in its own worktree and stops. It never merges, rebases a shared branch, or pushes trunk.
-   When done, reply with the branch, the head SHA, what changed, and how you verified it.
+   Touch only these files: <files>. If the task needs another file, stop and say which.
+   Open the PR early so CI runs alongside the work, with a body per the `pr` skill. Base: <trunk or parent branch>.
+   Before you report code-ready, run the repository's checks for the touched paths on the committed head and rebase onto current <trunk or parent branch>.
+   Push every finished unit before you start the next. Force-push only your own branch, with --force-with-lease pinned to the SHA you last pushed. On any push you did not make, stop and report.
+   Report every new head SHA, then code-ready, then green once CI passes. Never merge.
    ```
 
-   Record the thread id and branch in the run file. End the turn while workers run.
+3. **Verify once at the code-ready head.** Read the owner's report and diff yourself, then start one verifier with `delegate_task` on the `reviewer` role. When the reviewer default is the owner's model family and the backup is another family that can run, use the backup. The verifier gets the task, its verification, and the exact head SHA. It reruns the checks, proves the behavior on the real surface, audits the diff, and returns `pass` or `fail` with the failing run.
+   - Block a PR only for a problem you can show: a failing run at the head, or a doc line the PR made wrong. A problem trunk already has blocks only when the PR copies it or newly reaches it. Everything else becomes a follow-up task.
+   - On `fail`, send the findings to the owner with `t3_thread_send`, then verify its new head.
+   - A verdict covers the patch, not the commits. After a rebase, run `git patch-id` on the old and new diffs. When they match, the verdict stands. A conflict resolution or a minor fix gets one verifier at the new head. A wording-only change gets none. New behavior or a large new diff gets a full verification again.
+   - After 3 failed rounds on one task, stop fixing and ask the user whether to accept known limits, redesign, or drop it.
 
-5. **Watch.** Keep one `schedule_task` heartbeat, `{"type": "interval", "everyMs": 900000}`, while any worker runs, with the prompt "Continue the coordinate run `<run>`." On each wake, `t3_thread_read` every running worker. A worker idle for more than 10 minutes with no report gets one nudge with `t3_thread_send`. A worker idle again after its nudge is replaced: launch a fresh worker with the same brief, based on the old branch head. Run `$L lease renew L<n> --if-live` on any task that will outlast its lease.
+4. **Fix the recipe.** When two owners make the same kind of mistake, call the Skill tool with `correct` before launching or verifying more work.
 
-6. **Review.** When a worker reports done, read its report and its diff against trunk yourself. A done report is a claim. Then start one reviewer with `delegate_task`, using the `reviewer` role. When the reviewer default is the worker's model family and the backup is another family that can run, use the backup. The reviewer gets the task, the done criterion, the leased paths, and the exact head SHA, and returns `pass` or `send-back` with findings. A verdict holds only for that SHA.
-   - `send-back`: send the findings to the worker with `t3_thread_send`, then review its new head SHA. After 3 send-backs on one task, stop fixing and ask the user whether to accept known limits, redesign, or drop the task.
-   - When two workers' reviews find the same kind of mistake, call the Skill tool with `correct` before launching or sending more work.
+5. **Watch the run.** Keep one hourly `schedule_task` heartbeat while any owner works, with the prompt "Continue the coordinate run `<run>`." Each wake rereads this skill and the run file and fixes drift, such as an unreported head or an unrecorded thread, by having its owner record it. Probe every owner with `t3_thread_read` and judge it by what it did, such as pushes and new heads, not by its status text. An owner is stuck when it errors, cannot start turns, or shows nothing new past its stuck-after time. Replace a stuck owner at once with the same brief, based on its last pushed head. An owner waiting on you or the user is not stuck, so answer it.
 
-7. **Submit.** For a `pass`, write a PR body (what changed, how it was verified, and `Closes #<n>` for each issue) to the run directory. Then run `$L submit --holder <run>/<task> --branch <branch> --sha <reviewed sha> --lease L<n> --reviewer <provider>/<model> --title "<conventional commit title>" --body-file <file>`, then `$L land`. Settle and keep the queue moving per the land skill.
-   - `bounced`: send the reason to the worker. After its fix, review the new SHA again before resubmitting.
-   - `landed`: remove the worker's worktree and branch.
+6. **Refill.** When a task is verified, or its PR merges, launch the tasks that waited for it.
 
-8. **Refill.** After every landing, bounce, or dropped task, claim and launch the next tasks that are now free.
+7. **Stop at verified.** A task is done when its PR is verified and green at its current head. Hand the PRs to the user. After the handoff, nobody pushes without the user's go. When the user merges a PR, remove its owner's worktree. A PR stacked on it moves onto trunk only on the user's go, and keeps its verdict when `git patch-id` is unchanged.
 
-9. **Report.** When every task is landed, awaiting the user's merge, or blocked, reply with one table: task, PR or commit, state, and the decision it waits on, if any. Raise each decision once.
+8. **Stand down at once on the user's stop.** Send every owner a zero-writes order with `t3_thread_send`. Each reports where it stands and keeps its brief until the user releases it.
 
-Delete only what this run created: its worker worktrees and branches, and the queue's `landing/e<n>` branches. Ask before deleting any other branch.
+**Reply:** one table with each task, its PR, its verdict and the head it covers, and the decision it waits on, if any. Raise each decision once.
+
+Delete only what this run created: its owner worktrees and branches. Ask before deleting any other branch.

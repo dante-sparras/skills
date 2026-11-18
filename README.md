@@ -16,7 +16,6 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 - [implement](./skills/implement/SKILL.md)
 - [implement-spec](./skills/implement-spec/SKILL.md)
 - [improve-codebase-architecture](./skills/improve-codebase-architecture/SKILL.md)
-- [land](./skills/land/SKILL.md)
 - [pr](./skills/pr/SKILL.md)
 - [prototype](./skills/prototype/SKILL.md)
 - [research](./skills/research/SKILL.md)
@@ -45,11 +44,7 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 
 [setup-skills](./skills/setup-skills/SKILL.md) takes its model role configuration from Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack).
 
-### pstack-t3
-
-[land](./skills/land/SKILL.md) ports the `landing` skill and its `land.py` script from Marcus Gibson's [pstack-t3](https://github.com/creedants/pstack-t3), a T3 Code adaptation of pstack, at commit [`1552271dd085272602f57313eb01276bc872d4ce`](https://github.com/dante-sparras/pstack-t3/tree/1552271dd085272602f57313eb01276bc872d4ce/skills/landing). The Python library is rewritten smaller and runs on Windows.
-
-[coordinate](./skills/coordinate/SKILL.md) is a smaller version of the `brigade` coordinator from the same commit of [pstack-t3](https://github.com/dante-sparras/pstack-t3/tree/1552271dd085272602f57313eb01276bc872d4ce/skills/brigade).
+[coordinate](./skills/coordinate/SKILL.md) adapts the Autopilot-stack and Autopilot-full playbooks, the files-per-PR rule of the Multi-phase plan playbook, and the `separate-before-serializing-shared-state` principle from pstack at commit [`2f87c854fe3e2fcda44ca86b46ede35aad3c46b7`](https://github.com/cursor/plugins/tree/2f87c854fe3e2fcda44ca86b46ede35aad3c46b7/pstack/skills/poteto-mode/playbooks) to T3 threads.
 
 ### Other credits
 
@@ -62,5 +57,3 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 The upstream skills are by Matt Pocock and are used under the MIT License. See [LICENSES/mattpocock-skills.md](./LICENSES/mattpocock-skills.md).
 
 The pstack skills are by Lauren Tan and are used under the MIT License. See [LICENSES/pstack.md](./LICENSES/pstack.md).
-
-The pstack-t3 skills are by Lauren Tan and Marcus Gibson and are used under the MIT License. See [LICENSES/pstack-t3.md](./LICENSES/pstack-t3.md).

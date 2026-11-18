@@ -8,17 +8,15 @@ You have been provided a spec. This spec should have tickets associated with it,
 
 The issue tracker should have been provided to you. If not, tell the user to run `/setup-skills`.
 
-The goal is the entire spec implemented on a single **integration branch**, or as one PR per ticket through coordinate, with every ticket resolved the way the issue tracker closes work.
+The goal is the entire spec implemented as verified PRs off trunk, one per ticket, which the user merges, with every ticket resolved the way the issue tracker closes work.
 
 The tickets are not a list of steps. They are a **task graph** with blocking relationships between them. This means there is always a **frontier** of tickets which are ready to be grabbed.
 
-Start every subagent with a fresh context window.
+Start every owner and subagent with a fresh context window.
 
-Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the spec, tickets, research notes, and previous commits. Don't duplicate information already available via pointers.
+Communication to and from owners and subagents should be sparse. Communicate primarily through **context pointers**: to the spec, tickets, research notes, and previous commits. Don't duplicate information already available via pointers.
 
-**Implementer subagents** should be run in the background where possible for maximum concurrency.
-
-Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) before delegating. Start one `coordinator` to run the steps below and own the integration branch. Give it the spec, ticket references, and this workflow. The coordinator starts workers, records their task IDs and branches, and runs one merger at a time. Before starting a backup coordinator, recover the integration branch and worker status from the first run.
+Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) before delegating. Start one `coordinator` to run the steps below. Give it the spec, ticket references, and this workflow. Before starting a backup coordinator, recover the run file the first one kept.
 
 ## Steps
 
@@ -26,23 +24,15 @@ The coordinator starts here.
 
 1. Read the spec and tickets to understand the task graph.
 
-2. If the tickets need codebase or documentation research, start an `explorer`. Have it save notes outside the repo where the implementers can read them.
+2. If the tickets need codebase or documentation research, start an `explorer`. Have it save notes outside the repo where the owners can read them.
 
-3. If the user wants one PR per ticket, run the tickets through [coordinate](../coordinate/SKILL.md) instead of steps 3 to 6 and step 9: the frontier tickets are its tasks, each PR closes its ticket, and the user merges them. Pass it the research notes from step 2 as context pointers. Then continue at step 7: review the spec's PRs together, and give the fixes to coordinate as one more task.
+3. Run the tickets through [coordinate](../coordinate/SKILL.md). Each frontier ticket is a task, and its blocking relationships are the task dependencies. Merge two tickets into one task only when they would touch the same files. Add these lines to every owner's brief:
+   - the ticket and the research notes from step 2 as context pointers
+   - call the Skill tool with `tdd` to build the ticket
+   - mark the PR as closing its ticket when the issue tracker closes work through PRs
 
-   Otherwise create the integration branch. If the issue tracker closes work through PRs, or the user asks for one, open a draft PR after the first merge in step 5 (a branch with no commits ahead of main can't open one), marked as closing the spec and tickets.
+   A ticket blocked by another ticket whose PR is still open stacks on that PR, per coordinate step 2.
 
-4. Use the `implementer` role for each fresh ticket worker, each in its own worktree on its own branch. Each worker:
-   - confirms its worktree is based on the integration branch before starting, and resets onto it if not
-   - calls the Skill tool with `tdd` to build the ticket
-   - merges the integration branch tip into its own branch before reporting done
+4. Once every ticket's PR is verified, merge every PR head into a throwaway local branch off trunk and call the Skill tool with `code-review` on it, since trunk. Send each finding to the owner of the PR it belongs to, and verify that PR again per coordinate step 3. A finding that spans PRs becomes a new task.
 
-5. Once a worker completes, start a merger with the `implementer` role to merge its work to the integration branch. If two workers made the same mistake, call the Skill tool with `correct` before you merge more work.
-
-6. If this changes the **frontier** of available tickets, kick off more **implementer subagents** to work on the new tickets. This allows for maximum concurrency.
-
-7. Once all tickets are complete, call the Skill tool with `code-review` on the integration branch. Fix all issues raised by the code review with one fresh `implementer`.
-
-8. If a draft PR exists, mark it ready for review. Otherwise, resolve each ticket the way the issue tracker closes work, and report the integration branch.
-
-9. Clean up all **implementer subagent** worktrees.
+5. Hand the PRs to the user per coordinate step 7, then delete the throwaway branch. When the issue tracker does not close work through PRs, resolve each ticket the way it closes work once its PR merges.

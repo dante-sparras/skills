@@ -1,6 +1,6 @@
 ---
 name: coordinate
-description: "Run many T3 owner threads on one repository at once, one PR each, parallel off trunk, verified on the exact head and handed to the user to merge. Use for 'coordinate', 'run these tasks in parallel threads', 'one PR per task', or when implement-spec runs its tickets as separate PRs."
+description: "Run many T3 owner threads on one repository at once, one PR each, parallel off trunk, verified on the exact head and handed to the user to merge. Use for 'coordinate', 'run these tasks in parallel threads', 'one PR per task', or when implement-spec runs a spec's tickets."
 ---
 
 # Coordinate

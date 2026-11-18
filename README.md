@@ -18,7 +18,6 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 - [pr](./skills/pr/SKILL.md)
 - [prototype](./skills/prototype/SKILL.md)
 - [research](./skills/research/SKILL.md)
-- [retro](./skills/retro/SKILL.md)
 - [setup-skills](./skills/setup-skills/SKILL.md)
 - [tdd](./skills/tdd/SKILL.md)
 - [to-spec](./skills/to-spec/SKILL.md)
@@ -36,6 +35,12 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 - [wait-what](./skills/wait-what/SKILL.md)
 - [writing-for-agents](./skills/writing-for-agents/SKILL.md)
 
+### pstack
+
+[correct](./skills/correct/SKILL.md) started as a copy of the `correct` skill in Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/pstack) at commit [`e5136d82418d2db3165ea1050d17577cd618cc05`](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/pstack/skills/correct). It also absorbs the upstream `retro` skill from mattpocock/skills.
+
 ## License
 
 The upstream skills are by Matt Pocock and are used under the MIT License. See [LICENSES/mattpocock-skills.md](./LICENSES/mattpocock-skills.md).
+
+The pstack skills are by Lauren Tan and are used under the MIT License. See [LICENSES/pstack.md](./LICENSES/pstack.md).

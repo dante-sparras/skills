@@ -1,10 +1,12 @@
 ---
 name: setup-skills
-description: "Configure this repo for the engineering skills: set up its issue tracker, triage label vocabulary, and domain doc layout. Run once before first use of the other engineering skills."
+description: Configure model roles, the issue tracker, triage labels, and domain docs for the engineering skills.
 disable-model-invocation: true
 ---
 
 # Setup Skills
+
+For model setup alone, go straight to [Configure model roles](MODEL-ROLES.md#configure-model-roles).
 
 Scaffold the per-repo configuration that the engineering skills assume:
 
@@ -103,6 +105,10 @@ Then write the docs files using the seed templates in this skill folder as a sta
 
 For "other" issue trackers, write `docs/agents/issue-tracker.md` from scratch using the user's description.
 
-### 5. Done
+### 5. Set model roles
 
-Tell the user the setup is complete and which engineering skills will now read from these files. Mention they can edit `docs/agents/*.md` directly later. Re-running this skill is only necessary if they want to switch issue trackers or restart from scratch.
+Follow [Configure model roles](MODEL-ROLES.md#configure-model-roles) to confirm and write the four model roles in T3.
+
+### 6. Done
+
+Tell the user which files you wrote. They can edit `docs/agents/*.md` directly or rerun model setup alone to change their roles.

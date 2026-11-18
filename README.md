@@ -41,6 +41,8 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 
 [code-review](./skills/code-review/SKILL.md) takes its adversarial reviewer panel from the `interrogate` skill in pstack at commit [`ab1f702ce8e8b6557edb56b09f52cde8bfb83f17`](https://github.com/cursor/plugins/tree/ab1f702ce8e8b6557edb56b09f52cde8bfb83f17/pstack/skills/interrogate): the adversary brief, picking reviewers from different model families, and rerunning each finding before it is reported.
 
+[implement-spec](./skills/implement-spec/SKILL.md) takes its merge flow from the poteto-mode playbooks in pstack at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks): the per-task file plan from Multi-phase plan, verifying each head with an agent that did not write it and carrying a verdict across a rebase by `git patch-id` from Shipping, and the coordinator's ledger, re-testing on the landing base, and hourly stuck-agent check from Autopilot-full.
+
 [setup-skills](./skills/setup-skills/SKILL.md) takes its model role configuration from Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack).
 
 ### Other credits

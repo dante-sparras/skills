@@ -1,0 +1,3 @@
+interface:
+  display_name: "Land"
+  short_description: "Leases and one merge queue for many agents on one repo"

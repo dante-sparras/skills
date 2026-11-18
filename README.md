@@ -7,7 +7,6 @@ The skills below are copied unchanged from [mattpocock/skills](https://github.co
 
 ### Engineering
 
-- [ask-matt](./skills/ask-matt/SKILL.md)
 - [code-review](./skills/code-review/SKILL.md)
 - [codebase-design](./skills/codebase-design/SKILL.md)
 - [diagnosing-bugs](./skills/diagnosing-bugs/SKILL.md)

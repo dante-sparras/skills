@@ -47,14 +47,14 @@ def prose_semicolons(text):
 def main():
     root = Path(sys.argv[1] if len(sys.argv) > 1 else "skills")
     found = 0
-    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+    for path in sorted(p for p in root.rglob("*.md") if p.is_file()):
         for line, column in prose_semicolons(path.read_text(encoding="utf-8")):
             found += 1
             print(f'{path.as_posix()}:{line}:{column}: found ";" (semicolon outside code). {FIX}')
     if found:
-        print(f"\n{found} prose semicolon(s) under {root.as_posix()}/.")
+        print(f"\n{found} prose semicolon(s) in Markdown under {root.as_posix()}/.")
         return 1
-    print(f"No prose semicolons under {root.as_posix()}/.")
+    print(f"No prose semicolons in Markdown under {root.as_posix()}/.")
     return 0
 
 

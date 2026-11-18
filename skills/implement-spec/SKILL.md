@@ -31,7 +31,7 @@ Communication to and from subagents should be sparse. Communicate primarily thro
    - calls the Skill tool with `tdd` to build the ticket
    - merges the integration branch tip into its own branch before reporting done
 
-5. Once an **implementer subagent** completes, merge its work to the integration branch with a **merger subagent**.
+5. Once an **implementer subagent** completes, merge its work to the integration branch with a **merger subagent**. If two **implementer subagents** made the same mistake, call the Skill tool with `correct` before you merge more work.
 
 6. If this changes the **frontier** of available tickets, kick off more **implementer subagents** to work on the new tickets. This allows for maximum concurrency.
 

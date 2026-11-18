@@ -1,7 +1,6 @@
 ---
 name: correct
-description: "Turn each mistake agents repeat in this repo into a check that fails: architecture, then types, then a lint, then a test, docs last."
-disable-model-invocation: true
+description: "Turn each mistake agents repeat in this repo into a check that fails: architecture, then types, then a lint, then a test, docs last. Use when the operator corrects an agent, when two agents make the same mistake, when a review finds a mechanical mistake a check could catch, when a check could have caught a fixed bug, or when asked to look back at a session."
 ---
 
 # Correct

@@ -12,7 +12,6 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 - [diagnosing-bugs](./skills/diagnosing-bugs/SKILL.md)
 - [domain-modeling](./skills/domain-modeling/SKILL.md)
 - [grill-with-docs](./skills/grill-with-docs/SKILL.md)
-- [implement](./skills/implement/SKILL.md)
 - [implement-spec](./skills/implement-spec/SKILL.md)
 - [improve-codebase-architecture](./skills/improve-codebase-architecture/SKILL.md)
 - [pr](./skills/pr/SKILL.md)
@@ -24,15 +23,10 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 - [to-tickets](./skills/to-tickets/SKILL.md)
 - [triage](./skills/triage/SKILL.md)
 - [wayfinder](./skills/wayfinder/SKILL.md)
-- [wizard](./skills/wizard/SKILL.md)
 
 ### Productivity
 
 - [grilling](./skills/grilling/SKILL.md)
-- [handoff](./skills/handoff/SKILL.md)
-- [teach](./skills/teach/SKILL.md)
-- [to-questionnaire](./skills/to-questionnaire/SKILL.md)
-- [wait-what](./skills/wait-what/SKILL.md)
 - [writing-for-agents](./skills/writing-for-agents/SKILL.md)
 
 ### pstack

@@ -8,6 +8,8 @@ You have been provided a spec. This spec should have tickets associated with it,
 
 The issue tracker should have been provided to you. If not, tell the user to run `/setup-skills`.
 
+If the user passes a spec or ticket reference, fetch it from the issue tracker and state its title before starting. If the reference is ambiguous, ask.
+
 The goal is every ticket landed on main through one PR per task, each off main and never stacked, with the coordinator owning the landing order.
 
 The tickets are not a list of steps. They are a **task graph** with blocking relationships between them. This means there is always a **frontier** of tickets which are ready to be grabbed.
@@ -57,6 +59,7 @@ The coordinator starts here.
 
 5. Start a fresh `implementer` owner in the background for each launchable task on the frontier, each in its own worktree on its own branch off current main. Each owner:
    - calls the Skill tool with `tdd` to build its tickets, editing only the files in its plan
+   - runs the typechecker and the single test files it touches often while it works, and the full test suite before it reports a head
    - pushes soon after starting and after each finished unit, and opens its PR off main early so CI runs alongside the work, writing the body with the `pr` skill and marking the PR as closing its tickets
    - rebases onto current main, proves the change on the real artifact, and reports the code-ready head
    - keeps CI green, reports every later head, and makes every write to its branch, including a rebase the coordinator calls for, with `git push --force-with-lease` pinned to the SHA it last pushed
@@ -68,7 +71,7 @@ The coordinator starts here.
    - Merge with `gh pr merge <pr> --squash`, then read back `gh pr view <pr> --json state,mergedAt,baseRefName`. A PR has landed only when it reads merged into main.
    - Resolve the PR's tickets the way the issue tracker closes work if merging did not, and clean up the owner's worktree.
 
-   In **hand off** mode, stop at verified. Once every PR on the frontier passes at its current head with green CI, hand the user an ordered merge list: each PR with its verdict and head SHA, in the order you would land them, and the tasks still blocked behind them. After the handoff, nobody pushes to a listed PR without the user's go. Report per step 10. Tell the user to rerun this skill after merging. The rerun recovers from the ledger and starts the next frontier off the new main.
+   In **hand off** mode, stop at verified. Once every PR on the frontier passes at its current head with green CI, hand the user an ordered merge list: each PR with its verdict and head SHA, in the order you would land them, and the tasks still blocked behind them. Once the list is handed over, nobody pushes to a listed PR without the user's go. Report per step 10. Tell the user to rerun this skill after merging. The rerun recovers from the ledger and starts the next frontier off the new main.
 
 8. If a landing changes the frontier, add the new tasks to the file plan and start them per step 5.
 

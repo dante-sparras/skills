@@ -1,6 +1,19 @@
 # Compare the original and the candidate on tasks
 
-1. Use the skill's existing task evals when available. Add a representative case for any changed behavior they miss. If the skill has no evals, define tasks and observable checks before running either version. Cover the changed facts, actions, and ordering requirements. Prefer checks on outputs, tool traces, or repository state.
-2. Run each task against the original and the candidate in separate fresh sessions. Use the same model, effort, tools, inputs, and pass criteria for the pair. For tasks that need an agent to act, use local T3 delegates in isolated worktrees. Give each delegate only its assigned skill version and the task. Run deterministic checks with the repo's own harness when it exists.
-3. Record which checks pass under each version and the output or trace supporting the result. Compare per task and per check. If a result is flaky, repeat both versions under the same conditions before drawing a conclusion.
-4. Reject the candidate if any check the original passed regresses. If you cannot run a representative comparison, leave the candidate unapplied and report the missing evidence.
+Claims test single instructions. Task evals test whether the shorter skill still does whole jobs. The script runs them in the same isolated CLIs as the claims, so neither version can pick up an installed skill.
+
+1. Use the skill's existing task evals when available. Add a representative case for any changed behavior they miss. If the skill has none, define tasks and checks before running either version. Cover the changed facts, actions, and ordering requirements.
+2. Write the tasks to `<task-dir>/<skill>.json` as a list of objects with `id`, `prompt`, and `checks`. A prompt is a user request. Each check is one observable thing the reply commits to, such as an action, its order, a name, or a value.
+
+   ```json
+   [
+     {
+       "id": "webhooks",
+       "prompt": "Find out how Stripe retries failed webhook deliveries and leave me notes in the repo.",
+       "checks": ["Uses Stripe's official documentation as the source", "Says where the notes file was saved"]
+     }
+   ]
+   ```
+
+3. Pass `--tasks <task-dir>`. For each proposal, the script runs every task on every answerer with the original and with the candidate, and that answerer's judge grades each check. It caches each pair, so a rerun with new tasks asks only the new ones.
+4. The proposal is rejected when any check the original passed fails with the candidate. If a result looks flaky, rerun with a fresh `--state` before drawing a conclusion. If you cannot write a representative task, leave the candidate unapplied and report the missing evidence.

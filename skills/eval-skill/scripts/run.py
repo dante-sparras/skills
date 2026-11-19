@@ -847,8 +847,8 @@ def run(args):
             cwd=artifacts, capture_output=True, check=False,
         )
         if diff.returncode != 1 or not diff.stdout:
-            raise RuntimeError("Could not produce the shrink patch")
-        patch = artifacts / "shrink.patch"
+            raise RuntimeError("Could not produce the candidate patch")
+        patch = artifacts / "candidate.patch"
         patch.write_bytes(diff.stdout)
         summary["patch"] = str(patch)
     summary.update(seconds=round(time.monotonic() - start, 1), calls=dict(queue.stats), timings=str(timings))

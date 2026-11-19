@@ -28,7 +28,7 @@
 3. In each brief, give the worker the input tree, script path, state directory, and confirmed seats. Tell it to [dispatch the script's model requests](T3-REQUESTS.md) and return the final JSON summary and any candidate patch.
 
    ```sh
-   python skills/shrink/scripts/run.py run --root <input-tree> --skill <name> --seats <seats.json> --state <state-dir> --queue <fresh-dir> --concurrency 4
+   python skills/eval-skill/scripts/run.py run --root <input-tree> --skill <name> --seats <seats.json> --state <state-dir> --queue <fresh-dir> --concurrency 4
    ```
 
 4. Follow the T3 continuation for each task. If a task fails or times out, cancel it if it is still running and start a fresh local child with the same cache. Keep successful work and retry missing results. Use three child attempts for transient failures and report any scores still missing.

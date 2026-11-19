@@ -23,7 +23,14 @@ The pair of buckets gives each claim a decision: keep, cut, fix, or rewrite. A p
 
 ## Isolation
 
-Every answer call starts in a new empty temporary folder. The CLI's home directory points into that folder and holds only the sign-in and a generated configuration with no skills. Claude runs with `--safe-mode`, no tools, no slash commands, and no MCP servers. Codex runs with skill instructions off, every host skill disabled by path, the code mode host and shell tools off, and a read-only sandbox. An answer that used a tool is rejected. Grok runs with a temporary home, its bundled skills ignored, and its tools disallowed. No call gets the repo path.
+Every answer call starts in a new empty temporary folder. The CLI's home directory points into that folder and holds only the sign-in and a generated configuration with no skills. No call gets the repo path. Each CLI has an adapter in `scripts/novelty/clis/`:
+
+- Claude Code runs with `--safe-mode`, no tools, no slash commands, and no MCP servers.
+- Codex runs with skill instructions off, every host skill disabled by path, the code mode host and shell tools off, and a read-only sandbox. An answer that used a tool is rejected.
+- Grok Build runs with its bundled skills ignored and its tools disallowed.
+- opencode runs standalone with its config, data, cache, and state folders inside the temporary home, a custom agent whose prompt is the system prompt, every tool and permission denied, and the Claude Code compatibility layer off. The work folder is an empty git repository, so opencode does not search parent folders. An answer that used a tool is rejected. A subscription sign-in is imported into each call's home, and a free `opencode/` model gets none.
+
+`run.py panel --check` asks every seat to list its skills and fails when any installed skill name comes back. Run it after changing a CLI or its version.
 
 Every run proves the isolation:
 
@@ -39,7 +46,7 @@ The state directory defaults to `~/.cache/eval-skill`. Without-skill answers are
 
 ## Retries, speed, and timing
 
-Calls run in parallel up to `--parallel` per CLI (default 8). All skills, both arms, and the judges share those slots. A call that fails or passes `--timeout` is retried up to three times. A rejected reply is retried with the reason appended. A call that runs past twice the median for its kind and seat (`--hedge` before there is a median) gets one duplicate, and the first reply wins. When an answerer still fails, the claim moves to the next answerer and both arms rerun. When a judge fails, another family's seat grades. A claim still unscored after that fails the run.
+Calls run in parallel up to each CLI's `limits` entry (default 8). All skills, both arms, and the judges share those slots. A call that fails or passes `--timeout` is retried up to three times. A rejected reply is retried with the reason appended. A call that runs past twice the median for its kind and seat (`--hedge` before there is a median) gets one duplicate, and the first reply wins. When an answerer still fails, the claim moves to the next answerer and both arms rerun. When a judge fails, a seat from another model family grades. A seat's family comes from its model, so an opencode seat running a Claude model counts as the claude family. A claim still unscored after that fails the run.
 
 The run directory holds `report.md`, `summary.json`, `calls.jsonl`, and one folder per skill. The report has the wall time, per-step start and end times, and per-call p50, p90, max, slot wait, and hedge counts.
 

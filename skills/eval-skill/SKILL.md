@@ -5,42 +5,47 @@ description: "Measure what skills teach, find instructions that hurt performance
 
 # Evaluate skills
 
-[`scripts/run.py`](scripts/run.py) runs the whole novelty method in one process by calling the Claude, Codex, and Grok subscription CLIs directly. Run claim probes and task evals only through this script, never through subagents, which see the installed skills.
+[`scripts/run.py`](scripts/run.py) runs the whole novelty method in one process by calling the Claude Code, Codex, Grok Build, and opencode CLIs directly. Run claim probes and task evals only through this script, never through subagents, which see the installed skills. Run every command below from the repo root.
 
 1. Resolve the requested skills. Use the current skill when the user points to it and every skill only when the user asks for all of them.
-2. Ask the user which model and effort each role uses, and suggest the [default panel](#panel). Save the answer as a panel file. When the user picks one model for every role, pass it as `--model <cli>:<model>:<effort>` instead.
-3. From the repo root, run every requested skill in one command and wait for it to exit. When the shell's foreground limit is too short, start it as a background command and wait for its exit notification. Do not poll it.
+2. Settle the [panel](#panel). Run `python skills/eval-skill/scripts/run.py panel --check`. Show the user the resolved seats and where each came from. When they want changes, show the choices from `panel --list`, apply them with the role flags, and check again. Offer `--save` for the user file or `--save --project` for this repo. A saved panel makes later runs skip this step unless the user asks for a change.
+3. Run every requested skill in one command and wait for it to exit. When the shell's foreground limit is too short, start it as a background command and wait for its exit notification. Do not poll it.
 
    ```sh
-   python skills/eval-skill/scripts/run.py --skill <name> --skill <name> --panel <panel.json> --tasks <task-dir>
+   python skills/eval-skill/scripts/run.py run --skill <name> --skill <name> --tasks <task-dir>
    ```
 
-   Add `--score-only` when the user asks only for scores. Leave out `--tasks` when no task evals exist yet.
+   Add the same role flags used in step 2 when they were not saved. Add `--score-only` when the user asks only for scores. Leave out `--tasks` when no task evals exist yet.
 4. A nonzero exit means a claim stayed unscored, the isolation check failed, or a skill crashed. Report the problems and the `report.md` path. Never report scores from a run whose isolation check failed.
 5. Read `report.md` from the run directory the script prints. For each skill, report what it teaches, which instructions hurt, which fail both ways, and the isolation result. Give counts by answerer, since each claim runs on one answerer. Say so when the panel used one model for every role.
-6. A proposal with status `proposed` is shorter and keeps every taught claim. Apply it only when its task evals passed. When they did not run, write tasks per [EVALS.md](EVALS.md) and rerun, which reuses every cached answer. Review the patch for intact headings, links, and instructions no claim covered. Then run `git apply --check -p2 <patch>` and `git apply -p2 <patch>` from the repo root, followed by the repo's punctuation and Use when checks.
+6. A proposal with status `proposed` is shorter and keeps every taught claim. Apply it only when its task evals passed. When they did not run, write tasks per [EVALS.md](EVALS.md) and rerun, which reuses every cached answer. Review the patch for intact headings, links, and instructions no claim covered. Then run `git apply --check -p2 <patch>` and `git apply -p2 <patch>`, followed by the repo's punctuation and Use when checks.
 
 [METHOD.md](METHOD.md) explains the claims, buckets, isolation proof, cache, and rewrite gate. Read it before changing the script or explaining a result.
 
 ## Panel
 
-A seat is `<cli>:<model>:<effort>`, where the CLI is `claude`, `codex`, or `grok`. The default panel favors speed:
+A seat is `<cli>:<model>:<effort>`. The CLI is `claude`, `codex`, `grok`, or `opencode`. An opencode model is `provider/model`, and its effort is a model variant or `default`.
+
+The roles are the answerers, one judge per answerer model family, the drafter that splits a skill into claims, and the implementer that rewrites paragraphs. Each claim goes to one answerer, and both arms of that claim use it.
+
+The script resolves the panel from these layers, and later layers win:
+
+1. The built-in default, which favors speed.
+2. The user file `~/.config/skills/eval-skill.json`.
+3. The project file `.skills/eval-skill.json`.
+4. A file passed with `--panel`.
+5. Flags: `--answerer` (repeat for more, replaces the answerers), `--judge <family>=<seat>`, `--drafter`, `--implementer`, `--parallel` for every CLI, or `--model` for one seat in every role.
 
 ```json
 {
   "answerers": ["claude:sonnet:low", "codex:gpt-6.2-sol:low", "grok:grok-4.7-build-fast:low"],
-  "judges": {
-    "claude": "codex:gpt-6.2-sol:low",
-    "codex": "grok:grok-4.7-build-fast:low",
-    "grok": "claude:sonnet:low"
-  },
+  "judges": {"claude": "codex:gpt-6.2-sol:low", "gpt": "grok:grok-4.7-build-fast:low", "grok": "claude:sonnet:low"},
   "drafter": "claude:sonnet:low",
-  "implementer": "claude:sonnet:low"
+  "implementer": "claude:sonnet:low",
+  "limits": {"claude": {"parallel": 8}, "codex": {"parallel": 8}, "grok": {"parallel": 8}, "opencode": {"parallel": 8}}
 }
 ```
 
-- Use at most one answerer per CLI. Each claim goes to one answerer, and both arms of that claim use it.
-- `judges` maps each answerer's CLI to the seat that grades its answers. The script refuses a judge from the answerer's own family unless every role uses one seat.
-- The drafter splits the skill into claims. The implementer rewrites paragraphs. Both default to the first answerer.
+`judges` is keyed by model family: `claude`, `gpt`, `grok`, or the family of an opencode model. The script refuses a judge from the answerer's own family unless every role uses one seat. `limits` sets concurrent calls per CLI.
 
-The script accepts only subscription sign-ins: Claude Max (it refuses Claude Pro), Codex signed in with ChatGPT, and Grok signed in with grok.com. It removes every API key variable from the CLIs it starts. Ask the user to confirm that paid extra usage is off for each subscription, because the script cannot see that setting.
+The script accepts only subscription sign-ins and free models: Claude Code signed in with Claude Max (it refuses Claude Pro), Codex signed in with ChatGPT, Grok Build signed in with grok.com, and opencode with its free `opencode/` models or a provider signed in with a subscription. It removes every API key variable from the CLIs it starts. Ask the user to confirm that paid extra usage is off for each subscription, because the script cannot see that setting.

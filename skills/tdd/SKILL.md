@@ -82,6 +82,7 @@ Work without a new test still gets an executable check: a targeted script, a rep
 
 - Check the real artifact: run the feature, read the actual value, inspect the diff. "It compiles", a self-report, and cached output are proxies, not proof.
 - Verify a bug fix on the surface where the bug showed up. A unit test shows branch behavior, not that the bug is gone.
+- When the check needs the running app (a UI, CLI, or service flow), drive it with the repo's `verify-<app>` skill. If the repo has none, call the Skill tool with `create-verification-skill` first. Inside implement-spec, use the one the coordinator names.
 - Script the check when you can, so it reruns the same way.
 - When a check fails, suspect the observation method before the system.
 

@@ -25,7 +25,7 @@ Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) before dele
 
 ## Ledger
 
-The coordinator keeps a **ledger** file outside the repo, beside the research notes, so a backup coordinator or a replacement owner can pick up where the last one stopped. It holds the landing mode, the file plan, each task's owner task ID, branch, worktree, and PR, and each verdict with its head SHA and patch-id. Update it on every change.
+The coordinator keeps a **ledger** file outside the repo, beside the research notes, so a backup coordinator or a replacement owner can pick up where the last one stopped. It holds the landing mode, the file plan, the verification skill's path, each task's owner task ID, branch, worktree, and PR, and each verdict with its head SHA and patch-id. Update it on every change.
 
 ## File plan
 
@@ -33,9 +33,13 @@ Before launching any owner, list the files each ticket may touch. Group tickets 
 
 Launch a task only when every task it blocks on has landed on main and its files are disjoint from every open task's files. An owner that needs a file outside its plan stops and names the file. Add the file to its plan when no open task holds it. Otherwise the owner waits until the holding task lands.
 
+## Verification skill
+
+When a ticket needs proof in the running app (a UI, CLI, or service flow) and the repo has no `verify-<app>` skill, add a task with no tickets that owns the new `verify-<app>/` folder. Its owner calls the Skill tool with `create-verification-skill` in place of `tdd`. Hold verdicts that need the running app until it reports the skill proven. Until its PR lands, owners and verifiers read the skill from that owner's worktree.
+
 ## Verdicts
 
-A verifier works in a checkout of the head. It re-runs the repo's checks, proves the tickets' behavior on the real surface, and checks the diff against the file plan. Then it calls the Skill tool with `code-review`, giving `origin/main` as the fixed point, the PR's tickets as the spec, and the PR's purpose as the intent. It returns `PASS` or `FAIL`, and fails a head only for a problem it can show: a failing run at the head, a finding the panel proved, or a wrong line in the diff. A problem main already has fails the head only when the PR copies it or newly reaches it. It reports anything else as a follow-up. Green CI and the owner's own report are not verdicts.
+A verifier works in a checkout of the head. It re-runs the repo's checks, proves the tickets' behavior on the real surface, driving the running app with the verification skill the ledger names when the proof needs it, and checks the diff against the file plan. Then it calls the Skill tool with `code-review`, giving `origin/main` as the fixed point, the PR's tickets as the spec, and the PR's purpose as the intent. It returns `PASS` or `FAIL`, and fails a head only for a problem it can show: a failing run at the head, a finding the panel proved, or a wrong line in the diff. A problem main already has fails the head only when the PR copies it or newly reaches it. It reports anything else as a follow-up. Green CI and the owner's own report are not verdicts.
 
 A verdict covers a patch, not a commit. Record the patch-id of the PR's diff from its base with `git diff $(git merge-base origin/main <head>) <head> | git patch-id --stable`. After a rebase, compute it again. The verdict carries over when the patch-id is unchanged. Otherwise verify the new head again.
 
@@ -51,7 +55,7 @@ The coordinator starts here.
 
 2. If the tickets need codebase or documentation research, start an `explorer`. Have it save notes outside the repo where the owners can read them.
 
-3. Settle the landing mode, write the file plan, and start the ledger.
+3. Settle the landing mode, write the file plan with any [verification skill](#verification-skill) task, and start the ledger.
 
 4. From here on, act on events. An owner or verifier finishing, failing, hitting a usage limit, or asking a question wakes you. Answer a question. Replace an agent that failed or hit a limit with a fresh one of the same role per [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role), given the original brief and what the first one pushed.
 

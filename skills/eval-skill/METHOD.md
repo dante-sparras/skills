@@ -1,6 +1,6 @@
 # How the script runs the novelty method
 
-The method follows Nikolai Petrov's talk on skill novelty. Split a skill into claims, ask each claim with and without the skill, grade each answer with a judge, and sort the claim by the two grades.
+Split a skill into claims, ask each claim with and without the skill, grade each answer with a judge, and sort the claim by the two grades.
 
 ## Claims
 

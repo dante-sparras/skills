@@ -5,7 +5,7 @@ description: "Measure what skills teach, find instructions that hurt performance
 
 # Evaluate skills
 
-[`scripts/run.py`](scripts/run.py) runs the whole novelty method in one process. It calls the Claude, Codex, and Grok subscription CLIs directly, outside T3 Code. A T3 delegate always sees the installed skills, so its without-skill answer cannot be trusted. Never run claim probes or task evals through T3 delegates.
+[`scripts/run.py`](scripts/run.py) runs the whole novelty method in one process by calling the Claude, Codex, and Grok subscription CLIs directly. Run claim probes and task evals only through this script, never through subagents, which see the installed skills.
 
 1. Resolve the requested skills. Use the current skill when the user points to it and every skill only when the user asks for all of them.
 2. Ask the user which model and effort each role uses, and suggest the [default panel](#panel). Save the answer as a panel file. When the user picks one model for every role, pass it as `--model <cli>:<model>:<effort>` instead.

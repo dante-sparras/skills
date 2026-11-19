@@ -24,7 +24,7 @@
 ## Dispatch and collect
 
 1. Keep a ledger with each skill, input revision, seat file, state directory, and child task ID. Start with the largest skills. Choose a stable local state directory outside the checkout. Reuse the confirmed seat order on reruns when the user's choices stay the same.
-2. Launch one async `delegate_task` per skill using the confirmed coordinator seat on the current computer. Use a stable request ID per skill and attempt. Start with two active skills and four concurrent answer-and-judge jobs per skill. Fill each vacancy while the queue has work. Lower concurrency on timeouts or throttling before retrying.
+2. Launch one async `delegate_task` per skill using the confirmed coordinator seat on the current computer. Use a stable request ID per skill and attempt. Start with a budget of eight outstanding model requests. With two active skills, give each four slots using `--concurrency`. Each worker uses the same slots for both arms and their judges. Keep the sum of active worker slots within the budget. Lower the budget on timeouts or throttling before retrying.
 3. In each brief, give the worker the input tree, script path, state directory, and confirmed seats. Tell it to [dispatch the script's model requests](T3-REQUESTS.md) and return the final JSON summary and any candidate patch.
 
    ```sh

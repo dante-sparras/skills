@@ -9,7 +9,8 @@ import tempfile
 import threading
 import time
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
+from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -485,6 +486,16 @@ def reply_path(queue, request_id):
     return queue / "responses" / f"{request_id}.json"
 
 
+def parse_timestamp(value):
+    try:
+        timestamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("Use an ISO 8601 timestamp with a time zone") from error
+    if timestamp.tzinfo is None:
+        raise argparse.ArgumentTypeError("Use an ISO 8601 timestamp with a time zone")
+    return timestamp.timestamp()
+
+
 def pending(queue):
     now = time.time()
     for path in sorted((queue / "requests").glob("*.json")):
@@ -503,32 +514,70 @@ def submit_reply(args):
     if destination.exists():
         raise ValueError("Request already has a reply")
     response = {"error": args.error} if args.error else {"text": args.file.read_text(encoding="utf-8-sig")}
+    response["replied_at"] = time.time()
+    for field in ("dispatched_at", "started_at", "completed_at"):
+        timestamp = getattr(args, field)
+        if timestamp is not None:
+            response[field] = timestamp
     save_json(destination, response)
 
 
+def request_timings(queue):
+    stages = {
+        "capacity": ("ready_at", "queued_at"),
+        "queue": ("queued_at", "dispatched_at"),
+        "startup": ("dispatched_at", "started_at"),
+        "delegate_run": ("started_at", "completed_at"),
+        "reply": ("completed_at", "replied_at"),
+        "total": ("queued_at", "replied_at"),
+    }
+    rows = []
+    for path in (queue / "requests").glob("*.json"):
+        request = read_json(path)
+        response = read_json(reply_path(queue, request["id"]))
+        row = {key: request[key] for key in ("id", "kind", "seat", "ready_at", "queued_at", "expires_at")}
+        if response is None:
+            row["outcome"] = "expired" if time.time() >= request["expires_at"] else "unanswered"
+        else:
+            row["outcome"] = "error" if "error" in response else "replied"
+            row.update({key: response[key] for key in (
+                "dispatched_at", "started_at", "completed_at", "replied_at",
+            ) if key in response})
+        row["seconds"] = {
+            stage: round(row[end] - row[start], 3)
+            for stage, (start, end) in stages.items()
+            if start in row and end in row and row[end] >= row[start]
+        }
+        rows.append(row)
+    return sorted(rows, key=lambda row: row["queued_at"])
+
+
 class RequestQueue:
-    def __init__(self, directory, timeout):
+    def __init__(self, directory, timeout, requests):
         self.directory = directory
         self.timeout = timeout
+        self.requests = requests
         self.stats = Counter()
         self.lock = threading.Lock()
 
     def call(self, seat, kind, instructions, prompt, parse):
         for attempt in range(3):
             try:
-                return parse(self.request(seat, kind, instructions, prompt))
+                response = self.requests.submit(self.request, seat, kind, instructions, prompt, time.time())
+                return parse(response.result())
             except (ValueError, RuntimeError) as error:
                 with self.lock:
                     self.stats["failed_calls"] += 1
                 if attempt == 2:
                     raise RuntimeError(f"{kind} failed on {seat['model']}: {error}") from error
 
-    def request(self, seat, kind, instructions, prompt):
+    def request(self, seat, kind, instructions, prompt, ready_at):
         request_id = uuid4().hex
-        deadline = time.time() + self.timeout
+        queued_at = time.time()
+        deadline = queued_at + self.timeout
         request = {
             "id": request_id, "seat": seat, "kind": kind, "instructions": instructions,
-            "prompt": prompt, "expires_at": deadline,
+            "prompt": prompt, "ready_at": ready_at, "queued_at": queued_at, "expires_at": deadline,
         }
         with self.lock:
             self.stats[DRIVERS[seat["driverKind"]] + "_calls"] += 1
@@ -621,7 +670,7 @@ def score_arm(claim, arm, bundle, answerer, judge, cache, queue, candidate_attem
             dict(fields, **grade, judge_model=judge["model"], attempt=candidate_attempt or 1))
 
 
-def evaluate_claim(claim, bundle, seats, cache, queue):
+def evaluate_claim(claim, bundle, seats, cache, queue, arms):
     answerers = seats["answerers"]
     key = digest(claim["id"], claim["_blocks"], seats["judges"])
     route_path = cache.directory / "routes" / (key + ".json")
@@ -630,8 +679,11 @@ def evaluate_claim(claim, bundle, seats, cache, queue):
         offset = (starting + attempt) % len(answerers)
         answerer = answerers[(int(claim["id"]) + offset) % len(answerers)]
         judge = seats["judges"][DRIVERS[answerer["driverKind"]]]
+        futures = [arms.submit(score_arm, claim, arm, bundle, answerer, judge, cache, queue)
+                   for arm in ("without", "with")]
+        wait(futures)
         try:
-            paired = [score_arm(claim, arm, bundle, answerer, judge, cache, queue) for arm in ("without", "with")]
+            paired = [future.result() for future in futures]
         except RuntimeError as error:
             if attempt + 1 == len(answerers):
                 raise RuntimeError(f"Claim {claim['id']} is incomplete: {error}") from error
@@ -693,8 +745,11 @@ def evaluate_skill(args, directory, artifacts, seats, cache, queue):
     base = artifacts / "novelty" / args.skill
     write_jsonl(base / "claims.jsonl", claims)
     bundle = skill_bundle(directory)
-    with ThreadPoolExecutor(max_workers=args.concurrency) as pool:
-        scored = list(pool.map(lambda claim: evaluate_claim(claim, bundle, seats, cache, queue), claims))
+    with (
+        ThreadPoolExecutor(max_workers=2 * args.concurrency) as arms,
+        ThreadPoolExecutor(max_workers=args.concurrency) as pool,
+    ):
+        scored = list(pool.map(lambda claim: evaluate_claim(claim, bundle, seats, cache, queue, arms), claims))
     answers = [answer for pairs, _, _, _ in scored for answer, _ in pairs]
     grades = [grade for pairs, _, _, _ in scored for _, grade in pairs]
     routes = {pairs[0][0]["id"]: (answerer, judge) for pairs, answerer, judge, _ in scored}
@@ -764,9 +819,9 @@ def run(args):
     seats = load_seats(args.seats, args.score_only)
     start = time.monotonic()
     args.root = args.root.resolve()
-    queue = RequestQueue(args.queue.resolve(), args.timeout)
-    queue.directory.mkdir(parents=True)
-    print(f"T3 requests: {queue.directory}", file=sys.stderr, flush=True)
+    queue_directory = args.queue.resolve()
+    queue_directory.mkdir(parents=True)
+    print(f"T3 requests: {queue_directory}", file=sys.stderr, flush=True)
     version = digest(PROTOCOL)
     cache = Cache(args.state.resolve() / version / digest(seats["answerers"]) / args.skill)
     target = args.state.resolve() / "artifacts" / args.skill
@@ -779,7 +834,13 @@ def run(args):
     shutil.copytree(args.root / skill_path, directory)
     if not args.score_only:
         shutil.copytree(directory, artifacts / before)
-    summary = evaluate_skill(args, directory, artifacts, seats, cache, queue)
+    timings = artifacts / "timings.jsonl"
+    try:
+        with ThreadPoolExecutor(max_workers=args.concurrency) as requests:
+            queue = RequestQueue(queue_directory, args.timeout, requests)
+            summary = evaluate_skill(args, directory, artifacts, seats, cache, queue)
+    finally:
+        write_jsonl(timings, request_timings(queue_directory))
     if summary.get("requires_task_evals"):
         diff = subprocess.run(
             ["git", "diff", "--no-index", "--binary", "--", before.as_posix(), candidate.as_posix()],
@@ -790,7 +851,7 @@ def run(args):
         patch = artifacts / "shrink.patch"
         patch.write_bytes(diff.stdout)
         summary["patch"] = str(patch)
-    summary.update(seconds=round(time.monotonic() - start, 1), calls=dict(queue.stats))
+    summary.update(seconds=round(time.monotonic() - start, 1), calls=dict(queue.stats), timings=str(timings))
     save_json(artifacts / "summary.json", summary)
     print(json.dumps(summary))
 
@@ -812,6 +873,9 @@ def main():
     reply = commands.add_parser("reply")
     reply.add_argument("--queue", type=Path, required=True)
     reply.add_argument("--id", required=True)
+    reply.add_argument("--dispatched-at", type=parse_timestamp)
+    reply.add_argument("--started-at", type=parse_timestamp)
+    reply.add_argument("--completed-at", type=parse_timestamp)
     source = reply.add_mutually_exclusive_group(required=True)
     source.add_argument("--file", type=Path)
     source.add_argument("--error")

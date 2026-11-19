@@ -25,7 +25,7 @@ Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) before dele
 
 ## Ledger
 
-The coordinator keeps a **ledger** file outside the repo, beside the research notes, so a backup coordinator or a replacement owner can pick up where the last one stopped. It holds the landing mode, the file plan, each task's owner task ID, branch, worktree, PR, and stuck-after time, and each verdict with its head SHA and patch-id. Update it on every change.
+The coordinator keeps a **ledger** file outside the repo, beside the research notes, so a backup coordinator or a replacement owner can pick up where the last one stopped. It holds the landing mode, the file plan, each task's owner task ID, branch, worktree, and PR, and each verdict with its head SHA and patch-id. Update it on every change.
 
 ## File plan
 
@@ -35,7 +35,7 @@ Launch a task only when every task it blocks on has landed on main and its files
 
 ## Verdicts
 
-A verifier re-runs the repo's checks at the head, proves the tickets' behavior on the real surface, and audits the diff against the tickets and the file plan. It returns `PASS` or `FAIL`, and fails a head only for a problem it can show with a failing run at the head or a wrong line in the diff. A problem main already has fails the head only when the PR copies it or newly reaches it. It reports anything else as a follow-up. Green CI and the owner's own report are not verdicts.
+A verifier works in a checkout of the head. It re-runs the repo's checks, proves the tickets' behavior on the real surface, and checks the diff against the file plan. Then it calls the Skill tool with `code-review`, giving `origin/main` as the fixed point, the PR's tickets as the spec, and the PR's purpose as the intent. It returns `PASS` or `FAIL`, and fails a head only for a problem it can show: a failing run at the head, a finding the panel proved, or a wrong line in the diff. A problem main already has fails the head only when the PR copies it or newly reaches it. It reports anything else as a follow-up. Green CI and the owner's own report are not verdicts.
 
 A verdict covers a patch, not a commit. Record the patch-id of the PR's diff from its base with `git diff $(git merge-base origin/main <head>) <head> | git patch-id --stable`. After a rebase, compute it again. The verdict carries over when the patch-id is unchanged. Otherwise verify the new head again.
 
@@ -53,7 +53,7 @@ The coordinator starts here.
 
 3. Settle the landing mode, write the file plan, and start the ledger.
 
-4. Arm an hourly check, with `/loop 1h` where the host has it, that runs until no delegated work is left. Each tick re-reads this skill and fixes drift, such as an unreported head or an unrecorded owner, by having the owner record it. It probes every owner and verifier by its side effects, such as pushes, PR activity, or ledger rows, not its status text. An agent is stuck when it errors, cannot start turns, or shows nothing new past its stuck-after time, which you set at launch from how long similar tasks took. An owner that has neither pushed nor written a ledger row by the first tick is stuck too. An agent waiting on you is not stuck, so answer it. Replace a stuck agent at once with a fresh one of the same role, given the original brief and what the stuck one pushed.
+4. From here on, act on events. An owner or verifier finishing, failing, hitting a usage limit, or asking a question wakes you. Answer a question. Replace an agent that failed or hit a limit with a fresh one of the same role per [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role), given the original brief and what the first one pushed.
 
 5. Start a fresh `implementer` owner in the background for each launchable task on the frontier, each in its own worktree on its own branch off current main. Each owner:
    - calls the Skill tool with `tdd` to build its tickets, editing only the files in its plan
@@ -68,10 +68,10 @@ The coordinator starts here.
    - Merge with `gh pr merge <pr> --squash`, then read back `gh pr view <pr> --json state,mergedAt,baseRefName`. A PR has landed only when it reads merged into main.
    - Resolve the PR's tickets the way the issue tracker closes work if merging did not, and clean up the owner's worktree.
 
-   In **hand off** mode, stop at verified. Once every PR on the frontier passes at its current head with green CI, hand the user an ordered merge list: each PR with its verdict and head SHA, in the order you would land them, and the tasks still blocked behind them. After the handoff, nobody pushes to a listed PR without the user's go. Stop the hourly check and report per step 10. Tell the user to rerun this skill after merging. The rerun recovers from the ledger and starts the next frontier off the new main.
+   In **hand off** mode, stop at verified. Once every PR on the frontier passes at its current head with green CI, hand the user an ordered merge list: each PR with its verdict and head SHA, in the order you would land them, and the tasks still blocked behind them. After the handoff, nobody pushes to a listed PR without the user's go. Report per step 10. Tell the user to rerun this skill after merging. The rerun recovers from the ledger and starts the next frontier off the new main.
 
 8. If a landing changes the frontier, add the new tasks to the file plan and start them per step 5.
 
-9. Once every ticket has landed, resolve the spec the way the issue tracker closes work, stop the hourly check, and clean up all worktrees.
+9. Once every ticket has landed, resolve the spec the way the issue tracker closes work and clean up all worktrees.
 
 10. Report each PR with its verdict, whether it landed or waits on the merge list, and the follow-ups the verifiers reported.

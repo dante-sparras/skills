@@ -324,11 +324,19 @@ def score(scorer, args, call, stats, seats, state):
                     answerers=[seat["model"] for seat in answerers],
                     judges={family: seat["model"] for family, seat in seats["judges"].items()})
     save_json(manifest_path, metadata)
-    counts = {scale: dict(Counter(row[f"bucket_{scale}"] for row in rows))
-              for scale in ("lenient", "strict")}
+    def bucket_counts(items):
+        return {scale: dict(Counter(row[f"bucket_{scale}"] for row in items))
+                for scale in ("lenient", "strict")}
+
+    by_model = {}
+    for row in rows:
+        seat, _ = pair(row)
+        by_model.setdefault(seat["model"], []).append(row)
     summary = {"skill": args.skill, "claims": len(claims), "reused_claims": reused_claims,
                "fallback_claims": sum(offset % len(answerers) != 0 for offset in offsets.values()),
-               "buckets": counts, "artifacts": str(scorer.novelty_root())}
+               "buckets": bucket_counts(rows),
+               "buckets_by_answerer": {model: bucket_counts(items) for model, items in by_model.items()},
+               "artifacts": str(scorer.novelty_root())}
     if not args.score_only:
         original_blocks = scorer.block_claims
 
@@ -360,6 +368,7 @@ def score(scorer, args, call, stats, seats, state):
             summary.update(checked_taught=len(retained), lost_taught=lost)
             if not lost:
                 summary["proposal"] = str(directory)
+                summary["requires_task_evals"] = True
     summary["calls"] = dict(stats)
     return summary
 

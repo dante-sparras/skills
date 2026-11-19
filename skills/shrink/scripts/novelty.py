@@ -162,6 +162,12 @@ def meta_question(question):
     return META_QUESTION.search(question or "") is not None
 
 
+def reveals_fact(question, expected):
+    question_words = " ".join(tokens(question))
+    expected_words = " ".join(tokens(expected))
+    return bool(expected_words and f" {expected_words} " in f" {question_words} ")
+
+
 def normalize_ws(text):
     return re.sub(r"\s+", " ", text or "").strip()
 
@@ -199,6 +205,8 @@ def validate_claims(claims, bundle):
             errors.append(f"{label} question leaks the instruction: {leaks[0]}")
         if claim.get("kind") == "process" and meta_question(claim.get("question")):
             errors.append(f"{label} process question asks for an explanation")
+        if claim.get("kind") == "fact" and reveals_fact(str(claim.get("question") or ""), str(claim.get("expected") or "")):
+            errors.append(f"{label} fact question contains the expected answer")
         if "\u2014" in json.dumps(claim) or ";" in str(claim.get("question") or "") + str(claim.get("expected") or ""):
             errors.append(f"{label} uses a semicolon or an em dash")
     return errors
@@ -268,6 +276,8 @@ def classify(claims, grades):
         row["bucket_lenient"] = lenient
         row["bucket_strict"] = strict
         row["decision"] = decide(lenient, strict)
+        if claim["kind"] == "process" and row["decision"] == "cut":
+            row["decision"] = "keep"
         row["without_lenient_reason"] = without.get("lenient_reason", "")
         row["without_strict_reason"] = without.get("strict_reason", "")
         row["with_lenient_reason"] = with_skill.get("lenient_reason", "")
@@ -651,6 +661,7 @@ def judge_prompt(claim, answer):
         "Reasons are one sentence each, with no newline.\n"
         "Return JSON of this shape and nothing else: "
         '{"lenient":"pass","strict":"fail","lenient_reason":"...","strict_reason":"..."}\n\n'
+        f"User task:\n{claim['question']}\n\n"
         f"Expected behavior:\n{claim['expected']}\n\n"
         f"Agent reply:\n{clipped}\n"
     )
@@ -1062,7 +1073,8 @@ def write_report():
         "A process claim counts as known only when the reply does the step without being asked to explain it.",
         "",
         "A claim is kept when either grade teaches, fixed when either grade hurts, "
-        "cut when both grades are already known, and rewritten otherwise. "
+        "cut for facts when both grades are already known, and rewritten otherwise. "
+        "Already-known process claims are kept. "
         "Frontmatter is unchanged.",
         "",
         f"Skill text was rewritten by `{CLAUDE_MODEL}` on the Claude Max subscription at effort {REWRITE_EFFORT}. "
@@ -1189,6 +1201,9 @@ def self_test():
     assert any("leaks" in error or "explanation" in error for error in validate_claims(bad, bundle))
     shared = [dict(good[0], question="Change src/lib/money.ts so totals round half away from zero.", expected="In src/lib/money.ts the agent writes a failing test before editing the function.")]
     assert validate_claims(shared, bundle) == []
+    leaked = dict(good[0], kind="fact", question="Does the tool use format jsonl?", expected="JSONL")
+    assert any("contains the expected answer" in error for error in validate_claims([leaked], bundle))
+    assert "User task:\n" + good[0]["question"] in judge_prompt(good[0], "I will act.")
     grade = parse_grade('```json\n{"lenient":"pass","strict":"fail","lenient_reason":"idea","strict_reason":"no order"}\n```')
     assert grade["lenient"] == "pass" and grade["strict"] == "fail"
     claims = good
@@ -1198,6 +1213,9 @@ def self_test():
     ]
     rows = classify(claims, grades)
     assert rows[0]["decision"] == "keep"
+    grades[0].update(lenient="pass", strict="pass")
+    assert classify(claims, grades)[0]["decision"] == "keep"
+    assert classify([dict(claims[0], kind="fact")], grades)[0]["decision"] == "cut"
     assert held_status(rows[0], [{"lenient": "pass", "strict": "pass"}]) == "held"
     assert held_status(rows[0], [{"lenient": "fail", "strict": "fail"}, {"lenient": "pass", "strict": "pass"}]) == "held-on-retry"
     assert held_status(rows[0], [{"lenient": "fail", "strict": "pass"}]) == "lost"

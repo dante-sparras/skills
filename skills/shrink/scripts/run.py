@@ -20,6 +20,11 @@ ANSWER_FOOTER = (
     "\n\nThe task is a simulation. When you would use a tool, name the tool and "
     "its arguments in your final answer. Return a final answer without making tool calls."
 )
+REWRITE_GUARD = (
+    "\n\nMake the paragraph shorter. Preserve every instruction and detail without a decision, "
+    "including headings and links. "
+    "If nothing in the paragraph remains, return exactly [[DROP_PARAGRAPH]]."
+)
 MASKED_ENV = {
     "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL", "CLAUDECODE",
     "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX",
@@ -266,9 +271,15 @@ def score(scorer, args, call, stats, seats, state):
             save_json(path, value)
             return value
 
+    validation_attempts = Counter()
+
     def answer(claim, arm, full_bundle, timeout):
         seat, _ = pair(claim)
-        key = digest(seat, claim["question"], claim["_blocks"] if arm == "with" else None)
+        context = claim["_blocks"] if arm == "with" else None
+        if checking_rewrite:
+            validation_attempts[claim["id"]] += 1
+            context = [full_bundle, validation_attempts[claim["id"]]]
+        key = digest(seat, claim["question"], context)
         system = scorer.answer_system(full_bundle if arm == "with" else "") + ANSWER_FOOTER
         text, usage = memo(arm, key, lambda: call(seat, system, claim["question"], timeout, identity))
         return {"id": claim["id"], "arm": arm, "answer": text, "answerer_model": seat["model"],
@@ -281,6 +292,7 @@ def score(scorer, args, call, stats, seats, state):
                              lambda: call(seat, scorer.JUDGE_SYSTEM, prompt, timeout, scorer.parse_grade))
         return dict(parsed, judge_model=seat["model"], usage=usage)
 
+    checking_rewrite = False
     scorer.answer_claim, scorer.grade_answer = answer, grade
     run = ["--skill", args.skill, "--timeout", str(args.timeout), "--concurrency", str(args.concurrency)]
     result = scorer.run_path(args.skill, "baseline")
@@ -315,13 +327,37 @@ def score(scorer, args, call, stats, seats, state):
     summary = {"skill": args.skill, "claims": len(claims), "reused_claims": reused_claims,
                "fallback_claims": sum(offset % len(answerers) != 0 for offset in offsets.values()),
                "buckets": counts, "artifacts": str(scorer.novelty_root())}
-    if args.rewrite:
-        scorer.claude_text = lambda system, prompt, timeout, effort=None: call(
-            seats["implementer"], system, prompt, timeout, identity,
-        )
+    if not args.score_only:
+        original_blocks = scorer.block_claims
+
+        def safe_block_claims(block, decisions):
+            matched = original_blocks(block, decisions)
+            complete_cut = any(scorer.normalize_ws(row["span"]) == scorer.normalize_ws(block) for row in matched)
+            if matched and not complete_cut and all(row["decision"] == "cut" for row in matched):
+                return [*matched, {"decision": "keep", "span": ""}]
+            return matched
+
+        def rewrite(system, prompt, timeout, effort=None):
+            seat = seats["implementer"]
+            system += REWRITE_GUARD
+            text, usage = memo("rewrites", digest(seat, system, prompt),
+                               lambda: call(seat, system, prompt, timeout, identity))
+            return ("" if text.strip() == "[[DROP_PARAGRAPH]]" else text), usage
+
+        scorer.block_claims = safe_block_claims
+        scorer.claude_text = rewrite
+        before = scorer.disk_chars(directory)
         if scorer.main(["apply", *run]):
             raise RuntimeError("Proposed rewrite failed repository checks")
-        summary["proposal"] = str(directory)
+        after = scorer.disk_chars(directory)
+        summary.update(before_chars=before, proposed_chars=after)
+        if after < before:
+            checking_rewrite = True
+            retained = scorer.rescore_skill(directory, args.timeout, args.concurrency)
+            lost = [row["id"] for row in retained if row["status"] == "lost"]
+            summary.update(checked_taught=len(retained), lost_taught=lost)
+            if not lost:
+                summary["proposal"] = str(directory)
     summary["calls"] = dict(stats)
     return summary
 
@@ -353,7 +389,7 @@ def main():
     parser.add_argument("--state", type=Path, required=True)
     parser.add_argument("--timeout", type=int, default=90)
     parser.add_argument("--concurrency", type=int, default=4)
-    parser.add_argument("--rewrite", action="store_true")
+    parser.add_argument("--score-only", action="store_true")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", args.skill):
         parser.error("Pass a skill directory name")
@@ -361,7 +397,7 @@ def main():
         parser.error("Timeout and concurrency must be positive")
     source = (args.scorer or args.root / "scripts" / "novelty.py").resolve()
     if not source.is_file():
-        parser.error("Supply scripts/novelty.py from the scorer branch with --scorer")
+        parser.error("scripts/novelty.py is missing. Run from a checkout with the scorer or pass --scorer.")
     spec = importlib.util.spec_from_file_location("novelty", source)
     scorer = importlib.util.module_from_spec(spec)
     sys.dont_write_bytecode = True
@@ -376,13 +412,28 @@ def main():
     artifacts_root.mkdir(parents=True, exist_ok=True)
     artifacts = Path(tempfile.mkdtemp(prefix="run-", dir=artifacts_root))
     scratch = artifacts / "repo"
-    shutil.copytree(args.root / "skills" / args.skill, scratch / "skills" / args.skill)
+    skill_path = Path("skills") / args.skill
+    original = Path("before") / skill_path
+    edited = Path("repo") / skill_path
+    shutil.copytree(args.root / skill_path, artifacts / edited)
+    if not args.score_only:
+        shutil.copytree(artifacts / edited, artifacts / original)
     shutil.copytree(args.root / "scripts", scratch / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
     scorer.repo_root = lambda: scratch
     scorer.eprint(f"Artifacts: {artifacts}")
     with tempfile.TemporaryDirectory(prefix="shrink-cli-") as temporary:
         call, stats = install_transport(scorer, Path(temporary))
         summary = score(scorer, args, call, stats, seats, state)
+    if "proposal" in summary:
+        diff = subprocess.run(
+            ["git", "diff", "--no-index", "--binary", "--", original.as_posix(), edited.as_posix()],
+            cwd=artifacts, capture_output=True, check=False,
+        )
+        if diff.returncode != 1 or not diff.stdout:
+            raise RuntimeError("Could not produce the shrink patch")
+        patch = artifacts / "shrink.patch"
+        patch.write_bytes(diff.stdout)
+        summary["patch"] = str(patch)
     summary["seconds"] = round(time.monotonic() - start, 1)
     summary["scorer_sha256"] = scorer_hash
     save_json(artifacts / "summary.json", summary)

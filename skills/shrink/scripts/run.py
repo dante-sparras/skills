@@ -52,20 +52,22 @@ def save_json(path, value):
         temporary.unlink(missing_ok=True)
 
 
-def install_transport(scorer, scratch):
+def install_transport(scorer, scratch, families):
     env = scorer.clean_env(os.environ)
     for key in MASKED_ENV:
         env.pop(key, None)
     cwd = scratch / "empty"
     cwd.mkdir()
-    live_codex = Path(env.get("CODEX_HOME") or Path.home() / ".codex")
-    codex_home = scratch / "codex"
-    codex_home.mkdir()
-    auth = live_codex / "auth.json"
-    if not auth.is_file():
-        raise RuntimeError("A file-backed ChatGPT CLI login is required for isolated evaluation")
-    shutil.copyfile(auth, codex_home / "auth.json")
-    codex_env = {"CODEX_HOME": str(codex_home)}
+    codex_env = {}
+    if "gpt" in families:
+        live_codex = Path(env.get("CODEX_HOME") or Path.home() / ".codex")
+        codex_home = scratch / "codex"
+        codex_home.mkdir()
+        auth = live_codex / "auth.json"
+        if not auth.is_file():
+            raise RuntimeError("A file-backed ChatGPT CLI login is required for isolated evaluation")
+        shutil.copyfile(auth, codex_home / "auth.json")
+        codex_env = {"CODEX_HOME": str(codex_home)}
     local = threading.local()
     stats = Counter()
     lock = threading.Lock()
@@ -110,18 +112,19 @@ def install_transport(scorer, scratch):
         nonlocal authenticated
         if authenticated:
             return
-        claude = command(["claude", "auth", "status"], 30)
-        grok = command(["grok", "models"], 30)
-        codex = command(["codex", "login", "status"], 30, overrides=codex_env)
-        problems = scorer.subscription_problems(
-            env, json.loads(claude.stdout), grok.stdout + grok.stderr,
-        )
-        if any(item.returncode for item in (claude, grok, codex)):
-            problems.append("a CLI login check failed")
-        if "logged in using chatgpt" not in (codex.stdout + codex.stderr).lower():
-            problems.append("Codex auth is not a ChatGPT login")
-        if problems:
-            raise RuntimeError(", ".join(problems))
+        if "claude" in families:
+            claude = command(["claude", "auth", "status"], 30)
+            status = json.loads(claude.stdout) if not claude.returncode else {}
+            if status.get("authMethod") != "claude.ai" or status.get("subscriptionType") != "max":
+                raise RuntimeError("Claude requires a Claude Max subscription login")
+        if "grok" in families:
+            grok = command(["grok", "models"], 30, overrides={"GROK_HOME": str(grok_home())})
+            if grok.returncode or "logged in with grok.com" not in (grok.stdout + grok.stderr).lower():
+                raise RuntimeError("Grok requires a grok.com subscription login")
+        if "gpt" in families:
+            codex = command(["codex", "login", "status"], 30, overrides=codex_env)
+            if codex.returncode or "logged in using chatgpt" not in (codex.stdout + codex.stderr).lower():
+                raise RuntimeError("Codex requires a ChatGPT subscription login")
         authenticated = True
 
     def call(seat, system, prompt, timeout, parse):
@@ -362,22 +365,25 @@ def score(scorer, args, call, stats, seats, state):
     return summary
 
 
-def load_seats(path):
+def load_seats(path, score_only=False):
     seats = read_json(path)
     answerers, judges = seats["answerers"], seats["judges"]
     families = [DRIVERS[seat["driverKind"]] for seat in answerers]
-    if len(families) != len(DRIVERS) or set(families) != set(DRIVERS.values()):
-        raise ValueError("Configure one Claude, Grok, and GPT answerer")
+    if len(families) < 2 or len(families) != len(set(families)):
+        raise ValueError("Configure at least two answerers, with one model per family")
     for family, seat in judges.items():
         if DRIVERS[seat["driverKind"]] == family:
             raise ValueError(f"{family} needs a judge from a different family")
     if set(judges) != set(families):
         raise ValueError("Configure a judge for each answerer family")
-    for seat in [*answerers, *judges.values(), seats["implementer"]]:
+    active = [*answerers, *judges.values()]
+    if not score_only:
+        active.append(seats["implementer"])
+    for seat in active:
         family = DRIVERS[seat["driverKind"]]
         if not seat["model"].startswith(family + "-") or not re.fullmatch(r"[a-z]+", seat["effort"]):
             raise ValueError(f"Invalid {family} seat")
-    return seats
+    return seats, {DRIVERS[seat["driverKind"]] for seat in active}
 
 
 def main():
@@ -402,7 +408,7 @@ def main():
     scorer = importlib.util.module_from_spec(spec)
     sys.dont_write_bytecode = True
     spec.loader.exec_module(scorer)
-    seats = load_seats(args.seats)
+    seats, families = load_seats(args.seats, args.score_only)
     start = time.monotonic()
     scorer_hash = hashlib.sha256(source.read_bytes()).hexdigest()
     version = digest(PROTOCOL, scorer_hash)
@@ -422,7 +428,7 @@ def main():
     scorer.repo_root = lambda: scratch
     scorer.eprint(f"Artifacts: {artifacts}")
     with tempfile.TemporaryDirectory(prefix="shrink-cli-") as temporary:
-        call, stats = install_transport(scorer, Path(temporary))
+        call, stats = install_transport(scorer, Path(temporary), families)
         summary = score(scorer, args, call, stats, seats, state)
     if "proposal" in summary:
         diff = subprocess.run(

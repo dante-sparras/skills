@@ -5,12 +5,12 @@
 - Record the repository, input revision, selected skills, and start time.
 - Call `orchestrator_capabilities` for the local session. Use any saved [setup-skills roles](../setup-skills/MODEL-ROLES.md#resolve-a-role) as suggestions.
 - Before launching workers, ask the user to choose or confirm a model and effort for each role. Present the available choices together and show the suggested configuration if one exists.
-  - `coordinator` runs each skill's T3 child.
+  - `coordinator` runs each skill's T3 child and dispatches its model requests.
   - `explorer` supplies at least two answerers from distinct model families. The first answerer also drafts the claims.
   - `reviewer` grades each answer. Pick a judge from a different family for each answerer.
   - `implementer` rewrites the skill. Skip this role for a scoring-only run.
 - Validate the chosen models and effort values against the local catalog. Ask again if any choice is unavailable or a judge shares the answerer's model family. Preserve the confirmed choices for retries.
-- Use native Claude Max, Grok, or ChatGPT subscription seats. Check that paid overages are disabled or absent before launching. Stop the affected lane if included usage runs out. The worker strips API keys and checks the logins for the selected CLIs. Codex needs a file-backed ChatGPT login so the worker can isolate authentication from personal instructions.
+- Use T3 providers configured for Claude Max, Grok, or ChatGPT subscriptions. Check that paid overages are disabled or absent before launching. Stop the affected lane if included usage runs out. Keep each model request on its confirmed provider and effort.
 - Save the confirmed worker seats in JSON. Each variable below stands for an object with `driverKind`, `providerInstanceId`, `model`, and `effort`. The driver kinds are `claudeAgent`, `grok`, and `codex`.
 
   ```python
@@ -25,10 +25,10 @@
 
 1. Keep a ledger with each skill, input revision, seat file, state directory, and child task ID. Start with the largest skills. Choose a stable local state directory outside the checkout. Reuse the confirmed seat order on reruns when the user's choices stay the same.
 2. Launch one async `delegate_task` per skill using the confirmed coordinator seat on the current computer. Use a stable request ID per skill and attempt. Start with two active skills and four concurrent answer-and-judge jobs per skill. Fill each vacancy while the queue has work. Lower concurrency on timeouts or throttling before retrying.
-3. In each brief, give the worker the exact paths to the input tree, adapter, and state directory, plus the resolved seats. Ask for the final JSON summary and any candidate patch.
+3. In each brief, give the worker the input tree, script path, state directory, and confirmed seats. Tell it to [dispatch the script's model requests](T3-REQUESTS.md) and return the final JSON summary and any candidate patch.
 
    ```sh
-   python skills/shrink/scripts/run.py --root <input-tree> --skill <name> --seats <seats.json> --state <state-dir> --concurrency 4
+   python skills/shrink/scripts/run.py run --root <input-tree> --skill <name> --seats <seats.json> --state <state-dir> --queue <fresh-dir> --concurrency 4
    ```
 
 4. Follow the T3 continuation for each task. If a task fails or times out, cancel it if it is still running and start a fresh local child with the same cache. Keep successful work and retry missing results. Use three child attempts for transient failures and report any scores still missing.
@@ -37,7 +37,7 @@
 
 ## Cache and rewrites
 
-T3 schedules skill workers and runs task evals. The worker uses isolated subscription CLI calls for claim probes because a T3 delegate runs with agent instructions, skills, and tools from its harness. For each probe, keep the task, answerer, effort, and tools fixed. Give the with-skill arm the skill text and give the without-skill arm just the task. Send the task, reply, and rubric to the same cross-family judge for both arms. Keep the expected answer out of both questions and the arm label out of judging.
+T3 runs the skill workers, every model request, and agent task evals. For claim probes, start a fresh delegate for each response. Keep the task, answerer, effort, and harness fixed across arms. The with-skill arm receives the skill text. The without-skill arm receives the task alone. Keep the expected answer out of both prompts and the arm label out of judging. The grade measures behavior under the selected T3 harness.
 
 Draft up to 30 claims covering facts and instructions. Use concrete user tasks for action claims. Lenient grading checks the general idea. Strict grading checks exact names, values, and order. At each level, a claim is already known if both arms pass, hurts if only the without-skill arm passes, teaches if only the with-skill arm passes, and fails both if neither passes. Keep steering instructions that score as already known. Their value can be making the action repeatable on real tasks.
 

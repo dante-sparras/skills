@@ -1,6 +1,5 @@
 import argparse
 import hashlib
-import importlib.util
 import json
 import os
 import re
@@ -389,7 +388,6 @@ def load_seats(path, score_only=False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=Path.cwd())
-    parser.add_argument("--scorer", type=Path)
     parser.add_argument("--skill", required=True)
     parser.add_argument("--seats", type=Path, required=True)
     parser.add_argument("--state", type=Path, required=True)
@@ -401,16 +399,12 @@ def main():
         parser.error("Pass a skill directory name")
     if args.timeout < 1 or args.concurrency < 1:
         parser.error("Timeout and concurrency must be positive")
-    source = (args.scorer or args.root / "scripts" / "novelty.py").resolve()
-    if not source.is_file():
-        parser.error("scripts/novelty.py is missing. Run from a checkout with the scorer or pass --scorer.")
-    spec = importlib.util.spec_from_file_location("novelty", source)
-    scorer = importlib.util.module_from_spec(spec)
     sys.dont_write_bytecode = True
-    spec.loader.exec_module(scorer)
+    import novelty as scorer
+
     seats, families = load_seats(args.seats, args.score_only)
     start = time.monotonic()
-    scorer_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+    scorer_hash = hashlib.sha256(Path(scorer.__file__).read_bytes()).hexdigest()
     version = digest(PROTOCOL, scorer_hash)
     root = args.state.resolve() / version
     state = root / digest(seats["answerers"]) / args.skill

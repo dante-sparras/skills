@@ -2,7 +2,7 @@
 
 ## Prepare the run
 
-- Record the repository, input revision, selected skills, and start time. Locate `scripts/novelty.py` in the checkout or pass its path with `--scorer`.
+- Record the repository, input revision, selected skills, and start time.
 - Call `orchestrator_capabilities` for the local session. Use any saved [setup-skills roles](../setup-skills/MODEL-ROLES.md#resolve-a-role) as suggestions.
 - Before launching workers, ask the user to choose or confirm a model and effort for each role. Present the available choices together and show the suggested configuration if one exists.
   - `coordinator` runs each skill's T3 child.

@@ -19,8 +19,8 @@ DEFAULT_PANEL = {
     "answerers": ["claude:sonnet:low", "codex:gpt-6.2-sol:low", "grok:grok-4.7-build-fast:low"],
     "judges": {
         "claude": "codex:gpt-6.2-sol:low",
-        "gpt": "grok:grok-4.7-build-fast:low",
-        "grok": "claude:sonnet:low",
+        "gpt": "claude:sonnet:low",
+        "grok": "codex:gpt-6.2-sol:low",
     },
     "drafter": "claude:sonnet:low",
     "implementer": "claude:sonnet:low",

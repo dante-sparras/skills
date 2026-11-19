@@ -19,7 +19,7 @@ class Caller:
         self.durations = defaultdict(list)
         self.lock = threading.Lock()
 
-    def call(self, seat, system, prompt, parse, kind, skill, attempts=3, repair=True):
+    def call(self, seat, system, prompt, parse, kind, skill, attempts=3, repair=True, models=False):
         errors = []
         current = prompt
         for attempt in range(1, attempts + 1):
@@ -33,7 +33,7 @@ class Caller:
                     value = parse(reply.text)
                     record["ok"] = True
                     self.remember(kind, seat, time.monotonic() - record["started_at"])
-                    return value
+                    return (value, reply.models) if models else value
                 except (CallError, *PARSE_ERRORS) as error:
                     record.update(ok=False, error=str(error)[:300])
                     errors.append(str(error))

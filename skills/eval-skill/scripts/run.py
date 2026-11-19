@@ -31,6 +31,8 @@ def parse_args(argv):
     runner.add_argument("--hedge", type=float, default=45,
                         help="Seconds before a slow call gets a duplicate. Later calls use twice the median.")
     runner.add_argument("--max-claims", type=int, default=30)
+    runner.add_argument("--samples", type=int, default=3,
+                        help="Most samples per arm. The majority decides, and sampling stops once it is reached.")
     runner.add_argument("--score-only", action="store_true")
     runner.add_argument("--tasks", type=Path, help="Directory with <skill>.json task evals.")
     panel = commands.add_parser("panel", help="Show, list, check, or save the panel.")
@@ -45,8 +47,8 @@ def parse_args(argv):
     if args.command == "run":
         if not args.all and not args.skill:
             parser.error("Pass --skill or --all")
-        if args.max_claims < 1 or args.hedge <= 0:
-            parser.error("--hedge and --max-claims must be positive")
+        if args.max_claims < 1 or args.hedge <= 0 or args.samples < 1 or args.samples % 2 == 0:
+            parser.error("--hedge and --max-claims must be positive, and --samples must be an odd positive number")
     return args
 
 

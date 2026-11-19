@@ -6,7 +6,7 @@ from collections import defaultdict
 from . import skillfiles
 from .clis import CallError
 from .isolation import name_hits
-from .prompts import DRAFT_SYSTEM
+from .prompts import DRAFT_SYSTEM, PROTOCOL, REVIEW_SYSTEM, parse_review, review_prompt
 from .textutil import digest, json_between, normalize_ws, read_json, save_json, tokens
 
 FIELDS = ("id", "kind", "question", "expected", "span", "source")
@@ -159,3 +159,53 @@ def draft(caller, seat, skill, text, limit, paragraphs, allow_empty):
         if not salvage["claims"]:
             raise
         return salvage["claims"], salvage["dropped"]
+
+
+class Reviewer:
+    def __init__(self, context, skill, paragraphs):
+        self.caller = context.caller
+        self.cache = context.cache
+        self.identities = context.identities
+        self.drafter = context.panel.drafter
+        self.seat = context.panel.judges_for(self.drafter)[0]
+        self.skill = skill
+        self.paragraphs = paragraphs
+
+    def verdict(self, claim, text):
+        prompt = review_prompt(claim, text)
+        key = digest("review", PROTOCOL, self.identities.of(self.seat), REVIEW_SYSTEM, prompt)
+        result, _ = self.cache.get("reviews", key, lambda: self.caller.call(
+            self.seat, REVIEW_SYSTEM, prompt, parse_review, "review", self.skill))
+        problems = [name for name, bad in (("leaks", result["leaks"]), ("unfaithful", not result["faithful"])) if bad]
+        return problems, result["reason"]
+
+    def repair(self, claim, problems, reason, text):
+        prompt = (f"Skill name: {self.skill}\nA reviewer rejected this claim as {' and '.join(problems)}: {reason}\n"
+                  "Return a JSON array with exactly one corrected claim for the same span.\n\n"
+                  f"Claim:\n{json.dumps({key: claim[key] for key in FIELDS}, ensure_ascii=False)}\n\n{text}")
+
+        def parse(reply):
+            fixed = json_between(reply, "[", "]", "repair")
+            errors = validate_claims(fixed, text, 1, self.skill)
+            if errors:
+                raise ValueError("; ".join(errors))
+            return with_blocks(fixed[0], self.paragraphs)
+
+        return self.caller.call(self.drafter, DRAFT_SYSTEM, prompt, parse, "repair", self.skill)
+
+    def review(self, claim, text):
+        try:
+            problems, reason = self.verdict(claim, text)
+        except CallError as error:
+            return claim, f"kept unreviewed: {error}"[:300]
+        if not problems:
+            return claim, None
+        first = f"{' and '.join(problems)}: {reason}"
+        try:
+            fixed = self.repair(claim, problems, reason, text)
+            problems, reason = self.verdict(fixed, text)
+        except CallError as error:
+            return None, f"{first} Repair failed: {error}"[:400]
+        if not problems:
+            return fixed, None
+        return None, f"{first} Still {' and '.join(problems)} after repair: {reason}"[:400]

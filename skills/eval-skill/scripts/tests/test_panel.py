@@ -23,7 +23,7 @@ class PanelLayers(unittest.TestCase):
 
     def test_built_in_default(self):
         panel = self.resolve()
-        self.assertEqual(panel.judges["gpt"].key, "grok:grok-4.7-build-fast:low")
+        self.assertEqual(panel.judges["gpt"].key, "claude:sonnet:low")
         self.assertEqual(panel.sources["answerers"], "built-in default")
 
     def test_project_file_then_flags_win(self):
@@ -52,7 +52,8 @@ class PanelLayers(unittest.TestCase):
         panel = self.resolve("--answerer", "opencode:anthropic/claude-sonnet-5-5:default",
                              "--answerer", "codex:gpt-6.2-sol:low")
         self.assertEqual(set(panel.judges), {"claude", "gpt"})
-        self.assertEqual(panel.clis, ["claude", "codex", "grok", "opencode"])
+        self.assertEqual(panel.clis, ["claude", "codex", "opencode"])
+        self.assertEqual(panel.judges["claude"].key, "codex:gpt-6.2-sol:low")
 
     def test_saved_file_round_trips(self):
         panel = self.resolve("--drafter", "codex:gpt-6.2-sol:medium")

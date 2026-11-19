@@ -3,6 +3,7 @@ import secrets
 
 from .prompts import CANARY_QUESTION, TASK_SYSTEM, arm_prompt
 from .clis import CallError
+from .scoring import without_answers
 from .textutil import read_json, save_json
 
 
@@ -54,10 +55,12 @@ def canary(caller, seat, arm, bundle, marker, skill):
 
 def verdict(name, markers, rows, canaries):
     problems = []
-    without = [row for row in rows if "without_answer" in row]
-    for row in without:
-        for found in [*markers.found_in(row["without_answer"]), *name_hits(row["without_answer"], name)]:
-            problems.append(f"claim {row['id']} without-skill answer contains {found!r}")
+    checked = 0
+    for row in rows:
+        for answer in without_answers(row):
+            checked += 1
+            for found in dict.fromkeys([*markers.found_in(answer), *name_hits(answer, name)]):
+                problems.append(f"claim {row['id']} without-skill answer contains {found!r}")
     for result in canaries:
         if not result["ok"]:
             problems.append(f"{result['seat']} {result['arm']} canary failed: {result['error']}")
@@ -69,7 +72,7 @@ def verdict(name, markers, rows, canaries):
     return {
         "marker": markers.current,
         "markers_checked": len(markers.all),
-        "without_answers_checked": len(without),
+        "without_answers_checked": checked,
         "canary": by_seat,
         "passed": not problems,
         "problems": problems,

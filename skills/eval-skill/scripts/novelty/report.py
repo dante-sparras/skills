@@ -3,6 +3,9 @@ import statistics
 from collections import defaultdict
 
 BUCKET_COLUMNS = ("already_known", "hurts", "teaches", "fails_both")
+LEGEND = ("Cells give the lenient then strict bucket per answerer: K already known, H hurts, T teaches, F fails both. "
+          "~ marks a cell whose samples disagreed. Overall is the most severe bucket across answerers, in the order "
+          "hurts, teaches, fails both, already known.")
 
 
 def call_stats(records):
@@ -33,10 +36,13 @@ def table(header, rows):
 def panel_section(result):
     panel = result["panel"]
     judges = ", ".join(f"{family} answers by {seat}" for family, seat in panel["judges"].items())
+    models = ", ".join(f"{seat} is {model}" for seat, model in result["models"].items())
     lines = [
         f"# Novelty run {result['run']}", "",
         f"Wall time {result['wall_seconds']}s. Panel: answerers {', '.join(panel['answerers'])}. Judges {judges}. "
-        f"Drafter {panel['drafter']}. Implementer {panel['implementer']}.",
+        f"Drafter {panel['drafter']}. Implementer {panel['implementer']}. "
+        f"Up to {result['samples']} samples per arm, decided by majority.",
+        "", f"Models: {models}.",
     ]
     if result.get("panel_note"):
         lines += ["", result["panel_note"]]
@@ -53,18 +59,40 @@ def isolation_lines(isolation):
             *(f"- {problem}" for problem in isolation["problems"])]
 
 
-def skill_section(summary):
+def claim_notes(summary):
+    lines = []
+    for item in summary["rejected_claims"]:
+        lines.append(f"- Rejected by review: {item['span'][:80]!r}. {item['reason']}")
+    for item in summary["unreviewed_claims"]:
+        lines.append(f"- Kept without review: {item['span'][:80]!r}. {item['reason']}")
+    for item in summary["missing_cells"]:
+        lines.append(f"- Claim {item['claim']} has no score from {item['answerer']}: {item['error']}")
+    for claim, cells in summary["unstable"].items():
+        lines.append(f"- Claim {claim} samples disagreed: " +
+                     ", ".join(f"{seat} {', '.join(arms)}" for seat, arms in cells.items()))
+    return lines
+
+
+def skill_section(summary, answerers):
     lines = ["", f"## {summary['skill']}", "",
              f"Claims {summary['claims']} ({summary['reused_claims']} reused, {summary['dropped_claims']} invalid "
-             f"drafts dropped). Unscored {len(summary['unscored'])}.",
+             f"drafts dropped, {len(summary['rejected_claims'])} rejected by review). Unscored {len(summary['unscored'])}.",
              *isolation_lines(summary["isolation"]), ""]
     lines += table(("Grade", "already known", "hurts", "teaches", "fails both"),
                    [(scale, *(summary["buckets"][scale][name] for name in BUCKET_COLUMNS)) for scale in ("lenient", "strict")])
     lines.append("")
-    lines += table(("Claim", "Kind", "Answerer", "Lenient", "Strict", "Decision", "Span"), [
-        (row["id"], row["kind"], row.get("answerer") or "", row.get("bucket_lenient") or "", row.get("bucket_strict") or "",
-         row["decision"], (row.get("span") or "").replace("|", "/").replace("\n", " ")[:90])
+    lines += table(("Answerer", "Grade", "already known", "hurts", "teaches", "fails both"),
+                   [(seat, scale, *(counts[scale][name] for name in BUCKET_COLUMNS))
+                    for seat, counts in summary["buckets_by_answerer"].items() for scale in ("lenient", "strict")])
+    lines += ["", LEGEND, ""]
+    lines += table(("Claim", "Kind", *answerers, "Overall", "Decision", "Span"), [
+        (row["id"], row["kind"], *(row["cells"].get(seat, "-") for seat in answerers),
+         f"{row.get('bucket_lenient') or '-'}/{row.get('bucket_strict') or '-'}", row["decision"],
+         (row.get("span") or "").replace("|", "/").replace("\n", " ")[:90])
         for row in summary["rows"]])
+    notes = claim_notes(summary)
+    if notes:
+        lines += [""] + notes
     proposal = summary.get("proposal")
     if proposal:
         lines += ["", f"Proposal: {proposal['status']}. {proposal.get('reason', '')} "
@@ -80,7 +108,7 @@ def skill_section(summary):
 def render_report(result):
     lines = panel_section(result)
     for summary in result["skills"]:
-        lines += skill_section(summary)
+        lines += skill_section(summary, result["panel"]["answerers"])
     lines.append("")
     lines += table(("Call", "Seat", "Calls", "Failed", "Hedged", "p50 s", "p90 s", "Max s", "Mean slot wait s"), [
         (row["kind"], row["seat"], row["calls"], row["failed"], row["hedged"], row["p50"], row["p90"], row["max"],

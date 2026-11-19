@@ -5,7 +5,7 @@ from pathlib import Path
 from novelty import skillfiles
 from novelty.claims import leak_grams, validate_claims
 from novelty.isolation import name_hits
-from novelty.scoring import bucket, decide, held_status
+from novelty.scoring import bucket, combine, decide, majority, tally
 from novelty.seats import Seat, model_family
 
 SKILL = "Before you rename a column, write down the callers.\n\nA 404 status code means the resource was not found.\n"
@@ -64,11 +64,17 @@ class Buckets(unittest.TestCase):
         self.assertEqual(decide("fact", "already_known", "already_known"), "cut")
         self.assertEqual(decide("process", "already_known", "already_known"), "keep")
 
-    def test_held_status_checks_only_taught_scales(self):
-        row = {"bucket_lenient": "teaches", "bucket_strict": "fails_both"}
-        self.assertEqual(held_status(row, [{"lenient": "pass", "strict": "fail"}]), "held")
-        self.assertEqual(held_status(row, [{"lenient": "fail"}, {"lenient": "pass"}]), "held-on-retry")
-        self.assertEqual(held_status(row, [{"lenient": "fail"}]), "lost")
+    def test_overall_bucket_takes_the_most_severe_answerer(self):
+        self.assertEqual(combine(["already_known", "teaches", "hurts"]), "hurts")
+        self.assertEqual(combine(["already_known", "fails_both"]), "fails_both")
+        self.assertEqual(combine(["already_known", "already_known"]), "already_known")
+
+    def test_majority_decides_and_flags_disagreement(self):
+        results = [{"lenient": verdict, "strict": "pass", "lenient_reason": verdict, "strict_reason": "s",
+                    "answer": "a", "judge": "j", "cached": False} for verdict in ("pass", "fail", "pass")]
+        self.assertIsNone(majority(results[:2], "lenient", 2))
+        summary = tally("without", results, 2)
+        self.assertEqual((summary["lenient"], summary["lenient_votes"], summary["unstable"]), ("pass", "PFP", ["lenient"]))
 
 
 class Families(unittest.TestCase):

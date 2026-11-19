@@ -1,16 +1,22 @@
 # How the script runs the novelty method
 
-Split a skill into claims, ask each claim with and without the skill, grade each answer with a judge, and sort the claim by the two grades.
+Split a skill into claims, ask each claim with and without the skill on every answerer, grade each answer with a judge, and sort the claim by the two grades.
 
 ## Claims
 
-The drafter splits the skill into at most 30 claims. Each claim has a question, the expected behavior, the verbatim span it tests, and its source file. A process claim's question is a concrete user task that would call for the behavior. A fact claim's question asks for the fact without stating it. The script rejects a draft whose question leaks the span, asks for an explanation, names the skill, or uses a semicolon or an em dash, and asks the drafter again with the reasons. A fact question may name its subject, so it leaks only when it repeats most of the span. After three rejected drafts, the script keeps the valid claims from the last one and reports how many it dropped. A skill with several files gets one draft call per file in parallel, with the claim budget split by size. Scoring starts as soon as a file's claims arrive.
+The drafter splits the skill into at most 30 claims. Each claim has a question, the expected behavior, the verbatim span it tests, and its source file. A process claim's question is a concrete user task that would call for the behavior. A fact claim's question asks for the fact without stating it. The script rejects a draft whose question leaks the span, asks for an explanation, names the skill, or uses a semicolon or an em dash, and asks the drafter again with the reasons. A fact question may name its subject, so it leaks only when it repeats most of the span. After three rejected drafts, the script keeps the valid claims from the last one and reports how many it dropped. A skill with several files gets one draft call per file in parallel, with the claim budget split by size.
+
+A reviewer from another model family than the drafter then reads each new claim with the skill text. It checks that the question does not give away the expected behavior and that the skill supports the expected behavior at the span. A flagged claim goes back to the drafter once with the reviewer's reason. A claim still flagged after that is dropped, and the report lists it. A claim whose review call fails is kept and listed as unreviewed. Each claim starts scoring as soon as its own review passes.
 
 ## Arms and grades
 
-Each claim goes to one answerer, assigned round robin. Both arms use that answerer. The with-skill arm gets the whole skill text in the user message. The without-skill arm gets the task alone. Neither prompt contains the expected behavior.
+Every answerer answers both arms of every claim, so each model's results cover the same claims. The with-skill arm gets the whole skill text in the user message. The without-skill arm gets the task alone. Neither prompt contains the expected behavior.
 
-The judge sees the task, the expected behavior, and one answer, never the arm. Lenient grading checks the general idea. Strict grading checks exact names, values, and order. At each level a claim is:
+One judge grades each answer. It sees the task, the expected behavior, and one answer, never the arm. Lenient grading checks the general idea. Strict grading checks exact names, values, and order.
+
+Each arm takes up to `--samples` samples (default 3), each a separate answer and grade. The majority decides. The first two samples run in parallel, and the third runs only when they disagree on either grade. A cell whose samples disagreed is marked unstable in the report.
+
+For one answerer, at each grading level, a claim is:
 
 | Without | With | Bucket |
 |---|---|---|
@@ -19,7 +25,7 @@ The judge sees the task, the expected behavior, and one answer, never the arm. L
 | fail | pass | teaches |
 | fail | fail | fails both |
 
-The pair of buckets gives each claim a decision: keep, cut, fix, or rewrite. A process claim that would be cut is kept, because a steering instruction can make an action repeatable even when the model already knows it.
+The claim's overall bucket is the most severe one across answerers, in the order hurts, teaches, fails both, already known. A claim is already known only when every answerer already knows it. The overall pair of buckets gives each claim a decision: keep, cut, fix, or rewrite. A process claim that would be cut is kept, because a steering instruction can make an action repeatable even when the model already knows it.
 
 ## Isolation
 
@@ -42,11 +48,13 @@ Any hit fails the run, and the report lists it.
 
 ## Cache and reruns
 
-The state directory defaults to `~/.cache/eval-skill`. Without-skill answers are keyed by answerer, prompt, and question. With-skill answers are also keyed by the paragraphs the claim's span covers. Grades are keyed by judge and the full grading prompt. A rerun reuses the claims from unchanged paragraphs and drafts only new or changed ones, keeping a claim's question when the new draft points at the same span. Only claims in changed paragraphs reach a model again. If an edit changes how another paragraph reads, pass a fresh `--state` for a full evaluation.
+The state directory defaults to `~/.cache/eval-skill`. At the start of every run, each seat answers one tiny probe, and the script records which model actually answered. Every cache key uses that model, so when an alias like `sonnet` moves to a newer model, the old answers stop matching and the claims are asked again. The report lists the model behind each seat.
+
+Without-skill answers are keyed by model, prompt, question, and sample number. With-skill answers are also keyed by the paragraphs the claim's span covers. Grades are keyed by the judge's model and the full grading prompt. Reviews are keyed by the reviewer's model and the claim. A rerun reuses the claims from unchanged paragraphs and drafts only new or changed ones, keeping a claim's question when the new draft points at the same span. Only claims in changed paragraphs reach a model again. If an edit changes how another paragraph reads, pass a fresh `--state` for a full evaluation.
 
 ## Retries, speed, and timing
 
-Calls run in parallel up to each CLI's `limits` entry (default 8). All skills, both arms, and the judges share those slots. A call that fails or passes `--timeout` is retried up to three times. A rejected reply is retried with the reason appended. A call that runs past twice the median for its kind and seat (`--hedge` before there is a median) gets one duplicate, and the first reply wins. When an answerer still fails, the claim moves to the next answerer and both arms rerun. When a judge fails, a seat from another model family grades. A seat's family comes from its model, so an opencode seat running a Claude model counts as the claude family. A claim still unscored after that fails the run.
+Calls run in parallel up to each CLI's `limits` entry (default 8). All skills, arms, samples, and judges share those slots. Raising the limit does not always help, because a subscription can slow every call when more run at once. The default panel keeps judging off the slowest CLI. A call that fails or passes `--timeout` is retried up to three times. A rejected reply is retried with the reason appended. A call that runs past twice the median for its kind and seat (`--hedge` before there is a median) gets one duplicate, and the first reply wins. When a judge fails, a seat from another model family grades. A seat's family comes from its model, so an opencode seat running a Claude model counts as the claude family. When an answerer still fails on a claim, that cell is missing and the report lists it. A claim no answerer scored fails the run.
 
 The run directory holds `report.md`, `summary.json`, `calls.jsonl`, and one folder per skill. The report has the wall time, per-step start and end times, and per-call p50, p90, max, slot wait, and hedge counts.
 
@@ -56,6 +64,6 @@ Without `--score-only`, the implementer rewrites each paragraph that has a cut, 
 
 1. The rewritten skill is shorter.
 2. The repo's em dash, semicolon, and Use when checks pass on it.
-3. Every claim the original taught still passes with the rewritten skill on each scale where it taught, using the same question, answerer, and judge, with one retry.
+3. Every claim the original taught still passes with the rewritten skill, for every answerer and on every scale where it taught, using the same question and judge and a fresh majority vote.
 
 A proposal then runs [task evals](EVALS.md) when `--tasks` has a file for the skill. A regression rejects it.

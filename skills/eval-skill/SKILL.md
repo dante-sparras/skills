@@ -15,9 +15,9 @@ description: "Measure what skills teach, find instructions that hurt performance
    python skills/eval-skill/scripts/run.py run --skill <name> --skill <name> --tasks <task-dir>
    ```
 
-   Add the same role flags used in step 2 when they were not saved. Add `--score-only` when the user asks only for scores. Leave out `--tasks` when no task evals exist yet.
+   Add the same role flags used in step 2 when they were not saved. Add `--score-only` when the user asks only for scores. `--samples` sets the most samples per arm (default 3). Leave out `--tasks` when no task evals exist yet.
 4. A nonzero exit means a claim stayed unscored, the isolation check failed, or a skill crashed. Report the problems and the `report.md` path. Never report scores from a run whose isolation check failed.
-5. Read `report.md` from the run directory the script prints. For each skill, report what it teaches, which instructions hurt, which fail both ways, and the isolation result. Give counts by answerer, since each claim runs on one answerer. Say so when the panel used one model for every role.
+5. Read `report.md` from the run directory the script prints. For each skill, report what it teaches, which instructions hurt, which fail both ways, and the isolation result. Compare answerers where they differ, since every answerer answers every claim. Call out claims marked unstable, claims rejected by review, and missing cells. Say so when the panel used one model for every role.
 6. A proposal with status `proposed` is shorter and keeps every taught claim. Apply it only when its task evals passed. When they did not run, write tasks per [EVALS.md](EVALS.md) and rerun, which reuses every cached answer. Review the patch for intact headings, links, and instructions no claim covered. Then run `git apply --check -p2 <patch>` and `git apply -p2 <patch>`, followed by the repo's punctuation and Use when checks.
 
 [METHOD.md](METHOD.md) explains the claims, buckets, isolation proof, cache, and rewrite gate. Read it before changing the script or explaining a result.
@@ -26,7 +26,7 @@ description: "Measure what skills teach, find instructions that hurt performance
 
 A seat is `<cli>:<model>:<effort>`. The CLI is `claude`, `codex`, `grok`, or `opencode`. An opencode model is `provider/model`, and its effort is a model variant or `default`.
 
-The roles are the answerers, one judge per answerer model family, the drafter that splits a skill into claims, and the implementer that rewrites paragraphs. Each claim goes to one answerer, and both arms of that claim use it.
+The roles are the answerers, one judge per answerer model family, the drafter that splits a skill into claims, and the implementer that rewrites paragraphs. Every answerer answers both arms of every claim, and one judge grades each answer. The reviewer that checks new claims is the judge for the drafter's family.
 
 The script resolves the panel from these layers, and later layers win:
 
@@ -39,7 +39,7 @@ The script resolves the panel from these layers, and later layers win:
 ```json
 {
   "answerers": ["claude:sonnet:low", "codex:gpt-6.2-sol:low", "grok:grok-4.7-build-fast:low"],
-  "judges": {"claude": "codex:gpt-6.2-sol:low", "gpt": "grok:grok-4.7-build-fast:low", "grok": "claude:sonnet:low"},
+  "judges": {"claude": "codex:gpt-6.2-sol:low", "gpt": "claude:sonnet:low", "grok": "codex:gpt-6.2-sol:low"},
   "drafter": "claude:sonnet:low",
   "implementer": "claude:sonnet:low",
   "limits": {"claude": {"parallel": 8}, "codex": {"parallel": 8}, "grok": {"parallel": 8}, "opencode": {"parallel": 8}}

@@ -4,25 +4,23 @@ import sys
 import threading
 import time
 from collections import Counter, defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, as_completed, wait
 from datetime import datetime
 
 from . import skillfiles
 from .cache import Cache
 from .calls import Caller
-from .claims import ClaimBook, draft, manifest_path
+from .claims import ClaimBook, Reviewer, draft, manifest_path
 from .clis import connect
+from .identity import Identities
 from .isolation import Markers, canary, verdict
 from .prompts import PROTOCOL
 from .report import call_stats, render_report
 from .rewrite import needs_rewrite, repo_checks, rewrite_paragraph, write_patch
-from .scoring import bucket_counts, by_answerer, taught_scales, Scorer
+from .scoring import SHORT, Scorer, bucket_counts, by_answerer, taught_scales
 from .seats import Panel
 from .tasks import compare, load_tasks
 from .textutil import digest, save_json, write_jsonl
-
-SUMMARY_ROW = ("id", "kind", "source", "span", "answerer", "judges", "bucket_lenient", "bucket_strict", "decision",
-               "without_cached", "with_cached")
 
 
 def log(message):
@@ -71,12 +69,14 @@ class RunContext:
         self.run_dir = self.state / "runs" / f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{secrets.token_hex(2)}"
         self.run_dir.mkdir(parents=True)
         width = sum(self.panel.parallel(cli) for cli in self.adapters)
-        self.arms = ThreadPoolExecutor(max_workers=max(64, width * 8), thread_name_prefix="arm")
         self.claims = ThreadPoolExecutor(max_workers=max(32, width * 4), thread_name_prefix="claim")
+        self.arms = ThreadPoolExecutor(max_workers=max(64, width * 8), thread_name_prefix="arm")
+        self.samples = ThreadPoolExecutor(max_workers=max(64, width * 8), thread_name_prefix="sample")
+        self.identities = Identities(self.caller, self.panel.seats(), self.samples)
 
     def close(self):
-        self.arms.shutdown(wait=True)
-        self.claims.shutdown(wait=True)
+        for pool in (self.claims, self.arms, self.samples):
+            pool.shutdown(wait=True)
 
 
 class SkillRun:
@@ -90,7 +90,8 @@ class SkillRun:
         self.output = context.run_dir / name
         self.before = self.output / "before" / "skills" / name
         self.candidate = self.output / "repo" / "skills" / name
-        self.scorer = Scorer(context.caller, context.cache, context.panel, name, context.arms, self.state / "routes")
+        self.scorer = Scorer(context, name)
+        self.rejected, self.unreviewed = [], []
 
     def bundle(self, directory):
         return f"Isolation marker: {self.markers.current}\n\n{skillfiles.bundle(directory)}"
@@ -101,7 +102,7 @@ class SkillRun:
         self.markers = Markers(self.state / "markers.json")
         bundle = self.bundle(self.before)
         probe = self.steps.timed("isolation canary", canary)
-        canaries = [self.context.arms.submit(probe, self.context.caller, seat, arm, bundle, self.markers.current, self.name)
+        canaries = [self.context.samples.submit(probe, self.context.caller, seat, arm, bundle, self.markers.current, self.name)
                     for seat in self.panel.answerers for arm in ("without", "with")]
         book = ClaimBook(manifest_path(self.state, self.panel.drafter), skillfiles.paragraphs(self.before),
                          self.args.max_claims)
@@ -119,23 +120,44 @@ class SkillRun:
         save_json(self.output / "summary.json", summary)
         return summary
 
+    def accept(self, original, claim, note):
+        if claim is None:
+            self.rejected.append({"span": original["span"], "reason": note})
+            return []
+        if note:
+            self.unreviewed.append({"span": claim["span"], "reason": note})
+        return [claim]
+
     def score_claims(self, book, bundle):
         score = self.steps.timed("score", self.scorer.claim)
         futures = {claim["id"]: self.context.claims.submit(score, claim, bundle) for claim in book.claims}
+        reviewer = Reviewer(self.context, self.name, book.paragraphs)
+        review = self.steps.timed("review", reviewer.review)
         self.steps.start("draft")
-        drafts = [self.context.arms.submit(draft, self.context.caller, self.panel.drafter, self.name, text,
-                                           book.limit(source), book.paragraphs, bool(book.claims))
-                  for source, text in book.changed.items()]
-        for future in as_completed(drafts):
-            claims, dropped = future.result()
-            book.dropped += dropped
-            for claim in book.admit(claims):
-                futures[claim["id"]] = self.context.claims.submit(score, claim, bundle)
-        self.steps.end("draft")
+        pending = {self.context.samples.submit(draft, self.context.caller, self.panel.drafter, self.name, text,
+                                               book.limit(source), book.paragraphs, bool(book.claims)): ("draft", text)
+                   for source, text in book.changed.items()}
+        while pending:
+            done, _ = wait(pending, return_when=FIRST_COMPLETED)
+            for future in done:
+                kind, payload = pending.pop(future)
+                if kind == "draft":
+                    claims, dropped = future.result()
+                    book.dropped += dropped
+                    pending.update({self.context.samples.submit(review, claim, payload): ("review", claim)
+                                    for claim in claims})
+                    if not any(item[0] == "draft" for item in pending.values()):
+                        self.steps.end("draft")
+                    continue
+                for claim in book.admit(self.accept(payload, *future.result())):
+                    futures[claim["id"]] = self.context.claims.submit(score, claim, bundle)
+        if not book.changed:
+            self.steps.end("draft")
         if not book.claims:
             raise SystemExit(f"{self.name}: no claims were drafted")
         book.save()
-        log(f"{self.name}: {len(book.claims)} claims, {book.reused} reused, {book.dropped} invalid drafts dropped")
+        log(f"{self.name}: {len(book.claims)} claims, {book.reused} reused, {book.dropped} invalid drafts dropped, "
+            f"{len(self.rejected)} rejected by review")
         return futures
 
     def collect(self, book, futures):
@@ -156,8 +178,7 @@ class SkillRun:
                 matched = [rows[identifier] for identifier in members[block]] if not waiting[block] else []
                 if matched and needs_rewrite(matched):
                     rewrites[block] = self.context.arms.submit(
-                        rewrite, self.context.caller, self.context.cache, self.panel.implementer, self.name,
-                        book.paragraphs[block][1], matched)
+                        rewrite, self.context, self.name, book.paragraphs[block][1], matched)
         log(f"{self.name}: scored {len(rows)} claims")
         return [rows[claim["id"]] for claim in sorted(book.claims, key=lambda claim: int(claim["id"]))], rewrites
 
@@ -169,14 +190,17 @@ class SkillRun:
             "claims": len(book.claims),
             "reused_claims": book.reused,
             "dropped_claims": book.dropped,
+            "rejected_claims": self.rejected,
+            "unreviewed_claims": self.unreviewed,
             "scored": len(scored),
             "unscored": [row["id"] for row in rows if row["decision"] == "unscored"],
-            "moved_answerer": [row["id"] for row in scored if row["moved_answerer"]],
+            "missing_cells": [dict(cell, claim=row["id"]) for row in rows for cell in row["missing"]],
+            "unstable": {row["id"]: row["unstable"] for row in scored if row["unstable"]},
             "buckets": bucket_counts(scored),
-            "buckets_by_answerer": by_answerer(scored),
+            "buckets_by_answerer": by_answerer(scored, self.panel.answerers),
             "decisions": dict(Counter(row["decision"] for row in rows)),
             "isolation": isolation,
-            "rows": [{key: row.get(key) for key in SUMMARY_ROW} for row in rows],
+            "rows": [summary_row(row) for row in rows],
         }
 
     def propose(self, rows, rewrites, summary):
@@ -215,10 +239,17 @@ class SkillRun:
         versions = {"original": skillfiles.bundle(self.before), "candidate": skillfiles.bundle(self.candidate)}
         self.steps.start("tasks")
         try:
-            return compare(self.context.caller, self.context.cache, self.panel, self.name, tasks, versions,
-                           self.context.claims)
+            return compare(self.context, self.name, tasks, versions)
         finally:
             self.steps.end("tasks")
+
+
+def summary_row(row):
+    cells = {seat: SHORT[cell["bucket_lenient"]] + SHORT[cell["bucket_strict"]] + ("~" if cell["unstable"] else "")
+             for seat, cell in row.get("cells", {}).items()}
+    return {"id": row["id"], "kind": row["kind"], "source": row.get("source"), "span": row.get("span"), "cells": cells,
+            "bucket_lenient": row.get("bucket_lenient"), "bucket_strict": row.get("bucket_strict"),
+            "decision": row["decision"]}
 
 
 def run_skills(args, skills, adapters=None):
@@ -234,6 +265,7 @@ def run_skills(args, skills, adapters=None):
                 except Exception as error:
                     failures.append(f"{futures[future]}: {error}")
                     log(f"{futures[future]} failed: {error}")
+        models = context.identities.resolved()
     finally:
         context.close()
     result = {
@@ -241,6 +273,8 @@ def run_skills(args, skills, adapters=None):
         "wall_seconds": round(time.monotonic() - context.origin, 1),
         "panel": context.panel.describe(),
         "panel_note": context.panel.note,
+        "models": models,
+        "samples": args.samples,
         "billing": context.notes + ["API key variables are removed from every child environment"],
         "skills": sorted(results, key=lambda summary: summary["skill"]),
         "failures": failures,

@@ -57,14 +57,15 @@ def needs_rewrite(rows):
     return all(row["decision"] != "unscored" for row in rows) and any(row["decision"] != "keep" for row in rows)
 
 
-def rewrite_paragraph(caller, cache, seat, skill, paragraph, rows):
+def rewrite_paragraph(context, skill, paragraph, rows):
     if all(row["decision"] == "cut" for row in rows) and any(
             normalize_ws(row["span"]) == normalize_ws(paragraph) for row in rows):
         return ""
+    seat = context.panel.implementer
     prompt = rewrite_prompt(paragraph, rows)
-    key = digest("rewrite", PROTOCOL, seat.key, REWRITE_SYSTEM, prompt)
     try:
-        edited, _ = cache.get("rewrites", key, lambda: caller.call(
+        key = digest("rewrite", PROTOCOL, context.identities.of(seat), REWRITE_SYSTEM, prompt)
+        edited, _ = context.cache.get("rewrites", key, lambda: context.caller.call(
             seat, REWRITE_SYSTEM, prompt, accept_edit(kept_spans(rows)), "rewrite", skill))
         return edited
     except CallError:

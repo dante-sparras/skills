@@ -2,10 +2,13 @@ from collections import Counter
 
 from .clis import CallError
 from .prompts import JUDGE_SYSTEM, PROTOCOL, TASK_SYSTEM, arm_prompt, judge_prompt, nonempty, parse_grade
-from .textutil import digest, read_json, save_json
+from .textutil import digest
 
 BUCKETS = ("already_known", "hurts", "teaches", "fails_both")
+PRECEDENCE = ("hurts", "teaches", "fails_both", "already_known")
+SHORT = {"already_known": "K", "hurts": "H", "teaches": "T", "fails_both": "F"}
 SCALES = ("lenient", "strict")
+ARMS = ("without", "with")
 DECISIONS = {
     ("already_known", "already_known"): "cut",
     ("already_known", "hurts"): "fix",
@@ -37,58 +40,89 @@ def bucket(without_pass, with_pass):
     return "fails_both"
 
 
+def combine(buckets):
+    return next(name for name in PRECEDENCE if name in buckets)
+
+
 def decide(kind, lenient, strict):
     decision = DECISIONS[(lenient, strict)]
     return "keep" if kind == "process" and decision == "cut" else decision
 
 
-def taught_scales(row):
-    return [scale for scale in SCALES if row.get(f"bucket_{scale}") == "teaches"]
+def taught_scales(item):
+    return [scale for scale in SCALES if item.get(f"bucket_{scale}") == "teaches"]
 
 
-def held_status(row, grades):
-    scales = taught_scales(row)
-    if not scales:
-        return "not-taught"
-    for index, grade in enumerate(grades, start=1):
-        if all(grade.get(scale) == "pass" for scale in scales):
-            return "held" if index == 1 else "held-on-retry"
-    return "lost"
+def majority(results, scale, need):
+    votes = Counter(result[scale] for result in results)
+    return "pass" if votes["pass"] >= need else "fail" if votes["fail"] >= need else None
 
 
-def bucket_counts(rows):
-    return {scale: {name: sum(1 for row in rows if row[f"bucket_{scale}"] == name) for name in BUCKETS}
-            for scale in SCALES}
-
-
-def classify(claim, without, with_skill, answerer, moved):
-    row = {key: claim.get(key, "") for key in ROW_FIELDS}
-    row.update(_blocks=claim["_blocks"], answerer=answerer.key, moved_answerer=moved,
-               judges=sorted({without["judge"], with_skill["judge"]}))
+def tally(arm, results, need):
+    summary = {"arm": arm, "answers": [result["answer"] for result in results],
+               "judges": sorted({result["judge"] for result in results}),
+               "cached": all(result["cached"] for result in results), "unstable": []}
     for scale in SCALES:
-        row[f"bucket_{scale}"] = bucket(without[scale] == "pass", with_skill[scale] == "pass")
+        verdict = majority(results, scale, need) or Counter(result[scale] for result in results).most_common(1)[0][0]
+        summary[scale] = verdict
+        summary[f"{scale}_votes"] = "".join(result[scale][0].upper() for result in results)
+        summary[f"{scale}_reason"] = next(result[f"{scale}_reason"] for result in results if result[scale] == verdict)
+        if len({result[scale] for result in results}) > 1:
+            summary["unstable"].append(scale)
+    return summary
+
+
+def make_cell(without, with_skill):
+    cell = {"without": without, "with": with_skill,
+            "unstable": sorted({f"{arm['arm']} {scale}" for arm in (without, with_skill) for scale in arm["unstable"]})}
+    for scale in SCALES:
+        cell[f"bucket_{scale}"] = bucket(without[scale] == "pass", with_skill[scale] == "pass")
+    return cell
+
+
+def make_row(claim, cells, missing):
+    row = {key: claim.get(key, "") for key in ROW_FIELDS}
+    row.update(_blocks=claim["_blocks"], cells=cells, missing=missing)
+    if not cells:
+        row["decision"] = "unscored"
+        return row
+    for scale in SCALES:
+        row[f"bucket_{scale}"] = combine([cell[f"bucket_{scale}"] for cell in cells.values()])
+        source = next(cell for cell in cells.values() if cell[f"bucket_{scale}"] == row[f"bucket_{scale}"])
+        row[f"with_{scale}_reason"] = source["with"][f"{scale}_reason"]
     row["decision"] = decide(claim["kind"], row["bucket_lenient"], row["bucket_strict"])
-    for arm, result in (("without", without), ("with", with_skill)):
-        row[f"{arm}_answer"] = result["answer"]
-        row[f"{arm}_cached"] = result["cached"]
-        for scale in SCALES:
-            row[f"{arm}_{scale}"] = result[scale]
-            row[f"{arm}_{scale}_reason"] = result[f"{scale}_reason"]
+    row["unstable"] = {seat: cell["unstable"] for seat, cell in cells.items() if cell["unstable"]}
     return row
 
 
-class Scorer:
-    def __init__(self, caller, cache, panel, skill, arms, routes):
-        self.caller = caller
-        self.cache = cache
-        self.panel = panel
-        self.skill = skill
-        self.arms = arms
-        self.routes = routes
+def without_answers(row):
+    return [answer for cell in row.get("cells", {}).values() for answer in cell["without"]["answers"]]
 
-    def answer(self, question, arm, answerer, bundle, context):
-        key = digest("answer", PROTOCOL, answerer.key, TASK_SYSTEM, arm_prompt(question, None),
-                     None if bundle is None else context)
+
+def bucket_counts(items):
+    return {scale: {name: sum(1 for item in items if item[f"bucket_{scale}"] == name) for name in BUCKETS}
+            for scale in SCALES}
+
+
+def by_answerer(rows, answerers):
+    return {seat.key: bucket_counts([row["cells"][seat.key] for row in rows if seat.key in row.get("cells", {})])
+            for seat in answerers}
+
+
+class Scorer:
+    def __init__(self, context, skill):
+        self.caller = context.caller
+        self.cache = context.cache
+        self.panel = context.panel
+        self.identities = context.identities
+        self.arms = context.arms
+        self.samples = context.samples
+        self.count = context.args.samples
+        self.skill = skill
+
+    def answer(self, question, arm, answerer, bundle, context, index):
+        key = digest("answer", PROTOCOL, self.identities.of(answerer), TASK_SYSTEM, arm_prompt(question, None),
+                     None if bundle is None else context, index)
         return self.cache.get("without" if bundle is None else "with", key, lambda: self.caller.call(
             answerer, TASK_SYSTEM, arm_prompt(question, bundle), nonempty, f"answer-{arm}", self.skill))
 
@@ -96,8 +130,8 @@ class Scorer:
         prompt = judge_prompt(claim, answer)
         errors = []
         for judge in self.panel.judges_for(answerer):
-            key = digest("grade", PROTOCOL, judge.key, JUDGE_SYSTEM, prompt)
             try:
+                key = digest("grade", PROTOCOL, self.identities.of(judge), JUDGE_SYSTEM, prompt)
                 grade, _ = self.cache.get("grades", key, lambda: self.caller.call(
                     judge, JUDGE_SYSTEM, prompt, parse_grade, "judge", self.skill))
                 return dict(grade, judge=judge.key)
@@ -105,44 +139,41 @@ class Scorer:
                 errors.append(str(error))
         raise CallError(f"no judge could grade claim {claim['id']}: {errors[-1]}")
 
-    def arm(self, claim, arm, answerer, bundle, context):
-        answer, cached = self.answer(claim["question"], arm, answerer, bundle, context)
-        return dict(self.grade(claim, answer, answerer), arm=arm, answer=answer, cached=cached, answerer=answerer.key)
+    def sample(self, claim, arm, answerer, bundle, context, index):
+        answer, cached = self.answer(claim["question"], arm, answerer, bundle, context, index)
+        return dict(self.grade(claim, answer, answerer), answer=answer, cached=cached)
 
-    def route_path(self, claim):
-        return self.routes / f"{digest(claim['id'], claim['_blocks'])}.json"
+    def vote(self, claim, arm, answerer, bundle, context):
+        need = self.count // 2 + 1
+        results = list(self.samples.map(lambda index: self.sample(claim, arm, answerer, bundle, context, index),
+                                        range(need)))
+        while len(results) < self.count and not all(majority(results, scale, need) for scale in SCALES):
+            results.append(self.sample(claim, arm, answerer, bundle, context, len(results)))
+        return tally(arm, results, need)
 
     def claim(self, claim, bundle):
-        answerers = self.panel.answerers
-        start = read_json(self.route_path(claim), 0)
-        errors = []
-        for step in range(len(answerers)):
-            offset = (start + step) % len(answerers)
-            answerer = answerers[(int(claim["id"]) + offset) % len(answerers)]
-            futures = [self.arms.submit(self.arm, claim, arm, answerer, bundle if arm == "with" else None,
-                                        claim["_blocks"]) for arm in ("without", "with")]
+        futures = {(seat.key, arm): self.arms.submit(self.vote, claim, arm, seat, bundle if arm == "with" else None,
+                                                     claim["_blocks"])
+                   for seat in self.panel.answerers for arm in ARMS}
+        cells, missing = {}, []
+        for seat in self.panel.answerers:
             try:
-                without, with_skill = [future.result() for future in futures]
+                cells[seat.key] = make_cell(futures[(seat.key, "without")].result(), futures[(seat.key, "with")].result())
             except CallError as error:
-                errors.append(f"{answerer.key}: {error}")
-                continue
-            save_json(self.route_path(claim), offset)
-            return classify(claim, without, with_skill, answerer, offset != start)
-        return {"id": claim["id"], "kind": claim["kind"], "decision": "unscored", "errors": errors}
+                missing.append({"answerer": seat.key, "error": str(error)[:300]})
+        return make_row(claim, cells, missing)
 
     def recheck(self, row, bundle, version):
-        answerer = next(seat for seat in self.panel.answerers if seat.key == row["answerer"])
-        grades = []
-        for attempt in (1, 2):
-            grades.append(self.arm(row, "with", answerer, bundle, [version, attempt]))
-            if held_status(row, grades) != "lost":
-                break
-        return {"id": row["id"], "scales": taught_scales(row), "status": held_status(row, grades)}
-
-
-def by_answerer(rows):
-    groups = {}
-    for row in rows:
-        groups.setdefault(row["answerer"], []).append(row)
-    return {seat: {scale: dict(Counter(row[f"bucket_{scale}"] for row in items)) for scale in SCALES}
-            for seat, items in groups.items()}
+        statuses = {}
+        for seat in self.panel.answerers:
+            cell = row["cells"].get(seat.key)
+            scales = taught_scales(cell or {})
+            if not scales:
+                continue
+            try:
+                result = self.vote(row, "with", seat, bundle, [version])
+                statuses[seat.key] = "held" if all(result[scale] == "pass" for scale in scales) else "lost"
+            except CallError as error:
+                statuses[seat.key] = f"unchecked: {error}"[:200]
+        status = "lost" if any(value != "held" for value in statuses.values()) else "held"
+        return {"id": row["id"], "status": status, "answerers": statuses}

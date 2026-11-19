@@ -1,6 +1,6 @@
 ---
 name: setup-skills
-description: Configure model roles, the issue tracker, triage labels, and domain docs for the engineering skills.
+description: "Configure the settings the engineering skills read. Per repo, in `docs/agents/` and an `AGENTS.md` block: the issue tracker, triage labels, and domain docs. Globally, in `~/.config/skills/roles.json`: the model roles, which a repo can override in `.skills/roles.json`. Use when a person sets these skills up in a new repo, a skill reports that the tracker or roles are not configured, or a person wants to change the model roles."
 disable-model-invocation: true
 ---
 

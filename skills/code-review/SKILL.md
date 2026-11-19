@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: "Adversarial review of the changes since a fixed point (commit, branch, tag, or merge-base). Parallel reviewers from different model families each try to break the change and report on three separate axes: Breakage (wrong behavior, edge cases, blast radius), Spec (does it do what the issue or spec asked?), and Standards (does it follow this repo's documented standards?). Behavior findings survive only when a rerun proves them. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to \"review since X\"."
+description: "Adversarial review of the changes since a fixed point (commit, branch, tag, or merge-base). Reviewers from different model families try to break the change on three axes, Breakage, Spec, and Standards, and a behavior finding survives only when a rerun proves it. Use when asked to review a branch, a PR, or work-in-progress changes, to review everything since a commit or tag, or when a finished change needs a verdict before it lands."
 ---
 
 Adversaries try to break the diff between `HEAD` and a fixed point the user supplies. Each one reports on three axes:

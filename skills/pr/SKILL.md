@@ -1,6 +1,6 @@
 ---
 name: pr
-description: "Use when writing a PR body."
+description: "PR body template: a Summary drawn as the smallest diagram that makes the point, Before and After evidence, and the Merge Danger door and blast radius. Use when opening a pull request, writing or rewriting a PR description, or updating one after the change grew."
 ---
 
 Use this template for writing the PR body:

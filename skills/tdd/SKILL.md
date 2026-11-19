@@ -27,7 +27,7 @@ No new test beats a bad test. Every skip still ends in proof: see [Prove skipped
 
 A **seam** is the public boundary you test at: the interface where you observe behavior without reaching inside. Tests live at seams, never against internals.
 
-**Test only at pre-agreed seams.** Take the seams from the spec or ticket when it names them. Otherwise write down the seams you propose, each with a one-line note on what it catches and what it misses, and confirm them with the user before writing any test. Inside implement-spec, confirm them with the coordinator instead, who asks the user if needed. Agreeing seams up front puts testing effort on the critical paths and complex logic instead of every edge case.
+**Test only at pre-agreed seams.** Take the seams from the spec or ticket when it names them. Otherwise write down the seams you propose, each with a one-line note on what it catches and what it misses, and confirm them with the user before writing any test. Inside the `implement` skill, confirm them with the coordinator instead, who asks the user if needed. Agreeing seams up front puts testing effort on the critical paths and complex logic instead of every edge case.
 
 When the shape of that interface is itself in question (how deep the module is, where the seam belongs, what the interface should expose), call the Skill tool with "codebase-design" for the vocabulary. It is a reference to consult, not a session to run.
 
@@ -82,7 +82,7 @@ Work without a new test still gets an executable check: a targeted script, a rep
 
 - Check the real artifact: run the feature, read the actual value, inspect the diff. "It compiles", a self-report, and cached output are proxies, not proof.
 - Verify a bug fix on the surface where the bug showed up. A unit test shows branch behavior, not that the bug is gone.
-- When the check needs the running app (a UI, CLI, or service flow), drive it with the repo's `verify-<app>` skill. If the repo has none, call the Skill tool with `create-verification-skill` first. Inside implement-spec, use the one the coordinator names.
+- When the check needs the running app (a UI, CLI, or service flow), drive it with the repo's `verify-<app>` skill. If the repo has none, call the Skill tool with `create-verification-skill` first. Inside the `implement` skill, use the one the coordinator names.
 - Script the check when you can, so it reruns the same way.
 - When a check fails, suspect the observation method before the system.
 

@@ -12,7 +12,7 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 - [diagnosing-bugs](./skills/diagnosing-bugs/SKILL.md)
 - [domain-modeling](./skills/domain-modeling/SKILL.md)
 - [grill-with-docs](./skills/grill-with-docs/SKILL.md)
-- [implement-spec](./skills/implement-spec/SKILL.md)
+- [implement](./skills/implement/SKILL.md)
 - [improve-codebase-architecture](./skills/improve-codebase-architecture/SKILL.md)
 - [pr](./skills/pr/SKILL.md)
 - [prototype](./skills/prototype/SKILL.md)
@@ -35,7 +35,7 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 
 [code-review](./skills/code-review/SKILL.md) takes its adversarial reviewer panel from the `interrogate` skill in pstack at commit [`ab1f702ce8e8b6557edb56b09f52cde8bfb83f17`](https://github.com/cursor/plugins/tree/ab1f702ce8e8b6557edb56b09f52cde8bfb83f17/pstack/skills/interrogate): the adversary brief, picking reviewers from different model families, and rerunning each finding before it is reported.
 
-[implement-spec](./skills/implement-spec/SKILL.md) takes its landing flow from the poteto-mode playbooks in pstack at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks): one owner and one PR per task off trunk, the ledger, the rebase-when-trunk-matters rule, and the forge-approval guardrail from Autopilot-full, the hand-off mode from Autopilot-stack, the per-task file plan from Multi-phase plan, and independent verdicts carried across a rebase by `git patch-id` and bottom-up landing from Shipping. Grouping tickets that share a file comes from pstack's `principle-separate-before-serializing-shared-state`.
+[implement](./skills/implement/SKILL.md) takes its landing flow from the poteto-mode playbooks in pstack at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks): one owner and one PR per task off trunk, the ledger, the rebase-when-trunk-matters rule, and the forge-approval guardrail from Autopilot-full, the hand-off mode from Autopilot-stack, the per-task file plan from Multi-phase plan, and independent verdicts carried across a rebase by `git patch-id` and bottom-up landing from Shipping. Grouping tickets that share a file comes from pstack's `principle-separate-before-serializing-shared-state`.
 
 [tdd](./skills/tdd/SKILL.md) takes its test-first rules from pstack at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/tdd): the bug-fix loop that sees red before the fix, when to skip a test, the closest checks that prove skipped work, the guardrails, and the evidence report. It also takes the two imagined edits that judge a test from [`principle-test-behavior-not-implementation`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-test-behavior-not-implementation), real-artifact proof from [`principle-prove-it-works`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-prove-it-works), and the red-then-green commit order and same-surface verification from the [Bug fix playbook](https://github.com/cursor/plugins/blob/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks/bug-fix.md). Seams, vertical slices, and the mocking and test examples stay from mattpocock/skills.
 

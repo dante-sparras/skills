@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: Test-driven development. Use when fixing a bug, building core logic test-first, writing a regression test, or the user mentions "red-green".
+description: Test-driven development. Use when fixing a bug, building core logic test-first, writing a regression or integration test, or the user mentions "red-green".
 ---
 
 # Test-Driven Development
@@ -27,7 +27,7 @@ No new test beats a bad test. Every skip still ends in proof: see [Prove skipped
 
 A **seam** is the public boundary you test at: the interface where you observe behavior without reaching inside. Tests live at seams, never against internals.
 
-**Test only at pre-agreed seams.** Take the seams from the spec or ticket when it names them. Otherwise write down the seams you propose, each with a one-line note on what it catches and what it misses, and confirm them with the user before writing any test. Agreeing seams up front puts testing effort on the critical paths and complex logic instead of every edge case.
+**Test only at pre-agreed seams.** Take the seams from the spec or ticket when it names them. Otherwise write down the seams you propose, each with a one-line note on what it catches and what it misses, and confirm them with the user before writing any test. Inside implement-spec, confirm them with the coordinator instead, who asks the user if needed. Agreeing seams up front puts testing effort on the critical paths and complex logic instead of every edge case.
 
 When the shape of that interface is itself in question (how deep the module is, where the seam belongs, what the interface should expose), call the Skill tool with "codebase-design" for the vocabulary. It is a reference to consult, not a session to run.
 

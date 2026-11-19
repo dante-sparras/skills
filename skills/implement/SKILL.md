@@ -1,6 +1,6 @@
 ---
 name: implement
-description: "Implement the result of /to-spec and /to-tickets in code."
+description: "Build and land a spec's tickets: one owner and one PR per task off main, an independent verdict on each head, and landing in dependency order or handing over an ordered merge list. Use when a person has a spec and its blocking tickets on the issue tracker, usually from /to-spec and /to-tickets, and wants them built and landed."
 disable-model-invocation: true
 ---
 

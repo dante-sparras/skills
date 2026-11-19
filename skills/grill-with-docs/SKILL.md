@@ -1,6 +1,6 @@
 ---
 name: grill-with-docs
-description: A relentless interview to sharpen a plan or design, which also builds the project glossary as we go.
+description: "Grill a plan or design to shared understanding and write the terms it settles into GLOSSARY.md as you go, by running the grilling and domain-modeling skills together. Use when a person wants a plan stress-tested and the project glossary updated in the same session."
 disable-model-invocation: true
 ---
 

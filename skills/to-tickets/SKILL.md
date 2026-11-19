@@ -1,6 +1,6 @@
 ---
 name: to-tickets
-description: Break a plan, spec, or the current conversation into a set of tracer-bullet tickets, each declaring its blocking edges, published to the configured tracker with native blocking links where it has them.
+description: "Break a plan, spec, or the current conversation into tracer-bullet tickets, each declaring what blocks it, and publish them to the configured tracker with native blocking links where it has them. Use when a person has a spec or plan ready to split into work for agents, usually after /to-spec and before /implement."
 disable-model-invocation: true
 ---
 

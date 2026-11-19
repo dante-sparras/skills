@@ -1,6 +1,6 @@
 ---
 name: create-verification-skill
-description: "Generate a project-local verification skill that launches the real app, drives it the way a user does, and captures evidence, in any language or platform. Use when proof needs the running app (a UI, CLI, TUI, or service flow) and the repo has no `verify-<app>` skill, or when asked to make one."
+description: "Generate a project-local `verify-<app>` skill that launches the real app, drives it the way a user does, and captures evidence, in any language or platform. Use when proving a change needs the running app (a UI, CLI, TUI, or service flow) and the repo has no `verify-<app>` skill yet, or when asked to make one."
 ---
 
 # Create a verification skill

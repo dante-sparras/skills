@@ -1,6 +1,6 @@
 ---
 name: eval-skill
-description: "Measure what a skill teaches models, find its instructions that hurt, and propose a shorter rewrite that keeps what it teaches. Use when asked to evaluate, benchmark, or trim a skill, to find which instructions models already know or are hurt by, or to test a rewrite of a skill."
+description: "Measure what a skill teaches models, find its instructions that hurt, and propose a rewrite that keeps what it teaches. Use when asked to evaluate, benchmark, or trim a skill, to find which instructions models already know or are hurt by, or to test a rewrite of a skill."
 ---
 
 # Evaluate skills
@@ -18,7 +18,7 @@ description: "Measure what a skill teaches models, find its instructions that hu
    Add the same role flags used in step 2 when they were not saved. Add `--score-only` when the user asks only for scores. Task evals load from `.skills/evals/<skill>.json`, and `--tasks <dir>` points elsewhere.
 4. A nonzero exit means a claim stayed unscored, the isolation check failed, or a skill crashed. Report the problems and the `report.md` path. Never report scores from a run whose isolation check failed.
 5. Read `report.md` from the run directory the script prints. For each skill, report what it teaches, which instructions hurt, which fail both ways, and the isolation result. Compare answerers where they differ, since every answerer answers every claim. Call out claims marked unstable, claims rejected by review, missing cells, failed rewrites, and fixes that still hurt. Say so when the panel used one model for every role.
-6. A proposal with status `proposed` is shorter, and every claim that passed with the original still passes with it. Offer it only when its task evals passed. When they did not run, write tasks per [EVALS.md](EVALS.md) and rerun with the same `--state`, which reuses every cached answer. Review the patch for intact headings, links, and instructions no claim covered. Ask the user before applying it. Then run `git apply --check -p2 <patch>` and `git apply -p2 <patch>`, followed by `python scripts/no-em-dashes.py skills`, `python scripts/no-semicolons.py skills`, and `python scripts/use-when-descriptions.py skills`.
+6. A proposal with status `proposed` changes at least one paragraph, and every claim that passed with the original still passes with it. It may be longer than the original, so report both sizes. Offer it only when its task evals passed. When they did not run, write tasks per [EVALS.md](EVALS.md) and rerun with the same `--state`, which reuses every cached answer. Review the patch for intact headings, links, and instructions no claim covered. Ask the user before applying it. Then run `git apply --check -p2 <patch>` and `git apply -p2 <patch>`, followed by `python scripts/no-em-dashes.py skills`, `python scripts/no-semicolons.py skills`, and `python scripts/use-when-descriptions.py skills`.
 
 [METHOD.md](METHOD.md) explains the claims, buckets, isolation proof, cache, and rewrite gate. Read it before changing the script or explaining a result.
 

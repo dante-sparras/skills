@@ -214,8 +214,8 @@ class SkillRun:
         skillfiles.apply_paragraph_edits(self.candidate, edits)
         before, after = skillfiles.size(self.before), skillfiles.size(self.candidate)
         summary.update(before_chars=before, proposed_chars=after)
-        if after >= before:
-            summary["proposal"] = {"status": "none", "reason": "the rewrite did not make the skill shorter"}
+        if not changed:
+            summary["proposal"] = {"status": "none", "reason": "the rewrite changed no paragraph"}
             return
         failures = self.steps.timed("checks", repo_checks)(self.context.root, self.candidate)
         if failures:
@@ -233,7 +233,7 @@ class SkillRun:
                        fixes={item["id"]: item["fixes"] for item in checked if item["fixes"]})
         if lost:
             summary["proposal"] = {"status": "rejected", "reason": "claims that passed with the original fail with "
-                                   "the shorter skill", "lost": lost}
+                                   "the rewritten skill", "lost": lost}
             return
         if unchecked:
             summary["proposal"] = {"status": "rejected", "reason": "some claims could not be rechecked",

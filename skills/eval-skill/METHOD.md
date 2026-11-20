@@ -60,9 +60,9 @@ The run directory holds `report.md`, `summary.json`, `calls.jsonl`, and one fold
 
 ## Rewrite gate
 
-Without `--score-only`, the implementer rewrites each paragraph that has a cut, fix, or rewrite decision as soon as all of that paragraph's claims are scored. The part of each kept span inside the paragraph must stay verbatim. A rewrite that fails three times leaves its paragraph as it was, and the report lists it. The script proposes the result only when:
+Without `--score-only`, the implementer rewrites each paragraph that has a cut, fix, or rewrite decision as soon as all of that paragraph's claims are scored. The part of each kept span inside the paragraph must stay verbatim. A rewrite that fails three times leaves its paragraph as it was, and the report lists it. A rewrite may make the skill longer, since making a failing instruction explicit often takes more words, and the report gives both sizes. The script proposes the result only when:
 
-1. The rewritten skill is shorter.
+1. The rewrite changed at least one paragraph.
 2. The repo's em dash, semicolon, and Use when checks pass on it.
 3. Every claim the original taught and every claim in a rewritten paragraph still passes with the rewritten skill. Each is asked again with the same question and judge and a fresh majority vote, and every grade that passed with the original must pass again, for every answerer. A recheck call that fails rejects the proposal too.
 

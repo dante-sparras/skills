@@ -1,0 +1,38 @@
+[
+  {
+    "id": "first-round",
+    "prompt": "Grill me on my plan to add a self-serve onboarding flow to our SaaS app before I start building it.",
+    "checks": [
+      "Asks several numbered questions in this one reply, not a single question",
+      "Gives a recommended answer under each question",
+      "Words each question so that answering yes accepts the recommended answer",
+      "No question in the reply depends on the answer to another question in the same reply",
+      "Ends the reply waiting for the user's answers, without drafting the plan or starting work"
+    ]
+  },
+  {
+    "id": "next-round",
+    "prompt": "You asked me two questions about the reporting dashboard. Q1: should it read from the Postgres read replica? Q2: is the audience the internal sales team? I answered yes to both. Keep grilling me.",
+    "checks": [
+      "Does not ask again about the data source or the audience",
+      "Asks new questions that build on the read replica and the sales team answers",
+      "Numbers the new questions and gives a recommended answer under each"
+    ]
+  },
+  {
+    "id": "environment-fact",
+    "prompt": "Stress-test my plan to move this repo's tests from Jest to Vitest.",
+    "checks": [
+      "Looks up a fact about the repo, such as the current Jest setup, with a tool or helper agent instead of asking the user for it",
+      "Still asks the user the questions that do not need the lookup in the same reply"
+    ]
+  },
+  {
+    "id": "confirm-before-acting",
+    "prompt": "I think I've answered everything about the CSV export: UTF-8, all columns, a button on the orders page, admins only.",
+    "checks": [
+      "Asks the user to confirm that the two of them share the same understanding before any implementation",
+      "Does not start implementing the export in this reply"
+    ]
+  }
+]

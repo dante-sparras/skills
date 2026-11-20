@@ -152,6 +152,15 @@ class Report(unittest.TestCase):
 
 
 class ParagraphEdits(unittest.TestCase):
+    def test_editing_the_first_paragraph_keeps_the_blank_line_after_the_frontmatter(self):
+        with tempfile.TemporaryDirectory() as folder:
+            skill = Path(folder) / "skills" / "demo"
+            skill.mkdir(parents=True)
+            (skill / "SKILL.md").write_text("---\nname: demo\n---\n\nOld first.\n\nSecond.\n", encoding="utf-8")
+            first = next(key for key, (_, text) in skillfiles.paragraphs(skill).items() if "Old first." in text)
+            skillfiles.apply_paragraph_edits(skill, {first: "New first."})
+            self.assertEqual((skill / "SKILL.md").read_text(encoding="utf-8"), "---\nname: demo\n---\n\nNew first.\n\nSecond.\n")
+
     def test_drops_a_paragraph_and_keeps_the_trailing_newline(self):
         with tempfile.TemporaryDirectory() as folder:
             skill = Path(folder) / "skills" / "demo"

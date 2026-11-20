@@ -108,7 +108,8 @@ def apply_paragraph_edits(skill_dir, edits):
             if paragraph.strip() and paragraph_key(part.source, paragraph) in edits:
                 replacement = edits[paragraph_key(part.source, paragraph)]
                 if replacement:
-                    replacement = replacement.strip() + paragraph[len(paragraph.rstrip()):]
+                    lead = paragraph[:len(paragraph) - len(paragraph.lstrip())]
+                    replacement = lead + replacement.strip() + paragraph[len(paragraph.rstrip()):]
             pieces.append(replacement + separator if replacement or not paragraph else "")
         text = part.front + "".join(pieces)
         if text.strip() and text != part.full:

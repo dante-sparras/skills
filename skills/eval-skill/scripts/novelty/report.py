@@ -109,6 +109,10 @@ def skill_section(summary, answerers):
             tasks = proposal["task_evals"]
             detail = f" ({tasks['reason']})" if tasks.get("reason") else ""
             lines.append(f"Patch: {proposal['patch']}. Task evals: {tasks['status']}{detail}.")
+        if proposal.get("written"):
+            lines.append(f"Written to {proposal['written']}.")
+        if proposal.get("not_written"):
+            lines.append(f"Not written, because {proposal['not_written']}.")
     lines.append("")
     lines += table(("Step", "Start s", "End s", "Seconds"),
                    [(step, entry.get("start"), entry.get("end"), entry.get("seconds")) for step, entry in summary["steps"].items()])

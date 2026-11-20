@@ -46,6 +46,7 @@ class Script:
         self.repaired_question = None
         self.task_judges_broken = False
         self.rewrite = "[[DROP_PARAGRAPH]]"
+        self.lose_on_recheck = False
 
     def count(self, kind):
         with self.lock:
@@ -102,6 +103,9 @@ def fake_cli(name, script):
                     script.count(f"{name}-failed")
                     raise CallError("broken on purpose")
                 leak = f" {script.leak}" if script.leak and not with_skill else ""
+                if script.lose_on_recheck and with_skill and "check the route" in prompt:
+                    script.count(kind)
+                    return Reply("LOST plan", (f"{seat.model}-{script.model}",))
                 text = ("WITH " if with_skill else "WITHOUT ") + f"plan {script.count('variant')}" + leak
             script.count(kind)
             return Reply(text, (f"{seat.model}-{script.model}",))
@@ -157,6 +161,34 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(summary["proposal"]["status"], "proposed")
         patch = Path(summary["proposal"]["patch"]).read_text(encoding="utf-8")
         self.assertIn("+A 404 status code means the resource was not found, so check the route", patch)
+
+    def test_write_replaces_the_skill_once_task_evals_pass(self):
+        self.fail_the_fact_claim()
+        self.write_tasks()
+        self.script.rewrite = "A 404 status code means the resource was not found, so check the route before you retry."
+        summary, _ = self.run_demo("--write", str(self.root / "skills"))
+        written = (self.root / "skills" / "demo" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertEqual(summary["proposal"]["written"], str(self.root / "skills" / "demo"))
+        self.assertIn("so check the route before you retry.", written)
+        self.assertIn("---\n\nBefore you rename a column", written)
+
+    def test_write_leaves_the_skill_alone_without_task_evals(self):
+        self.fail_the_fact_claim()
+        self.script.rewrite = "A 404 status code means the resource was not found, so check the route before you retry."
+        summary, _ = self.run_demo("--write", str(self.root / "skills"))
+        self.assertEqual(summary["proposal"]["status"], "proposed")
+        self.assertNotIn("written", summary["proposal"])
+        self.assertIn("task evals", summary["proposal"]["not_written"])
+        self.assertEqual((self.root / "skills" / "demo" / "SKILL.md").read_text(encoding="utf-8"), SKILL)
+
+    def test_write_leaves_the_skill_alone_when_the_proposal_is_rejected(self):
+        self.fail_the_fact_claim()
+        self.write_tasks()
+        self.script.rewrite = "A 404 status code means the resource was not found, so check the route before you retry."
+        self.script.lose_on_recheck = True
+        summary, _ = self.run_demo("--write", str(self.root / "skills"))
+        self.assertEqual(summary["proposal"]["status"], "rejected")
+        self.assertEqual((self.root / "skills" / "demo" / "SKILL.md").read_text(encoding="utf-8"), SKILL)
 
     def test_a_rewrite_that_changes_nothing_proposes_nothing(self):
         self.fail_the_fact_claim()

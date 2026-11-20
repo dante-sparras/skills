@@ -69,3 +69,5 @@ Without `--score-only`, the implementer rewrites each paragraph that has a cut, 
 The recheck also asks each claim that hurt, and the report says whether its fix worked. A fix that still hurts does not block the proposal, since the original hurt the same way.
 
 A proposal then runs [task evals](EVALS.md) when the task folder has a file for the skill. A regression rejects it. A task eval call that fails marks the task evals failed and keeps the scores.
+
+With `--write <dir>`, the script copies a proposal over `<dir>/<skill>` once its task evals passed. It never writes a rejected candidate, or a proposal whose task evals did not run or failed, and the report says why.

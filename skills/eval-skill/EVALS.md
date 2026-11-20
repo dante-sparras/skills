@@ -1,6 +1,6 @@
 # Compare the original and the candidate on tasks
 
-Claims test single instructions. Task evals test whether the shorter skill still does whole jobs. The script runs them in the same isolated CLIs as the claims, so neither version can pick up an installed skill.
+Claims test single instructions. Task evals test whether the rewritten skill still does whole jobs. The script runs them in the same isolated CLIs as the claims, so neither version can pick up an installed skill.
 
 1. Use the skill's existing task evals in `.skills/evals/<skill>.json` when available. Add a representative case for any changed behavior they miss. If the skill has none, define tasks and checks before running either version. Cover the changed facts, actions, and ordering requirements.
 2. Write the tasks to `.skills/evals/<skill>.json` as a list of objects with `id`, `prompt`, and `checks`. A prompt is a user request. Each check is one observable thing the reply commits to, such as an action, its order, a name, or a value.

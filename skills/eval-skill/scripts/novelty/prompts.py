@@ -8,7 +8,8 @@ ANSWER_FOOTER = (
     "Keep the whole answer under 250 words."
 )
 REWRITE_GUARD = (
-    "\n\nMake the paragraph shorter. Keep every instruction and detail that the request gives no decision for, "
+    "\n\nChange only what the request's decisions ask for, even when that makes the paragraph longer. "
+    "Keep every instruction and detail that the request gives no decision for, "
     "including headings and links. "
     "If nothing in the paragraph remains, return exactly [[DROP_PARAGRAPH]]."
 )

@@ -45,6 +45,7 @@ class Script:
         self.flag_question = None
         self.repaired_question = None
         self.task_judges_broken = False
+        self.rewrite = "[[DROP_PARAGRAPH]]"
 
     def count(self, kind):
         with self.lock:
@@ -55,7 +56,7 @@ class Script:
 def judge_reply(script, prompt):
     expected = prompt.split("Expected behavior:\n", 1)[1]
     reply = prompt.split("Agent reply:\n", 1)[1]
-    passed = "KNOWN" in expected or reply.startswith("WITH ")
+    passed = ("KNOWN" in expected or reply.startswith("WITH ")) and "FAILS" not in expected
     if script.flaky and "KNOWN" in expected and reply.startswith("WITHOUT"):
         passed = script.count("flaky-judge") % 2 == 1
     verdict = "pass" if passed else "fail"
@@ -94,7 +95,7 @@ def fake_cli(name, script):
                 kind = "canary"
                 text = re.search(r"isomark[0-9a-f]{8}", prompt).group(0) if with_skill else "NONE"
             elif system.startswith("You edit one paragraph"):
-                kind, text = "rewrite", "[[DROP_PARAGRAPH]]"
+                kind, text = "rewrite", script.rewrite
             else:
                 kind = "answer-with" if with_skill else "answer-without"
                 if name in script.broken:
@@ -129,7 +130,7 @@ class Pipeline(unittest.TestCase):
             result, _, passed = run_skills(args, ["demo"], self.adapters)
         return result["skills"][0], passed
 
-    def test_scores_every_answerer_and_proposes_a_shorter_skill(self):
+    def test_scores_every_answerer_and_proposes_a_rewrite(self):
         summary, passed = self.run_demo()
         self.assertTrue(passed)
         self.assertEqual(summary["buckets"]["lenient"], {"already_known": 1, "hurts": 0, "teaches": 1, "fails_both": 0})
@@ -141,6 +142,28 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(summary["proposal"]["status"], "proposed")
         patch = Path(summary["proposal"]["patch"]).read_text(encoding="utf-8")
         self.assertIn("-A 404 status code means the resource was not found.", patch)
+
+    def fail_the_fact_claim(self):
+        claims = [CLAIMS[0], dict(CLAIMS[1], expected="FAILS The resource was not found.")]
+        patcher = mock.patch(f"{__name__}.CLAIMS", claims)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_proposes_a_rewrite_that_makes_the_skill_longer(self):
+        self.fail_the_fact_claim()
+        self.script.rewrite = "A 404 status code means the resource was not found, so check the route before you retry."
+        summary, _ = self.run_demo()
+        self.assertGreater(summary["proposed_chars"], summary["before_chars"])
+        self.assertEqual(summary["proposal"]["status"], "proposed")
+        patch = Path(summary["proposal"]["patch"]).read_text(encoding="utf-8")
+        self.assertIn("+A 404 status code means the resource was not found, so check the route", patch)
+
+    def test_a_rewrite_that_changes_nothing_proposes_nothing(self):
+        self.fail_the_fact_claim()
+        self.script.rewrite = "A 404 status code means the resource was not found."
+        summary, _ = self.run_demo()
+        self.assertEqual(summary["proposal"]["status"], "none")
+        self.assertNotIn("patch", summary["proposal"])
 
     def assert_leak_fails(self, leak):
         markers = self.root / "state" / "v6" / "skills" / "demo" / "markers.json"

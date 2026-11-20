@@ -243,6 +243,13 @@ class SkillRun:
         patch = write_patch(self.output, self.name)
         summary["proposal"] = {"status": "rejected" if tasks["status"] == "regressed" else "proposed",
                                "patch": str(patch), "task_evals": tasks}
+        if self.args.write and summary["proposal"]["status"] == "proposed":
+            if tasks["status"] == "passed":
+                destination = self.args.write / self.name
+                shutil.copytree(self.candidate, destination, dirs_exist_ok=True)
+                summary["proposal"]["written"] = str(destination)
+            else:
+                summary["proposal"]["not_written"] = f"task evals {tasks['status']}"
 
     def task_evals(self):
         tasks, reason = load_tasks(task_dir(self.args, self.context.root), self.name)

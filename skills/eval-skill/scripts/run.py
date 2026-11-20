@@ -37,6 +37,9 @@ def parse_args(argv):
     runner.add_argument("--score-only", action="store_true")
     runner.add_argument("--tasks", type=Path,
                         help="Directory with <skill>.json task evals. Defaults to .skills/evals under --root.")
+    runner.add_argument("--write", type=Path,
+                        help="Copy each proposed skill whose task evals passed to WRITE/<skill>, overwriting its files. "
+                             "Pass skills to update this repo.")
     panel = commands.add_parser("panel", help="Show, list, check, or save the panel.")
     add_panel_options(panel)
     panel.add_argument("--list", action="store_true", help="List the models and efforts each CLI offers.")
@@ -51,6 +54,8 @@ def parse_args(argv):
             parser.error("Pass --skill or --all")
         if args.max_claims < 1 or args.hedge <= 0 or args.samples < 1 or args.samples % 2 == 0:
             parser.error("--hedge and --max-claims must be positive, and --samples must be an odd positive number")
+        if args.write and args.score_only:
+            parser.error("--write needs a rewrite, so drop --score-only")
     return args
 
 

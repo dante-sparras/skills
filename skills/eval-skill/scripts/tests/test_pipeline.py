@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest import mock
 
 import run
-from novelty import seats
+from novelty import seats, skillfiles
 from novelty.clis import Adapter, CallError, Reply
 from novelty.pipeline import run_skills
 from novelty.prompts import CANARY_QUESTION, DRAFT_SYSTEM, JUDGE_SYSTEM, PROBE_PROMPT, REVIEW_SYSTEM
@@ -44,6 +44,7 @@ class Script:
         self.flaky = False
         self.flag_question = None
         self.repaired_question = None
+        self.task_judges_broken = False
 
     def count(self, kind):
         with self.lock:
@@ -82,6 +83,11 @@ def fake_cli(name, script):
                 kind = "review"
                 leaks = script.flag_question is not None and f"Question:\n{script.flag_question}\n" in prompt
                 text = json.dumps({"leaks": leaks, "faithful": True, "reason": "r"})
+            elif system == JUDGE_SYSTEM and "Checks:\n" in prompt:
+                kind = "task-judge"
+                if script.task_judges_broken:
+                    raise CallError("task judge broken on purpose")
+                text = json.dumps({"checks": [{"result": "pass", "reason": "r"}]})
             elif system == JUDGE_SYSTEM:
                 kind, text = "judge", judge_reply(script, prompt)
             elif CANARY_QUESTION in prompt:
@@ -184,6 +190,42 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(self.script.calls["repair"], 1)
         self.assertEqual(summary["claims"], 2)
         self.assertEqual(summary["rejected_claims"], [])
+
+    def write_tasks(self):
+        tasks = self.root / ".skills" / "evals" / "demo.json"
+        tasks.parent.mkdir(parents=True)
+        tasks.write_text(json.dumps([{"id": "rename", "prompt": "Rename cust_id.", "checks": ["Lists callers"]}]))
+
+    def test_task_evals_run_from_the_default_folder(self):
+        self.write_tasks()
+        summary, _ = self.run_demo()
+        self.assertEqual(summary["proposal"]["task_evals"]["status"], "passed")
+
+    def test_a_task_eval_failure_keeps_the_scores(self):
+        self.write_tasks()
+        self.script.task_judges_broken = True
+        summary, _ = self.run_demo()
+        self.assertEqual(summary["buckets"]["lenient"]["teaches"], 1)
+        self.assertEqual(summary["proposal"]["task_evals"]["status"], "failed")
+
+    def test_a_crashing_skill_leaves_the_others_in_the_report(self):
+        (self.root / "skills" / "broken").mkdir()
+        (self.root / "skills" / "broken" / "SKILL.md").write_text(SKILL.replace("demo", "broken"), encoding="utf-8")
+        original = skillfiles.paragraphs
+
+        def paragraphs(directory):
+            if "broken" in str(directory):
+                raise SystemExit("no claims were drafted")
+            return original(directory)
+
+        args = run.parse_args(["run", "--skill", "demo", "--skill", "broken", "--root", str(self.root),
+                               "--state", str(self.root / "state"), "--score-only"])
+        with mock.patch("novelty.pipeline.log"), mock.patch.object(skillfiles, "paragraphs", paragraphs):
+            result, report, passed = run_skills(args, ["demo", "broken"], self.adapters)
+        self.assertFalse(passed)
+        self.assertEqual([summary["skill"] for summary in result["skills"]], ["demo"])
+        self.assertTrue(any("broken" in failure for failure in result["failures"]))
+        self.assertTrue(report.is_file())
 
     def test_a_question_that_still_leaks_is_dropped(self):
         self.script.flag_question = CLAIMS[1]["question"]

@@ -44,9 +44,10 @@ def combine(buckets):
     return next(name for name in PRECEDENCE if name in buckets)
 
 
-def decide(kind, lenient, strict):
+def decide(kind, lenient, strict, partial=False):
+    """A cut needs every answerer to know the claim, so a claim missing a cell is kept."""
     decision = DECISIONS[(lenient, strict)]
-    return "keep" if kind == "process" and decision == "cut" else decision
+    return "keep" if decision == "cut" and (kind == "process" or partial) else decision
 
 
 def taught_scales(item):
@@ -90,13 +91,27 @@ def make_row(claim, cells, missing):
         row[f"bucket_{scale}"] = combine([cell[f"bucket_{scale}"] for cell in cells.values()])
         source = next(cell for cell in cells.values() if cell[f"bucket_{scale}"] == row[f"bucket_{scale}"])
         row[f"with_{scale}_reason"] = source["with"][f"{scale}_reason"]
-    row["decision"] = decide(claim["kind"], row["bucket_lenient"], row["bucket_strict"])
+    row["decision"] = decide(claim["kind"], row["bucket_lenient"], row["bucket_strict"], partial=bool(missing))
     row["unstable"] = {seat: cell["unstable"] for seat, cell in cells.items() if cell["unstable"]}
     return row
 
 
 def without_answers(row):
     return [answer for cell in row.get("cells", {}).values() for answer in cell["without"]["answers"]]
+
+
+def judged(context, answerer, tag, prompt, parse, kind, skill):
+    """Grade with the answerer's judge, falling back to seats from other families."""
+    errors = []
+    for judge in context.panel.judges_for(answerer):
+        try:
+            key = digest(tag, PROTOCOL, context.identities.of(judge), JUDGE_SYSTEM, prompt)
+            value, _ = context.cache.get("grades", key, lambda: context.caller.call(
+                judge, JUDGE_SYSTEM, prompt, parse, kind, skill))
+            return value, judge
+        except CallError as error:
+            errors.append(str(error))
+    raise CallError(f"no judge could grade: {errors[-1]}")
 
 
 def bucket_counts(items):
@@ -111,6 +126,7 @@ def by_answerer(rows, answerers):
 
 class Scorer:
     def __init__(self, context, skill):
+        self.context = context
         self.caller = context.caller
         self.cache = context.cache
         self.panel = context.panel
@@ -127,17 +143,12 @@ class Scorer:
             answerer, TASK_SYSTEM, arm_prompt(question, bundle), nonempty, f"answer-{arm}", self.skill))
 
     def grade(self, claim, answer, answerer):
-        prompt = judge_prompt(claim, answer)
-        errors = []
-        for judge in self.panel.judges_for(answerer):
-            try:
-                key = digest("grade", PROTOCOL, self.identities.of(judge), JUDGE_SYSTEM, prompt)
-                grade, _ = self.cache.get("grades", key, lambda: self.caller.call(
-                    judge, JUDGE_SYSTEM, prompt, parse_grade, "judge", self.skill))
-                return dict(grade, judge=judge.key)
-            except CallError as error:
-                errors.append(str(error))
-        raise CallError(f"no judge could grade claim {claim['id']}: {errors[-1]}")
+        try:
+            grade, judge = judged(self.context, answerer, "grade", judge_prompt(claim, answer), parse_grade,
+                                  "judge", self.skill)
+        except CallError as error:
+            raise CallError(f"claim {claim['id']}: {error}")
+        return dict(grade, judge=judge.key)
 
     def sample(self, claim, arm, answerer, bundle, context, index):
         answer, cached = self.answer(claim["question"], arm, answerer, bundle, context, index)
@@ -164,16 +175,25 @@ class Scorer:
         return make_row(claim, cells, missing)
 
     def recheck(self, row, bundle, version):
-        statuses = {}
+        """Ask the claim again with the candidate. Every scale that passed with the original must still pass,
+        and a scale that hurt is reported as fixed or still hurting."""
+        statuses, fixes = {}, {}
         for seat in self.panel.answerers:
             cell = row["cells"].get(seat.key)
-            scales = taught_scales(cell or {})
-            if not scales:
+            if not cell:
+                continue
+            hold = [scale for scale in SCALES if cell[f"bucket_{scale}"] in ("teaches", "already_known")]
+            hurt = [scale for scale in SCALES if cell[f"bucket_{scale}"] == "hurts"]
+            if not hold and not hurt:
                 continue
             try:
                 result = self.vote(row, "with", seat, bundle, [version])
-                statuses[seat.key] = "held" if all(result[scale] == "pass" for scale in scales) else "lost"
             except CallError as error:
                 statuses[seat.key] = f"unchecked: {error}"[:200]
-        status = "lost" if any(value != "held" for value in statuses.values()) else "held"
-        return {"id": row["id"], "status": status, "answerers": statuses}
+                continue
+            statuses[seat.key] = "held" if all(result[scale] == "pass" for scale in hold) else "lost"
+            if hurt:
+                fixes[seat.key] = "fixed" if all(result[scale] == "pass" for scale in hurt) else "still hurts"
+        values = set(statuses.values())
+        status = "lost" if "lost" in values else "held" if values <= {"held"} else "unchecked"
+        return {"id": row["id"], "status": status, "answerers": statuses, "fixes": fixes}

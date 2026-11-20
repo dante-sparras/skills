@@ -42,6 +42,13 @@ class PanelLayers(unittest.TestCase):
         with self.assertRaises(SystemExit):
             self.resolve("--judge", "claude=claude:opus:high")
 
+    def test_a_drafter_needs_a_judge_for_its_family_to_review_claims(self):
+        with self.assertRaises(SystemExit):
+            self.resolve("--answerer", "opencode:anthropic/claude-sonnet-5-5:default",
+                         "--drafter", "opencode:google/gemini-3-pro:default")
+        panel = self.resolve("--answerer", "claude:sonnet:low", "--drafter", "codex:gpt-6.2-sol:low")
+        self.assertEqual(panel.judges_for(panel.drafter)[0].key, "claude:sonnet:low")
+
     def test_one_model_for_every_role_is_allowed_and_noted(self):
         panel = self.resolve("--model", "grok:grok-4.7:low")
         self.assertTrue(panel.single)

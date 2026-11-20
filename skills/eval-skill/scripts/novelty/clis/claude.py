@@ -61,6 +61,7 @@ class Claude(Adapter):
                 ["claude", "-p", "--model", "haiku", "--safe-mode", "--tools", "", "--no-session-persistence",
                  "--disable-slash-commands", "--strict-mcp-config", "Reply OK."],
                 cwd=folder, capture_output=True, timeout=120, check=False,
+                env=child_env(Path.home(), CLAUDE_CONFIG_DIR=str(self.config_dir)),
             )
         finally:
             shutil.rmtree(folder, ignore_errors=True)

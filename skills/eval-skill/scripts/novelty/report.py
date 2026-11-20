@@ -66,10 +66,14 @@ def claim_notes(summary):
     for item in summary["unreviewed_claims"]:
         lines.append(f"- Kept without review: {item['span'][:80]!r}. {item['reason']}")
     for item in summary["missing_cells"]:
-        lines.append(f"- Claim {item['claim']} has no score from {item['answerer']}: {item['error']}")
+        lines.append(f"- Claim {item['claim']} has no score from {item['answerer']}, so it cannot be cut: {item['error']}")
     for claim, cells in summary["unstable"].items():
         lines.append(f"- Claim {claim} samples disagreed: " +
                      ", ".join(f"{seat} {', '.join(arms)}" for seat, arms in cells.items()))
+    for item in summary.get("rewrite_failures", []):
+        lines.append(f"- Rewrite failed, paragraph left as it was: {item['paragraph']!r}. {item['error']}")
+    for claim, seats in summary.get("fixes", {}).items():
+        lines.append(f"- Claim {claim} fix: " + ", ".join(f"{seat} {status}" for seat, status in seats.items()))
     return lines
 
 
@@ -95,10 +99,16 @@ def skill_section(summary, answerers):
         lines += [""] + notes
     proposal = summary.get("proposal")
     if proposal:
-        lines += ["", f"Proposal: {proposal['status']}. {proposal.get('reason', '')} "
-                      f"{summary.get('before_chars')} to {summary.get('proposed_chars')} characters."]
+        sentences = [f"Proposal: {proposal['status']}."]
+        if proposal.get("reason"):
+            sentences.append(proposal["reason"][0].upper() + proposal["reason"][1:] + ".")
+        if summary.get("before_chars") is not None:
+            sentences.append(f"{summary['before_chars']} to {summary['proposed_chars']} characters.")
+        lines += ["", " ".join(sentences)]
         if proposal.get("patch"):
-            lines.append(f"Patch: {proposal['patch']}. Task evals: {proposal['task_evals']['status']}.")
+            tasks = proposal["task_evals"]
+            detail = f" ({tasks['reason']})" if tasks.get("reason") else ""
+            lines.append(f"Patch: {proposal['patch']}. Task evals: {tasks['status']}{detail}.")
     lines.append("")
     lines += table(("Step", "Start s", "End s", "Seconds"),
                    [(step, entry.get("start"), entry.get("end"), entry.get("seconds")) for step, entry in summary["steps"].items()])

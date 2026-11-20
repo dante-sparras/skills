@@ -129,14 +129,15 @@ class Panel:
         self.answerers = [Seat.parse(text) for text in merged.get("answerers", [])]
         if not self.answerers or len(set(self.answerers)) != len(self.answerers):
             raise SystemExit("Give one or more answerers, each seat once")
-        families = list(dict.fromkeys(seat.family for seat in self.answerers))
+        self.drafter = Seat.parse(merged.get("drafter") or merged["answerers"][0])
+        self.implementer = Seat.parse(merged.get("implementer") or self.drafter.key)
+        families = list(dict.fromkeys([*(seat.family for seat in self.answerers), self.drafter.family]))
         judges = merged.get("judges", {})
         missing = [family for family in families if family not in judges]
         if missing:
-            raise SystemExit(f"Give a judge for {', '.join(missing)} answers")
+            raise SystemExit(f"Give a judge for {', '.join(missing)} with --judge <family>=<seat>. "
+                             "The judge for the drafter's family also reviews its claims.")
         self.judges = {family: Seat.parse(judges[family]) for family in families}
-        self.drafter = Seat.parse(merged.get("drafter") or merged["answerers"][0])
-        self.implementer = Seat.parse(merged.get("implementer") or self.drafter.key)
         self.limits = {cli: {"parallel": DEFAULT_PARALLEL, **merged.get("limits", {}).get(cli, {})} for cli in CLIS}
         for cli, limit in self.limits.items():
             if set(limit) != {"parallel"} or not isinstance(limit["parallel"], int) or limit["parallel"] < 1:

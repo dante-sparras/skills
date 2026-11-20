@@ -48,12 +48,19 @@ Example of shape, not of content. Skill text says "Before you rename a column, w
 """
 
 
-def arm_prompt(question, bundle):
-    if bundle is None:
-        return f"Task:\n{question}{ANSWER_FOOTER}"
+def arm_prompt(question, bundle, base=""):
+    """base holds the skills the tested skill builds on. Both arms get it, and only the with-skill arm gets bundle."""
+    if not base:
+        if bundle is None:
+            return f"Task:\n{question}{ANSWER_FOOTER}"
+        return (
+            "Follow the skill below whenever it applies to the task.\n\n"
+            f"<skill>\n{bundle}</skill>\n\nTask:\n{question}{ANSWER_FOOTER}"
+        )
+    skill = "" if bundle is None else f"<skill>\n{bundle}</skill>\n\n"
     return (
-        "Follow the skill below whenever it applies to the task.\n\n"
-        f"<skill>\n{bundle}</skill>\n\nTask:\n{question}{ANSWER_FOOTER}"
+        "Follow the skills and files below whenever they apply to the task.\n\n"
+        f"{base}\n\n{skill}Task:\n{question}{ANSWER_FOOTER}"
     )
 
 

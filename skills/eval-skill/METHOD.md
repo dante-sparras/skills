@@ -10,7 +10,14 @@ A reviewer from another model family than the drafter then reads each new claim 
 
 ## Arms and grades
 
-Every answerer answers both arms of every claim, so each model's results cover the same claims. The with-skill arm gets the whole skill text in the user message. The without-skill arm gets the task alone. Neither prompt contains the expected behavior.
+Every answerer answers both arms of every claim, so each model's results cover the same claims. The with-skill arm gets the skill's description and the whole skill text in the user message. The without-skill arm gets the task alone. Neither prompt contains the expected behavior.
+
+A skill can build on other skills. Both arms then get those dependencies, so a claim scores what the skill adds on top of them, not what the dependencies already teach. The script finds them in the skill's own files:
+
+- A sentence that mentions the Skill tool and names another skill in double quotes or backticks, as in call the Skill tool with "grilling", loads that whole skill with its description. Skills a dependency loads in turn are left out, since the agent reaches them only when it gets that far.
+- A relative link into another skill's folder, as in `../setup-skills/MODEL-ROLES.md`, loads that one file. Links inside loaded files are followed too.
+
+Claims and rewrites come only from the tested skill, so the dependencies stay fixed. The report lists them, or says the without-skill arm is the bare model.
 
 One judge grades each answer. It sees the task, the expected behavior, and one answer, never the arm. Lenient grading checks the general idea. Strict grading checks exact names, values, and order.
 
@@ -42,7 +49,7 @@ Every run proves the isolation:
 
 - Each run writes a new marker word into the skill text the with-skill arm receives.
 - Each answerer gets a canary question asking for the marker, once with the skill and once without. The with-skill arm must return the marker, which proves the skill text arrives. The without-skill arm must not.
-- Every without-skill answer the run uses, cached or new, is searched for every marker the skill has ever had and for references to the skill's name. A reference is the name in a skill path, a slash command, backticks, `<name> skill`, `Skill(<name>)`, or `name: <name>`. The bare name does not count, since names like `research` or `code-review` are ordinary prose. Drafted questions are stricter, and a hyphenated name alone rejects one.
+- Every without-skill answer the run uses, cached or new, is searched for every marker the skill has ever had and for references to the skill's name. A reference is the name in a skill path, a slash command, backticks, `<name> skill`, `Skill(<name>)`, or `name: <name>`. The bare name does not count, since names like `research` or `code-review` are ordinary prose. A reference the dependencies themselves contain does not count, since it reached the answer through them. Drafted questions are stricter, and a hyphenated name alone rejects one.
 
 Any hit fails the run, and the report lists it.
 
@@ -50,7 +57,7 @@ Any hit fails the run, and the report lists it.
 
 The state directory defaults to `~/.cache/eval-skill`. At the start of every run, each seat answers one tiny probe, and the script records the model it reports. Every cache key uses that model. Claude Code and Grok Build report the model that actually answered, so when an alias like `sonnet` moves to a newer model, the old answers stop matching and the claims are asked again. Codex and opencode report only the seat's model name, so when the model behind one of their names changes, pass a fresh `--state`. The report lists the model behind each seat.
 
-Without-skill answers are keyed by model, prompt, question, and sample number. With-skill answers are also keyed by the paragraphs the claim's span covers. Grades are keyed by the judge's model and the full grading prompt. Reviews are keyed by the reviewer's model and the claim. A rerun reuses the claims from unchanged paragraphs and drafts only new or changed ones, keeping a claim's question when the new draft points at the same span. Only claims in changed paragraphs reach a model again. If an edit changes how another paragraph reads, pass a fresh `--state` for a full evaluation.
+Without-skill answers are keyed by model, prompt, question, dependencies, and sample number. With-skill answers are also keyed by the description and by the paragraphs the claim's span covers. Grades are keyed by the judge's model and the full grading prompt. Reviews are keyed by the reviewer's model and the claim. A rerun reuses the claims from unchanged paragraphs and drafts only new or changed ones, keeping a claim's question when the new draft points at the same span. Only claims in changed paragraphs reach a model again. If an edit changes how another paragraph reads, pass a fresh `--state` for a full evaluation.
 
 ## Retries, speed, and timing
 

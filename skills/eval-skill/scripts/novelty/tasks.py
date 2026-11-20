@@ -22,22 +22,22 @@ def load_tasks(directory, skill):
     return tasks, None
 
 
-def run_task(context, skill, task, seat, bundle):
+def run_task(context, skill, task, seat, bundle, base=""):
     caller, cache, identities = context.caller, context.cache, context.identities
-    key = digest("task", PROTOCOL, identities.of(seat), TASK_SYSTEM, task, bundle)
-    answer, _ = cache.get("tasks", key, lambda: caller.call(
-        seat, TASK_SYSTEM, arm_prompt(task["prompt"], bundle), nonempty, "task", skill))
+    prompt = arm_prompt(task["prompt"], bundle, base)
+    key = digest("task", PROTOCOL, identities.of(seat), TASK_SYSTEM, task, bundle, *([prompt] if base else []))
+    answer, _ = cache.get("tasks", key, lambda: caller.call(seat, TASK_SYSTEM, prompt, nonempty, "task", skill))
     checks, _ = judged(context, seat, "checks", task_judge_prompt(task, answer), parse_checks(len(task["checks"])),
                        "task-judge", skill)
     return checks
 
 
-def compare(context, skill, tasks, versions):
+def compare(context, skill, tasks, versions, base=""):
     answerers = context.panel.answerers
     jobs = [(task, seat, version) for task in tasks for seat in answerers for version in versions]
     results = dict(zip(
         [(task["id"], seat.key, version) for task, seat, version in jobs],
-        context.claims.map(lambda job: run_task(context, skill, job[0], job[1], versions[job[2]]), jobs),
+        context.claims.map(lambda job: run_task(context, skill, job[0], job[1], versions[job[2]], base), jobs),
     ))
     regressions = [
         {"task": task["id"], "seat": seat.key, "check": index, "reason": new["reason"]}

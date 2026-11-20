@@ -125,7 +125,10 @@ def by_answerer(rows, answerers):
 
 
 class Scorer:
-    def __init__(self, context, skill):
+    def __init__(self, context, skill, base="", fixed=""):
+        """base is the dependency text both arms get. fixed digests the with-arm text no claim covers."""
+        self.base = base
+        self.fixed = fixed
         self.context = context
         self.caller = context.caller
         self.cache = context.cache
@@ -137,10 +140,10 @@ class Scorer:
         self.skill = skill
 
     def answer(self, question, arm, answerer, bundle, context, index):
-        key = digest("answer", PROTOCOL, self.identities.of(answerer), TASK_SYSTEM, arm_prompt(question, None),
+        key = digest("answer", PROTOCOL, self.identities.of(answerer), TASK_SYSTEM, arm_prompt(question, None, self.base),
                      None if bundle is None else context, index)
         return self.cache.get("without" if bundle is None else "with", key, lambda: self.caller.call(
-            answerer, TASK_SYSTEM, arm_prompt(question, bundle), nonempty, f"answer-{arm}", self.skill))
+            answerer, TASK_SYSTEM, arm_prompt(question, bundle, self.base), nonempty, f"answer-{arm}", self.skill))
 
     def grade(self, claim, answer, answerer):
         try:
@@ -164,7 +167,7 @@ class Scorer:
 
     def claim(self, claim, bundle):
         futures = {(seat.key, arm): self.arms.submit(self.vote, claim, arm, seat, bundle if arm == "with" else None,
-                                                     claim["_blocks"])
+                                                     [*claim["_blocks"], self.fixed])
                    for seat in self.panel.answerers for arm in ARMS}
         cells, missing = {}, []
         for seat in self.panel.answerers:

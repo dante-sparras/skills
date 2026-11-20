@@ -41,13 +41,13 @@ class Markers:
         return [marker for marker in self.all if marker.lower() in lowered]
 
 
-def canary(caller, seat, arm, bundle, marker, skill):
+def canary(caller, seat, arm, bundle, marker, skill, base=""):
     def parse(text):
         if arm == "with" and marker.lower() not in text.lower():
             raise CallError("the with-skill arm did not echo the marker")
         return text
 
-    prompt = arm_prompt(CANARY_QUESTION, bundle if arm == "with" else None)
+    prompt = arm_prompt(CANARY_QUESTION, bundle if arm == "with" else None, base)
     try:
         text = caller.call(seat, TASK_SYSTEM, prompt, parse, "canary", skill, repair=False)
         return {"seat": seat.key, "arm": arm, "answer": text[:300], "ok": True}
@@ -55,13 +55,15 @@ def canary(caller, seat, arm, bundle, marker, skill):
         return {"seat": seat.key, "arm": arm, "error": str(error), "ok": False}
 
 
-def verdict(name, markers, rows, canaries):
+def verdict(name, markers, rows, canaries, base=""):
+    """A reference to the skill that its dependencies already contain reached the without arm through them."""
     problems = []
     checked = 0
     for row in rows:
         for answer in without_answers(row):
             checked += 1
-            for found in dict.fromkeys([*markers.found_in(answer), *name_hits(answer, name)]):
+            hits = [hit for hit in name_hits(answer, name) if hit.lower() not in base.lower()]
+            for found in dict.fromkeys([*markers.found_in(answer), *hits]):
                 problems.append(f"claim {row['id']} without-skill answer contains {found!r}")
     for result in canaries:
         if not result["ok"]:

@@ -77,10 +77,17 @@ def claim_notes(summary):
     return lines
 
 
+def dependency_line(sources):
+    if not sources:
+        return "Dependencies: none, so the without-skill arm is the bare model."
+    return f"Dependencies in both arms: {', '.join(sources)}."
+
+
 def skill_section(summary, answerers):
     lines = ["", f"## {summary['skill']}", "",
              f"Claims {summary['claims']} ({summary['reused_claims']} reused, {summary['dropped_claims']} invalid "
              f"drafts dropped, {len(summary['rejected_claims'])} rejected by review). Unscored {len(summary['unscored'])}.",
+             dependency_line(summary.get("dependencies", [])),
              *isolation_lines(summary["isolation"]), ""]
     lines += table(("Grade", "already known", "hurts", "teaches", "fails both"),
                    [(scale, *(summary["buckets"][scale][name] for name in BUCKET_COLUMNS)) for scale in ("lenient", "strict")])

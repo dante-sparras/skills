@@ -47,6 +47,7 @@ class Script:
         self.task_judges_broken = False
         self.rewrite = "[[DROP_PARAGRAPH]]"
         self.lose_on_recheck = False
+        self.answer_prompts = []
 
     def count(self, kind):
         with self.lock:
@@ -99,6 +100,8 @@ def fake_cli(name, script):
                 kind, text = "rewrite", script.rewrite
             else:
                 kind = "answer-with" if with_skill else "answer-without"
+                with script.lock:
+                    script.answer_prompts.append((kind, prompt))
                 if name in script.broken:
                     script.count(f"{name}-failed")
                     raise CallError("broken on purpose")
@@ -262,6 +265,22 @@ class Pipeline(unittest.TestCase):
         summary, _ = self.run_demo()
         self.assertEqual(summary["buckets"]["lenient"]["teaches"], 1)
         self.assertEqual(summary["proposal"]["task_evals"]["status"], "failed")
+
+    def test_both_arms_get_the_skills_it_loads(self):
+        helper = self.root / "skills" / "helper"
+        helper.mkdir()
+        (helper / "SKILL.md").write_text(SKILL.replace("demo", "helper").replace(
+            "Before you rename a column, write down the callers.", "HELPER BODY"), encoding="utf-8")
+        demo = self.root / "skills" / "demo" / "SKILL.md"
+        demo.write_text(demo.read_text(encoding="utf-8") + '\nCall the Skill tool with "helper" first.\n',
+                        encoding="utf-8")
+        summary, passed = self.run_demo("--score-only")
+        self.assertTrue(passed)
+        self.assertEqual(summary["dependencies"], ["skills/helper"])
+        arms = {kind for kind, prompt in self.script.answer_prompts if "HELPER BODY" in prompt}
+        self.assertEqual(arms, {"answer-with", "answer-without"})
+        self.assertFalse(any("Before you rename a column" in prompt
+                             for kind, prompt in self.script.answer_prompts if kind == "answer-without"))
 
     def test_a_crashing_skill_leaves_the_others_in_the_report(self):
         (self.root / "skills" / "broken").mkdir()

@@ -9,6 +9,7 @@ from datetime import datetime
 
 from . import skillfiles
 from .cache import Cache
+from .deps import dependencies
 from .calls import Caller
 from .claims import ClaimBook, Reviewer, draft, manifest_path
 from .clis import CallError, connect
@@ -90,7 +91,9 @@ class SkillRun:
         self.output = context.run_dir / name
         self.before = self.output / "before" / "skills" / name
         self.candidate = self.output / "repo" / "skills" / name
-        self.scorer = Scorer(context, name)
+        self.deps = dependencies(context.root / "skills", name)
+        self.scorer = Scorer(context, name, self.deps.text,
+                             digest("fixed", self.deps.text, skillfiles.description(context.root / "skills" / name)))
         self.rejected, self.unreviewed = [], []
 
     def bundle(self, directory):
@@ -102,13 +105,14 @@ class SkillRun:
         self.markers = Markers(self.state / "markers.json")
         bundle = self.bundle(self.before)
         probe = self.steps.timed("isolation canary", canary)
-        canaries = [self.context.samples.submit(probe, self.context.caller, seat, arm, bundle, self.markers.current, self.name)
+        canaries = [self.context.samples.submit(probe, self.context.caller, seat, arm, bundle, self.markers.current, self.name,
+                                                self.deps.text)
                     for seat in self.panel.answerers for arm in ("without", "with")]
         book = ClaimBook(manifest_path(self.state, self.panel.drafter), skillfiles.paragraphs(self.before),
                          self.args.max_claims)
         futures = self.score_claims(book, bundle)
         rows, rewrites = self.collect(book, futures)
-        isolation = verdict(self.name, self.markers, rows, [future.result() for future in canaries])
+        isolation = verdict(self.name, self.markers, rows, [future.result() for future in canaries], self.deps.text)
         summary = self.summarize(book, rows, isolation)
         if self.args.score_only:
             pass
@@ -200,6 +204,7 @@ class SkillRun:
             "buckets_by_answerer": by_answerer(scored, self.panel.answerers),
             "decisions": dict(Counter(row["decision"] for row in rows)),
             "isolation": isolation,
+            "dependencies": self.deps.sources,
             "rows": [summary_row(row) for row in rows],
         }
 
@@ -258,7 +263,7 @@ class SkillRun:
         versions = {"original": skillfiles.bundle(self.before), "candidate": skillfiles.bundle(self.candidate)}
         self.steps.start("tasks")
         try:
-            return compare(self.context, self.name, tasks, versions)
+            return compare(self.context, self.name, tasks, versions, self.deps.text)
         except CallError as error:
             return {"status": "failed", "reason": str(error)[:300]}
         finally:

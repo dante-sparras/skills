@@ -54,8 +54,20 @@ def parts(skill_dir):
     return result
 
 
+def description(skill_dir):
+    """The frontmatter description, which harnesses show the model next to the skill's name."""
+    path = skill_dir / "SKILL.md"
+    if not path.is_file():
+        return ""
+    front = split_frontmatter(read_text(path)[0])[0]
+    match = re.search(r"^description:[ \t]*(.+)$", front, re.M)
+    return match.group(1).strip().strip("\"'") if match else ""
+
+
 def bundle(skill_dir):
-    return "\n".join(f"<!-- {part.source} -->\n{part.body.strip()}\n" for part in parts(skill_dir)).strip() + "\n"
+    text = "\n".join(f"<!-- {part.source} -->\n{part.body.strip()}\n" for part in parts(skill_dir)).strip() + "\n"
+    summary = description(skill_dir)
+    return f"Description: {summary}\n\n{text}" if summary else text
 
 
 def size(skill_dir):

@@ -1,12 +1,25 @@
-from .prompts import JUDGE_SYSTEM, PROTOCOL, TASK_SYSTEM, arm_prompt, nonempty, parse_checks, task_judge_prompt
+from .prompts import PROTOCOL, TASK_SYSTEM, arm_prompt, nonempty, parse_checks, task_judge_prompt
+from .scoring import judged
 from .textutil import digest, read_json
+
+DEFAULT_TASKS = (".skills", "evals")
+
+
+def task_dir(args, root):
+    return args.tasks or root.joinpath(*DEFAULT_TASKS)
 
 
 def load_tasks(directory, skill):
-    path = directory / f"{skill}.json" if directory else None
-    if not path or not path.is_file():
-        return None, f"no task file at {path}" if path else "no --tasks directory"
-    return read_json(path), None
+    path = directory / f"{skill}.json"
+    if not path.is_file():
+        return None, f"no task file at {path}"
+    tasks = read_json(path)
+    valid = isinstance(tasks, list) and tasks and all(
+        isinstance(task, dict) and str(task.get("id") or "").strip() and str(task.get("prompt") or "").strip()
+        and isinstance(task.get("checks"), list) and task["checks"] for task in tasks)
+    if not valid:
+        raise ValueError(f"{path} must be a list of objects with id, prompt, and a nonempty checks list")
+    return tasks, None
 
 
 def run_task(context, skill, task, seat, bundle):
@@ -14,10 +27,8 @@ def run_task(context, skill, task, seat, bundle):
     key = digest("task", PROTOCOL, identities.of(seat), TASK_SYSTEM, task, bundle)
     answer, _ = cache.get("tasks", key, lambda: caller.call(
         seat, TASK_SYSTEM, arm_prompt(task["prompt"], bundle), nonempty, "task", skill))
-    judge = context.panel.judges_for(seat)[0]
-    prompt = task_judge_prompt(task, answer)
-    checks, _ = cache.get("grades", digest("checks", PROTOCOL, identities.of(judge), JUDGE_SYSTEM, prompt), lambda: caller.call(
-        judge, JUDGE_SYSTEM, prompt, parse_checks(len(task["checks"])), "task-judge", skill))
+    checks, _ = judged(context, seat, "checks", task_judge_prompt(task, answer), parse_checks(len(task["checks"])),
+                       "task-judge", skill)
     return checks
 
 

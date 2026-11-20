@@ -11,7 +11,7 @@ from . import skillfiles
 from .cache import Cache
 from .calls import Caller
 from .claims import ClaimBook, Reviewer, draft, manifest_path
-from .clis import connect
+from .clis import CallError, connect
 from .identity import Identities
 from .isolation import Markers, canary, verdict
 from .prompts import PROTOCOL
@@ -19,8 +19,8 @@ from .report import call_stats, render_report
 from .rewrite import needs_rewrite, repo_checks, rewrite_paragraph, write_patch
 from .scoring import SHORT, Scorer, bucket_counts, by_answerer, taught_scales
 from .seats import Panel
-from .tasks import compare, load_tasks
-from .textutil import digest, save_json, write_jsonl
+from .tasks import compare, load_tasks, task_dir
+from .textutil import digest, normalize_ws, save_json, write_jsonl
 
 
 def log(message):
@@ -115,7 +115,7 @@ class SkillRun:
         elif summary["unscored"] or not isolation["passed"]:
             summary["proposal"] = {"status": "none", "reason": "the run has unscored claims or failed isolation"}
         else:
-            self.propose(rows, rewrites, summary)
+            self.propose(book, rows, rewrites, summary)
         summary["steps"] = self.steps.data
         save_json(self.output / "summary.json", summary)
         return summary
@@ -154,7 +154,7 @@ class SkillRun:
         if not book.changed:
             self.steps.end("draft")
         if not book.claims:
-            raise SystemExit(f"{self.name}: no claims were drafted")
+            raise RuntimeError("no claims were drafted")
         book.save()
         log(f"{self.name}: {len(book.claims)} claims, {book.reused} reused, {book.dropped} invalid drafts dropped, "
             f"{len(self.rejected)} rejected by review")
@@ -203,10 +203,15 @@ class SkillRun:
             "rows": [summary_row(row) for row in rows],
         }
 
-    def propose(self, rows, rewrites, summary):
+    def propose(self, book, rows, rewrites, summary):
         self.steps.start("rewrite")
-        skillfiles.apply_paragraph_edits(self.candidate, {block: future.result() for block, future in rewrites.items()})
+        results = {block: future.result() for block, future in rewrites.items()}
         self.steps.end("rewrite")
+        summary["rewrite_failures"] = [{"paragraph": book.paragraphs[block][1][:80], "error": error}
+                                       for block, (_, error) in results.items() if error]
+        edits = {block: text for block, (text, error) in results.items() if not error}
+        changed = {block for block, text in edits.items() if normalize_ws(text) != normalize_ws(book.paragraphs[block][1])}
+        skillfiles.apply_paragraph_edits(self.candidate, edits)
         before, after = skillfiles.size(self.before), skillfiles.size(self.candidate)
         summary.update(before_chars=before, proposed_chars=after)
         if after >= before:
@@ -217,15 +222,22 @@ class SkillRun:
             summary["proposal"] = {"status": "rejected", "reason": "repo checks failed", "failures": failures}
             return
         bundle, version = self.bundle(self.candidate), digest(skillfiles.bundle(self.candidate))
+        recheck = [row for row in rows if taught_scales(row) or set(row["_blocks"]) & changed]
         self.steps.start("validate")
-        kept = list(self.context.claims.map(lambda row: self.scorer.recheck(row, bundle, version),
-                                            [row for row in rows if taught_scales(row)]))
+        checked = list(self.context.claims.map(lambda row: self.scorer.recheck(row, bundle, version), recheck))
         self.steps.end("validate")
-        write_jsonl(self.output / "kept.jsonl", kept)
-        lost = [item["id"] for item in kept if item["status"] == "lost"]
-        summary.update(checked_taught=len(kept), lost_taught=lost)
+        write_jsonl(self.output / "kept.jsonl", checked)
+        lost = [item["id"] for item in checked if item["status"] == "lost"]
+        unchecked = [item["id"] for item in checked if item["status"] == "unchecked"]
+        summary.update(checked_claims=len(checked), lost_claims=lost, unchecked_claims=unchecked,
+                       fixes={item["id"]: item["fixes"] for item in checked if item["fixes"]})
         if lost:
-            summary["proposal"] = {"status": "rejected", "reason": "the shorter skill lost taught claims", "lost": lost}
+            summary["proposal"] = {"status": "rejected", "reason": "claims that passed with the original fail with "
+                                   "the shorter skill", "lost": lost}
+            return
+        if unchecked:
+            summary["proposal"] = {"status": "rejected", "reason": "some claims could not be rechecked",
+                                   "unchecked": unchecked}
             return
         tasks = self.task_evals()
         patch = write_patch(self.output, self.name)
@@ -233,13 +245,15 @@ class SkillRun:
                                "patch": str(patch), "task_evals": tasks}
 
     def task_evals(self):
-        tasks, reason = load_tasks(self.args.tasks, self.name)
+        tasks, reason = load_tasks(task_dir(self.args, self.context.root), self.name)
         if tasks is None:
             return {"status": "not run", "reason": reason}
         versions = {"original": skillfiles.bundle(self.before), "candidate": skillfiles.bundle(self.candidate)}
         self.steps.start("tasks")
         try:
             return compare(self.context, self.name, tasks, versions)
+        except CallError as error:
+            return {"status": "failed", "reason": str(error)[:300]}
         finally:
             self.steps.end("tasks")
 
@@ -262,7 +276,7 @@ def run_skills(args, skills, adapters=None):
             for future in as_completed(futures):
                 try:
                     results.append(future.result())
-                except Exception as error:
+                except (Exception, SystemExit) as error:
                     failures.append(f"{futures[future]}: {error}")
                     log(f"{futures[future]} failed: {error}")
         models = context.identities.resolved()

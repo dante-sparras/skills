@@ -54,7 +54,7 @@ def claim_errors(claim, text, name):
     expected_words = " ".join(tokens(expected))
     if kind == "fact" and expected_words and f" {expected_words} " in f" {' '.join(tokens(question))} ":
         errors.append("fact question contains the expected answer")
-    if re.search(r"\bskill\b", question, re.I) or name_hits(question, name):
+    if re.search(r"\bskill\b", question, re.I) or name_hits(question, name, bare=True):
         errors.append("question names the skill")
     if "—" in json.dumps(claim, ensure_ascii=False) or ";" in question + expected:
         errors.append("uses a semicolon or an em dash")

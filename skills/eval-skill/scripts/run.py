@@ -6,6 +6,7 @@ from pathlib import Path
 
 from novelty.panelcmd import panel_command
 from novelty.pipeline import run_skills
+from novelty.tasks import load_tasks, task_dir
 
 
 def add_panel_options(parser):
@@ -34,7 +35,8 @@ def parse_args(argv):
     runner.add_argument("--samples", type=int, default=3,
                         help="Most samples per arm. The majority decides, and sampling stops once it is reached.")
     runner.add_argument("--score-only", action="store_true")
-    runner.add_argument("--tasks", type=Path, help="Directory with <skill>.json task evals.")
+    runner.add_argument("--tasks", type=Path,
+                        help="Directory with <skill>.json task evals. Defaults to .skills/evals under --root.")
     panel = commands.add_parser("panel", help="Show, list, check, or save the panel.")
     add_panel_options(panel)
     panel.add_argument("--list", action="store_true", help="List the models and efforts each CLI offers.")
@@ -62,13 +64,23 @@ def resolve_skills(args):
     return args.skill
 
 
+def check_tasks(args, skills):
+    for name in skills:
+        try:
+            load_tasks(task_dir(args, args.root.resolve()), name)
+        except ValueError as error:
+            raise SystemExit(str(error))
+
+
 def main(argv=None):
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8")
     args = parse_args(argv)
     if args.command == "panel":
         return panel_command(args)
-    result, report, passed = run_skills(args, resolve_skills(args))
+    skills = resolve_skills(args)
+    check_tasks(args, skills)
+    result, report, passed = run_skills(args, skills)
     print(json.dumps({
         "run": result["run"], "wall_seconds": result["wall_seconds"], "failures": result["failures"],
         "report": str(report),

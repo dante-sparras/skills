@@ -15,16 +15,32 @@ INSTRUCTIONS = {
 CHECKS = ("no-em-dashes.py", "no-semicolons.py", "use-when-descriptions.py")
 
 
-def kept_spans(rows):
-    return [row["span"] for row in rows if row["decision"] == "keep" and row.get("span")]
+def span_piece(span, paragraph):
+    """The part of a span inside this paragraph, since a span may run across paragraphs."""
+    wanted, text = normalize_ws(span), normalize_ws(paragraph)
+    if wanted in text:
+        return wanted
+    if text in wanted:
+        return text
+    for size in range(min(len(wanted), len(text)) - 1, 0, -1):
+        if text.endswith(wanted[:size]):
+            return wanted[:size].strip()
+        if text.startswith(wanted[-size:]):
+            return wanted[-size:].strip()
+    return ""
+
+
+def kept_spans(rows, paragraph):
+    pieces = [span_piece(row["span"], paragraph) for row in rows if row["decision"] == "keep" and row.get("span")]
+    return [piece for piece in dict.fromkeys(pieces) if piece]
 
 
 def rewrite_prompt(paragraph, rows):
-    keep = kept_spans(rows)
+    keep = kept_spans(rows, paragraph)
     lines = [
         "Edit the paragraph. Return only the edited paragraph.",
         "Do not add a semicolon or an em dash.",
-        "Do not add a step the paragraph did not already contain.",
+        "Use only the steps the paragraph already contains.",
     ]
     if keep:
         lines += ["These spans must remain verbatim:", *keep]
@@ -58,18 +74,19 @@ def needs_rewrite(rows):
 
 
 def rewrite_paragraph(context, skill, paragraph, rows):
+    """Return the edited paragraph and an error. On an error the paragraph stays as it was."""
     if all(row["decision"] == "cut" for row in rows) and any(
             normalize_ws(row["span"]) == normalize_ws(paragraph) for row in rows):
-        return ""
+        return "", None
     seat = context.panel.implementer
     prompt = rewrite_prompt(paragraph, rows)
     try:
         key = digest("rewrite", PROTOCOL, context.identities.of(seat), REWRITE_SYSTEM, prompt)
         edited, _ = context.cache.get("rewrites", key, lambda: context.caller.call(
-            seat, REWRITE_SYSTEM, prompt, accept_edit(kept_spans(rows)), "rewrite", skill))
-        return edited
-    except CallError:
-        return paragraph
+            seat, REWRITE_SYSTEM, prompt, accept_edit(kept_spans(rows, paragraph)), "rewrite", skill))
+        return edited, None
+    except CallError as error:
+        return paragraph, str(error)[:300]
 
 
 def repo_checks(root, directory):

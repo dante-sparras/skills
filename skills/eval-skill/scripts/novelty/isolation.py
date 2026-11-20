@@ -7,7 +7,9 @@ from .scoring import without_answers
 from .textutil import read_json, save_json
 
 
-def name_patterns(name):
+def name_patterns(name, bare=False):
+    """References to a skill. With bare, a hyphenated name alone counts too, which suits questions the drafter
+    writes but not answers, where a name like code-review is ordinary prose."""
     escaped = re.escape(name)
     patterns = [
         rf"skills[/\\]{escaped}\b",
@@ -18,13 +20,13 @@ def name_patterns(name):
         rf"Skill\(\s*[\"']?{escaped}",
         rf"\bname:\s*{escaped}\b",
     ]
-    if "-" in name:
+    if bare and "-" in name:
         patterns.append(rf"(?<![\w-]){escaped}(?![\w-])")
     return [re.compile(pattern, re.I) for pattern in patterns]
 
 
-def name_hits(text, name):
-    return [match.group(0) for pattern in name_patterns(name) for match in [pattern.search(text or "")] if match]
+def name_hits(text, name, bare=False):
+    return [match.group(0) for pattern in name_patterns(name, bare) for match in [pattern.search(text or "")] if match]
 
 
 class Markers:

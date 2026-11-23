@@ -28,10 +28,12 @@ Two vocabularies, used exactly:
 
    Apply the **deletion test** to each suspect: a module whose deletion would spread complexity across its callers is worth keeping, and one whose deletion makes complexity vanish is a candidate.
 
-3. **Report.** Write the candidates as one HTML file, per [HTML-REPORT.md](HTML-REPORT.md), to `<tmpdir>/architecture-review-<timestamp>.html`, so nothing lands in the repo. The temp dir is `$TMPDIR`, else `/tmp`, or `%TEMP%` on Windows. Open the file for the user and give them its absolute path.
+3. **Report.** Write the candidates as one HTML file, per [HTML-REPORT.md](HTML-REPORT.md), to `<tmpdir>/architecture-review-<timestamp>.html`, so nothing lands in the repo. The temp dir is `$TMPDIR`, else `/tmp`, or `%TEMP%` on Windows. Give the user its absolute path as a link they can open.
 
    Propose no interfaces yet. Ask: "Which of these would you like to explore?"
 
 4. **Interview.** Once the user picks, call the Skill tool with "interview" and walk the decision tree: constraints, dependencies, the shape of the deepened module, what sits behind the seam, which tests survive. As decisions settle:
    - A term is new or sharpened: call the Skill tool with "domain-modeling" so it lands in `GLOSSARY.md`.
    - The user wants to compare interfaces: follow [Design It Twice](../codebase-design/DESIGN-IT-TWICE.md).
+
+   Done when the user has a design they want built. Say in one line the task that would build it.

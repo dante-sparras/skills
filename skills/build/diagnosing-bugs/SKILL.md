@@ -24,7 +24,7 @@ Ways to build one, roughly in this order:
 7. **A property or fuzz loop.** For "sometimes wrong output", run 1,000 random inputs and look for the failure mode.
 8. **A bisection harness.** When the bug appeared between two known states (commits, datasets, versions), automate "boot at state X, check" so `git bisect run` can drive it.
 9. **A differential loop.** The same input through the old version and the new, or two configs, with the outputs diffed.
-10. **A human-in-the-loop script.** Last resort. When a person must click, drive them with `scripts/hitl-loop.template.sh`, so the loop stays structured and its output comes back to you.
+10. **A person in the loop.** Last resort. When a person must click, give them numbered steps in your thread, one batch at a time, and ask them to paste back what each step showed.
 
 Then **tighten** it:
 
@@ -41,7 +41,7 @@ Phase 1 is done when you can name **one command** you have already run, shown wi
 - [ ] **Red-capable**: it drives the real bug code path and asserts the user's exact symptom, so it goes red on this bug and green once it is fixed.
 - [ ] **Deterministic**: the same verdict every run, or a pinned, high reproduction rate for a flaky bug.
 - [ ] **Fast**: seconds, not minutes.
-- [ ] **Agent-runnable**: it runs unattended, with a person involved only through `scripts/hitl-loop.template.sh`.
+- [ ] **Agent-runnable**: it runs unattended. A person is involved only for the steps nothing else can drive.
 
 If you catch yourself reading code to build a theory before this command exists, stop. That jump is the failure this skill prevents.
 

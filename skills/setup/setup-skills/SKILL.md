@@ -46,6 +46,12 @@ The defaults are the canonical roles, each label named after its role: the state
 
 The `auto-mode` coordinator reads the answer. It still hands the merge to a person wherever branch protection requires an approval it cannot give.
 
+**Section E: Required checks.** Runs on GitHub when the repo has CI. List the checks that run on a PR, and whether a ruleset or branch protection on the default branch requires them. When none is required, ask one question:
+
+> Make `<check>` a required check on `<default branch>`? (recommended: **yes**)
+
+T3 wakes the coordinator when a required check passes and stays silent for any other, so without this a green PR waits until something else wakes the coordinator. On a yes, add a ruleset with `gh api --method POST repos/<owner>/<repo>/rulesets` that targets the default branch and holds one `required_status_checks` rule naming the check. Tell the user that pushes straight to the default branch stop working once it is active.
+
 ## 3. Confirm
 
 Show the user a draft of the `## Agent skills` block and of each `docs/agents/` file. Let them edit before you write.

@@ -64,7 +64,7 @@ List the `ready-for-agent` issues an agent can start now:
 
 2. **Recommend** a category and a state, with your reasons and what the code showed. Wait for the maintainer's direction.
 
-3. **Verify the claim** before any interview. Reproduce a bug from the reporter's steps. For a PR, check it out and run the tests or commands that show the diff does what it claims. Report one of three results: confirmed (with the code path), failed, or too little detail to tell, which points to `needs-info`. Keep the exact steps or command and their output, since the brief carries them to the agent that builds the fix.
+3. **Verify the claim** before any interview. Reproduce a bug from the reporter's steps. For a PR, read the diff first. Check it out and run its tests only when the maintainer says to, since an outside contributor's code would run with your access. Report one of three results: confirmed (with the code path), failed, or too little detail to tell, which points to `needs-info`. Keep the exact steps or command and their output, since the brief carries them to the agent that builds the fix.
 
 4. **Interview** when the request needs fleshing out: call the Skill tool with "interview".
 

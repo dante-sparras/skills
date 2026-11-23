@@ -8,7 +8,7 @@ Start with [`/auto-mode`](./skills/auto-mode/SKILL.md) and hand it your tasks, o
 One rule runs it all: **one task, one worker, one PR.** The skills are written for T3 Code: each worker is a `delegate_task` child with its own thread and checkout.
 
 1. **The coordinator makes each thing a task** and starts a worker for it.
-2. **The worker sizes its own task**, and the coordinator tells you how. If it fits in one PR, the worker builds it. If it is bigger, or a decision is open, the worker interviews you in its own thread, writes a spec and its tickets, and hands the tickets back. Each ticket becomes a new task.
+2. **The worker sizes its own task**, and the coordinator tells you how. If it fits in one PR, the worker builds it. It asks you about a single open decision in its own thread. If the task is more than one PR, the worker interviews you there, writes a spec and its tickets, and hands the tickets back. Each ticket becomes a new task.
 3. **The coordinator sends a reviewer to each PR**, once its checks are green. The reviewer and the worker argue each finding until they agree: the worker fixes it, or the reviewer withdraws it. After three rounds without agreement, the coordinator brings both positions to you.
 4. **The coordinator merges** once the checks are green again, or hands you a merge list when merging is yours.
 5. **Anything that comes up becomes a new task**: a bug nobody owns, a teammate's review, a mistake that repeats.
@@ -38,7 +38,7 @@ sequenceDiagram
         R->>C: PASS, or no agreement
         Note over C: Merges once checks are green.<br/>No agreement goes to you
         C->>You: Merged, or on your merge list
-    else Path B: the task is bigger, or a decision is open
+    else Path B: the task is more than one PR
         W->>You: Interview, in the worker's own thread
         You->>W: Answers, and approval of the tickets
         W->>C: A spec and its tickets
@@ -48,12 +48,13 @@ sequenceDiagram
 
 Read the diagram top to bottom. Each arrow is a message, and the numbers give the order. A task takes path A or path B.
 
-The whole flow is two files. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
+The whole flow is three files, one per role. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
 
 | File | Who reads it | What it holds |
 | --- | --- | --- |
 | [`auto-mode/SKILL.md`](./skills/auto-mode/SKILL.md) | The coordinator | The loop: intake, start, receive, review, land, check |
-| [`auto-mode/worker.md`](./skills/auto-mode/worker.md) | Every worker and reviewer | How to size a task, build it, split it, or review a PR |
+| [`auto-mode/worker.md`](./skills/auto-mode/worker.md) | Every worker | How to size a task, build it, or split it |
+| [`auto-mode/reviewer.md`](./skills/auto-mode/reviewer.md) | The reviewer of a PR | How to review it, and argue each finding with its worker |
 
 Every other skill is a tool a worker picks up when its task calls for it. You type one more yourself: [setup-skills](./skills/setup/setup-skills/SKILL.md), once per repo.
 

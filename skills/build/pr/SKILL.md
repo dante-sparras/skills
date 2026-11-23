@@ -23,7 +23,7 @@ Write the body from this template:
 
 <optional: description>
 
-**Blast Radius:** <one-word description>
+**Blast Radius:** <what the change could affect, in one line>
 
 <optional: potential ramifications of merge>
 

@@ -26,7 +26,7 @@ Read `docs/agents/issue-tracker.md` for the tracker and `docs/agents/triage-labe
 5. **Publish.** Done when every ticket is on the tracker and you have given the user the spec's reference.
    - The spec, from its template, with the `spec` label. The label keeps it out of the triage queue and marks it as the parent of tickets, not as work to grab.
    - One issue per ticket, from its template, each a sub-issue of the spec. Publish blockers first, so every ticket references real identifiers, and use the tracker's native blocking relationship where it has one. Apply `ready-for-agent` and the category that fits, `enhancement` or `bug`.
-   - A spec that already existed stays as it is: open and unedited.
+   - A spec that already existed gets the `spec` label and is otherwise left as it is: open and unedited.
 
 Keep file paths and code snippets out of both templates, since they go stale. The exception is a snippet that states a decision more exactly than prose can, such as a state machine, a schema, or a type shape. Trim it to the decision.
 

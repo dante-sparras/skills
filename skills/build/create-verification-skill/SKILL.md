@@ -15,7 +15,7 @@ Answer these from the codebase. Ask the user only what you cannot observe.
 
 - **Surface:** what does a user touch? A web UI, a CLI or TUI, a desktop app, an API, a mobile app, a library. A repo can have several. Pick the primary one and note the rest.
 - **Run:** how does the app start locally? Prefer the repo's documented dev command (package scripts, Makefile, README quickstart). Note ports, env vars, seed data, and auth.
-- **Drive:** how can an agent interact with it programmatically? Use existing harnesses first: Playwright or Cypress specs, expect scripts, PTY helpers, curl-able endpoints, a debug port. Only then pick a generic recipe: browser or CDP for web and Electron, a tmux or PTY harness for a CLI or TUI, plain HTTP for a service.
+- **Drive:** how can an agent interact with it programmatically? Use existing harnesses first: Playwright or Cypress specs, expect scripts, PTY helpers, curl-able endpoints, a debug port. Only then pick a generic recipe: browser or CDP for web and Electron, a PTY harness for a CLI or TUI, with tmux where the machine has it, plain HTTP for a service, and T3's device tools for a mobile app.
 - **Observe:** what evidence can be captured? Screenshots, terminal transcripts, response bodies, logs, exit codes, database state.
 - **Isolate:** can two instances run side by side (ports, data dirs, profiles)? If not, the generated skill says so and refuses to drive an instance it did not start.
 
@@ -51,7 +51,7 @@ Each feature file answers, from the user's point of view, what the feature is, h
 
 ## 4. Prove it cold
 
-Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role). Start a fresh `reviewer` with only the checkout, the path to the generated skill, and one mapped feature. One feature is enough. The map exists so later runs cover the rest. It follows the skill's own instructions end to end (launch, doctor, drive the feature, capture evidence, clean up), then confirms the evidence still exists at the named location and reports each step that failed or that it had to guess.
+Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role). Start a fresh `reviewer` in this same checkout, with `isolation: "shared"`, so it sees the skill before it is committed. Give it only the path to the generated skill and one mapped feature. One feature is enough. The map exists so later runs cover the rest. It follows the skill's own instructions end to end (launch, doctor, drive the feature, capture evidence, clean up), then confirms the evidence still exists at the named location and reports each step that failed or that it had to guess.
 
 Fix what it reports and start a fresh `reviewer` again until a run passes with no guesses. After every failed run, run the generated cleanup yourself so broken attempts don't strand processes and ports. A cleanup that deletes the evidence fails the run.
 

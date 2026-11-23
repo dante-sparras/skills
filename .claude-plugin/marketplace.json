@@ -1,0 +1,59 @@
+{
+  "name": "dante-skills",
+  "owner": {
+    "name": "Dante Sparrås"
+  },
+  "metadata": {
+    "description": "Agent skills that plan, build, test, review, and land work in a repository."
+  },
+  "plugins": [
+    {
+      "name": "plan",
+      "description": "Settle what to build: interviews, maps, specs, tickets, triage, and research.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/plan/interview",
+        "./skills/plan/research",
+        "./skills/plan/to-spec",
+        "./skills/plan/triage",
+        "./skills/plan/wayfinder"
+      ]
+    },
+    {
+      "name": "build",
+      "description": "Tools a worker builds with: tdd, diagnosing-bugs, code-review, pr, and create-verification-skill.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/build/code-review",
+        "./skills/build/create-verification-skill",
+        "./skills/build/diagnosing-bugs",
+        "./skills/build/pr",
+        "./skills/build/tdd"
+      ]
+    },
+    {
+      "name": "codebase",
+      "description": "Keep the codebase good for agents to work in: module design, the domain glossary, architecture surveys, and turning repeated mistakes into checks.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/codebase/codebase-design",
+        "./skills/codebase/correct",
+        "./skills/codebase/domain-modeling",
+        "./skills/codebase/improve-codebase-architecture"
+      ]
+    },
+    {
+      "name": "setup",
+      "description": "Set the skills up in a repo, and write documents agents read.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/setup/setup-skills",
+        "./skills/setup/writing-for-agents"
+      ]
+    }
+  ]
+}

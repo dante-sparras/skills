@@ -2,6 +2,40 @@
 
 Agent skills that plan, build, test, review, and land work in a repository.
 
+## Coordination
+
+**Operator**:
+The person a run works for. Skills written for a conversation call this person the user, and `triage` calls them the maintainer.
+_Avoid_: Owner, end user
+
+**Coordinator**:
+The one agent the operator talks to. It makes everything the operator asks for a task, starts a worker for each, and makes sure each one ships. It is the only agent that merges.
+_Avoid_: Orchestrator, main agent
+
+**Task**:
+One outcome the operator asked for, or one ticket. One worker carries it, and it lands through one PR when it changes code.
+_Avoid_: Unit, job
+
+**Worker**:
+A fresh agent the coordinator starts with one task and a brief that opens with `auto-mode/worker.md`. It sizes the task, then builds it or splits it into tickets. The operator answers it in its own thread.
+_Avoid_: Helper, child, implementer, planner
+
+**Verifier**:
+The agent that checks one head it did not write and posts `PASS` or `FAIL` on the PR. It runs on the `reviewer` model role.
+_Avoid_: Reviewer, checker, QA agent
+
+**Verdict comment**:
+The comment a verifier posts on a PR: `PASS` or `FAIL`, the head SHA, and the findings.
+_Avoid_: Review, approval
+
+**Friction**:
+What cost a worker time during its task, returned as facts at the end of its report and kept on the PR.
+_Avoid_: Mistake log, complaints
+
+**Repeat**:
+The same friction or failure reason from two workers, or the same correction from the operator twice. A repeat becomes a task for the `correct` skill.
+_Avoid_: Pattern, recurring issue
+
 ## Verification
 
 **Verification skill**:

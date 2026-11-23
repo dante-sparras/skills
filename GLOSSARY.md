@@ -21,11 +21,11 @@ A fresh agent the coordinator starts with one task and a brief that opens with `
 _Avoid_: Helper, child, implementer, planner
 
 **Reviewer**:
-The agent the coordinator sends to one PR it did not write. It proves the behavior, runs `code-review`, and settles its findings with the PR's worker by message. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
+The agent the coordinator sends to one PR it did not write. It proves the behavior, runs `code-review`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
 _Avoid_: Verifier, checker, QA agent
 
 **Verdict comment**:
-The comment a reviewer posts on a PR once it and the worker are done: `PASS` or `NO AGREEMENT`, the head SHA, and how each finding was settled.
+The comment a reviewer posts on a PR once it and the worker are done: `PASS` or `NO AGREEMENT`, the head SHA, and whether each finding was fixed or withdrawn.
 _Avoid_: Review, approval
 
 **Friction**:

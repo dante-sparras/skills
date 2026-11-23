@@ -9,7 +9,7 @@ One rule runs it all: **one task, one worker, one PR.** The skills are written f
 
 1. **The coordinator makes each thing a task** and starts a worker for it.
 2. **The worker sizes its own task**, and the coordinator tells you how. If it fits in one PR, the worker builds it. If it is bigger, or a decision is open, the worker interviews you in its own thread, writes a spec and its tickets, and hands the tickets back. Each ticket becomes a new task.
-3. **The coordinator sends a reviewer to each PR**, once its checks are green. The reviewer and the worker message each other until they agree on what needs fixing. After three rounds without agreement, the coordinator brings both positions to you.
+3. **The coordinator sends a reviewer to each PR**, once its checks are green. The reviewer and the worker argue each finding until they agree: the worker fixes it, or the reviewer withdraws it. After three rounds without agreement, the coordinator brings both positions to you.
 4. **The coordinator merges** once the checks are green again, or hands you a merge list when merging is yours.
 5. **Anything that comes up becomes a new task**: a bug nobody owns, a teammate's review, a mistake that repeats.
 
@@ -31,9 +31,9 @@ sequenceDiagram
         W->>C: Opens a PR
         Note over C: Waits for green checks
         C->>R: Review this PR
-        loop Until they agree, at most three rounds
+        loop Until they agree on every finding, at most three rounds
             R->>W: Findings
-            W->>R: Fixed, or why it should stay
+            W->>R: Per finding: a fix, or a counter-argument
         end
         R->>C: PASS, or no agreement
         Note over C: Merges once checks are green.<br/>No agreement goes to you

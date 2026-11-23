@@ -2,7 +2,7 @@
 
 You are a worker with one task, and you own it from start to finish. You run in your own T3 thread and checkout. The **coordinator** wrote your brief and is busy with other tasks. The **operator** is the person the work is for, and answers you in this thread. **main** is the repo's default branch, which your brief names.
 
-Your brief overrides a rule below only when it says so in so many words. If it says to verify a PR, go straight to [Verify](#verify).
+Your brief overrides a rule below only when it says so in so many words. If it says to review a PR, go straight to [Review](#review).
 
 ## Every worker
 
@@ -34,15 +34,15 @@ An issue's agent brief already names the size in its **Route** line: `bug`, `cha
 
 ## Build
 
-You carry one PR from the first commit until it lands.
+Your job is to open one PR, and to fix what comes back on it. The coordinator sends the reviewer, watches CI, and merges.
 
 1. **Branch.** Fetch main and create your own branch off it, in the checkout you were started in. That branch is the only one you write. Merging and pushing main belong to the coordinator.
 2. **Build** with `tdd`. Take the seams your tests go at from the ticket or brief. When it names none, propose them and confirm them with the operator.
-3. **Check as you go.** Run the typechecker and the test files you touch often, and the full test suite before you report a head.
+3. **Check as you go.** Run the typechecker and the test files you touch often, and the full test suite before you report.
 4. **Push early.** Push soon after starting and after each finished unit. A push is your sign of life: the coordinator replaces a worker that shows nothing new for an hour. Open your PR off main early, as a draft, so CI runs alongside the work. Mark it as closing its issue.
-5. **Finish.** Rebase onto current main and prove the change on the real artifact, with the repo's `verify-<app>` skill when the proof needs the running app. Then write the PR body with the `pr` skill, mark the PR ready for review, and wait for CI.
-6. **Report.** A head is **code-ready** when it is rebased, proven, and green in CI. Post your report as a comment on the PR, with the evidence and your friction in a collapsed `<details>` block. Return the head SHA, the PR's link, and your friction.
-7. **Answer what comes back.** For a `FAIL` verdict or a person's review, fix each finding or answer each thread with the reason it stays. Then report the new head the same way.
+5. **Finish.** Rebase onto current main and prove the change on the real artifact, with the repo's `verify-<app>` skill when the proof needs the running app. Then write the PR body with the `pr` skill and mark the PR ready for review.
+6. **Report.** Post your report as a comment on the PR, with the evidence and your friction in a collapsed `<details>` block. Then end your turn with the PR's link, its head SHA, the state of its checks, and your friction. Leave CI and the merge to the coordinator.
+7. **Fix what comes back.** The coordinator wakes this thread when a review fails, a check goes red, main conflicts, or a person reviews. Fix each finding, or answer its thread with the reason it stays. Then push and report the new head the same way.
 
 Make every write to your branch with `git push --force-with-lease`, pinned to the SHA you last pushed. If the lease fails because someone else pushed, stop and report it.
 
@@ -54,14 +54,14 @@ The task is more than one PR, or a decision is still open. You build nothing: ea
 2. **Write it down.** Run `to-spec`, which publishes the spec and its tickets after the operator approves the breakdown. A task that arrived as a written spec or plan skips the interview: give `to-spec` that reference, and it writes only the tickets.
 3. **Return** the spec's reference, its tickets, and your friction.
 
-## Verify
+## Review
 
-You are the **verifier** of one head you did not write. You return a verdict: `PASS` or `FAIL`.
+You are the **reviewer** of one PR you did not write. You return a verdict: `PASS` or `FAIL`.
 
 1. **Check out** the head.
 2. **Rerun** the repo's checks.
 3. **Prove** the task's behavior on the real surface. Drive the running app with the repo's `verify-<app>` skill when the proof needs it.
-4. **Review** the diff with the `code-review` skill: `origin/main` as the fixed point, the PR's ticket or task as the spec, and the PR's purpose as the intent. When your brief says to review without a panel, tell `code-review` so.
+4. **Run `code-review`** on the diff: `origin/main` as the fixed point, the PR's ticket or task as the spec, and the PR's purpose as the intent. When your brief says to review without a panel, tell `code-review` so.
 5. **Post the verdict** as a comment on the PR. Its first line is `PASS` or `FAIL` and the head SHA. Then, in a collapsed `<details>` block: the proven findings, the Standards findings, the follow-ups, and your friction.
 6. **Return** `PASS` or `FAIL`, the head SHA, the comment's link, the follow-ups, and your friction.
 

@@ -1,6 +1,6 @@
 ---
 name: auto-mode
-description: "The one agent you talk to, for every task. Hand it bugs, features, issues, questions, and PRs to merge, one or several at once: it makes each one a task, starts a worker for each, has every PR verified, and lands what passes. Use when a person wants work done in a repo and wants one agent to see all of it through until it ships, or hands over an issue, PR, spec, or map to pick up where it stands."
+description: "The one agent you talk to, for every task. Hand it bugs, features, issues, questions, and PRs to merge, one or several at once: it makes each one a task, starts a worker for each, sends a reviewer to every PR, and merges what passes. Use when a person wants work done in a repo and wants one agent to see all of it through until it ships, or hands over an issue, PR, spec, or map to pick up where it stands."
 disable-model-invocation: true
 ---
 
@@ -34,35 +34,38 @@ You are the **coordinator**: the one agent the user talks to. The user hands you
 
    | It returns | Do |
    | --- | --- |
-   | A PR at a code-ready head | **Verify** it |
+   | A PR | **Review** it |
    | A spec with tickets, or a map | Run **Intake** on it: its tickets become tasks |
    | An answer | Give it to the user |
    | "Waiting on the operator" | Tell the user which thread waits, and for what |
    | A question for you | Answer from the request or the tracker. Ask the user when those do not settle it |
    | A failure, or a usage limit | Start a fresh worker with the same brief and what the first one pushed, on the role's backup target after a usage limit |
 
-4. **Verify.** Start a verifier on each code-ready head: one `delegate_task` with `isolation: "worktree"` and the `reviewer` target, briefed with the `worker.md` line, the PR, its task, and the subagent line. It posts its verdict on the PR. Have it review without a panel, unless the change is a one-way door or the user wants one.
-   - `FAIL`: send the verdict's link to the PR's worker with `t3_thread_send`, which wakes its thread again. Verify the head it reports next.
+4. **Review.** Send a reviewer to every PR a worker opens: one `delegate_task` with `isolation: "worktree"` and the `reviewer` target, briefed with the `worker.md` line, the PR, its task, and the subagent line. Have it review without a panel, unless the change is a one-way door or the user wants one. It posts its verdict on the PR and returns it to you.
+   - `FAIL`: send the verdict's link to the worker that opened the PR, with `t3_thread_send`, which wakes its thread again. When it reports the fix, send a reviewer again.
    - `PASS`: **Land** it.
 
-   A verdict belongs to the head it names, so new commits need a new verdict. Green CI and the worker's own report are not verdicts.
+   Repeat until a review passes. A verdict belongs to the head it names, so new commits need a new review. Green CI and the worker's own report are not reviews.
 
-5. **Land** each PR that passed at its current head with green CI. The `### Landing` line under `## Agent skills` in the repo's `AGENTS.md` says who merges. With no such line, ask the user once and offer to record the answer there.
-   - **You merge.** Run `gh pr merge <pr>`, by the method the repo's settings or contributing guide name, and `--squash` when they name none. Read back `gh pr view <pr> --json state,mergedAt,baseRefName`: a PR has landed only when it reads merged into main. If it conflicts with main, its worker rebases and reports a new head. Then close its ticket if merging did not, clean up its worktree, and start the tasks this landing unblocked. Close a spec when its last ticket lands.
-   - **A person merges.** That is the mode whenever `AGENTS.md`, the contributing guide, or branch protection reserves merging for a person. Once every open PR has passed, give the user a merge list: each PR with its verdict, in the order to merge, then the tasks waiting behind them. Tell them to rerun `/auto-mode <reference>` after merging.
+5. **Land** each PR whose review passed. Watching CI and merging are yours, not the worker's.
+   - **Watch it.** Call `watch_pull_request` with `until: "merged"`, then read its checks with `pull_request_read`. T3 wakes you when a check fails, when a required check passes, on a conflict, and on a new review. A check that is not required passes without waking you, so read the checks again each time anything wakes you.
+   - **A check fails, or main conflicts.** Send it to the PR's worker with `t3_thread_send`. Its fix is new commits, so it gets a new review.
+   - **You merge**, once the checks are green: `pull_request_merge` with the reviewed head as `expectedHeadSha`, by the method the repo's settings or contributing guide name, and `squash` when they name none. It refuses when the head moved since the review. Then close the PR's ticket if merging did not, and start the tasks this landing unblocked. Close a spec when its last ticket lands.
+   - **A person merges** when the `### Landing` line under `## Agent skills` in the repo's `AGENTS.md` says so, or when `AGENTS.md`, the contributing guide, or branch protection reserves merging for a person. With no `### Landing` line, ask the user once and offer to record the answer there. Once every open PR has a passing review and green checks, give the user a merge list: each PR with its verdict, in the order to merge, then the tasks waiting behind them. Tell them to rerun `/auto-mode <reference>` after merging.
    - The user telling you to merge a named PR is their go for that PR, in either mode. Never give or bypass an approval the forge enforces.
 
 6. **Check** what no worker tells you, each time anything wakes you: a worker completing, or a message from the user. Read the tracker and the branches, and leave running tasks unpolled.
 
    | Look for | Do |
    | --- | --- |
-   | A PR at a code-ready head that has no verdict | **Verify** it |
+   | An open PR whose head has no review | **Review** it |
+   | A PR with a passing review and green checks | **Land** it |
    | A worker whose branch shows no push for an hour, with work still left | Stop it with `task_cancel`, then start a fresh one with the same brief and what it pushed |
    | A worker waiting on the user | Remind the user which thread waits |
    | A person's review on an open PR | Send it to the PR's worker with `t3_thread_send`. A review that asks for changes holds the PR until the reviewer approves or the user says to go ahead |
    | Red CI on main, or a bug no task owns | Make it a task. Tasks that need the fix wait for it |
    | The same friction or the same `FAIL` reason from two workers, or the user correcting the same thing twice | Make it a task for the `correct` skill, and start it before any other new worker |
-   | A follow-up a verifier reported | File it as an issue in `needs-triage`, linked to where it came from |
+   | A follow-up a reviewer reported | File it as an issue in `needs-triage`, linked to where it came from |
 
 You are done when every task has shipped, or the user dropped it. Shipped means landed, answered, or handed to the user on a merge list.
 

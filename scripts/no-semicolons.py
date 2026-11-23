@@ -26,12 +26,21 @@ def prose_mask(line):
     return mask
 
 
+UNCLOSED = (
+    "code fence opened here is still open at the end of the file, so everything after it "
+    "renders as code and is skipped by this check. Close it, or give an outer fence more "
+    "backticks than the fences inside it."
+)
+
+
 def prose_semicolons(text):
     fence = None
+    opened = 0
     for number, line in enumerate(text.splitlines(), start=1):
         match = FENCE.match(line)
         if fence is None and match:
             fence = match.group(1)
+            opened = number
             continue
         if fence is not None:
             closes = match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence)
@@ -41,20 +50,25 @@ def prose_semicolons(text):
         prose = prose_mask(line)
         for column, char in enumerate(line, start=1):
             if char == ";" and prose[column - 1]:
-                yield number, column
+                yield number, column, None
+    if fence is not None:
+        yield opened, 1, UNCLOSED
 
 
 def main():
     root = Path(sys.argv[1] if len(sys.argv) > 1 else "skills")
     found = 0
     for path in sorted(p for p in root.rglob("*.md") if p.is_file()):
-        for line, column in prose_semicolons(path.read_text(encoding="utf-8")):
+        for line, column, problem in prose_semicolons(path.read_text(encoding="utf-8")):
             found += 1
-            print(f'{path.as_posix()}:{line}:{column}: found ";" (semicolon outside code). {FIX}')
+            if problem:
+                print(f"{path.as_posix()}:{line}:{column}: {problem}")
+            else:
+                print(f'{path.as_posix()}:{line}:{column}: found ";" (semicolon outside code). {FIX}')
     if found:
-        print(f"\n{found} prose semicolon(s) in Markdown under {root.as_posix()}/.")
+        print(f"\n{found} prose semicolon or open fence problem(s) in Markdown under {root.as_posix()}/.")
         return 1
-    print(f"No prose semicolons in Markdown under {root.as_posix()}/.")
+    print(f"No prose semicolons or open fences in Markdown under {root.as_posix()}/.")
     return 0
 
 

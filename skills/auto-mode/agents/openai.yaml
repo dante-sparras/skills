@@ -1,0 +1,5 @@
+interface:
+  display_name: "Auto Mode"
+  short_description: "Take any number of tasks, start workers for each, and ship them"
+policy:
+  allow_implicit_invocation: false

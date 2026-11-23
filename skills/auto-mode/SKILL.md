@@ -28,43 +28,51 @@ You are the **coordinator**: the one agent the user talks to. The user hands you
    - the task, and pointers to its issue, spec, PR, or research notes
    - main, which is the repo's default branch: `git symbolic-ref --short refs/remotes/origin/HEAD`
    - the path of the repo's `verify-<app>` skill, when it has one
+   - your own thread id, which `t3_thread_list` with `limit: 1` returns as `currentThreadId`, so the worker can send you notes
    - the line `You may start the subagents your skills call for.`
 
-3. **Receive.** A worker's completion wakes you. Read what it returned with `task_status`, and act on it.
+3. **Receive.** A worker's note or completion wakes you. Read a completion with `task_status`, and act on what arrived.
 
-   | It returns | Do |
+   | It sends or returns | Do |
    | --- | --- |
+   | A note on how it sized its task | Give the user one line for that task: its name and the path it took |
+   | A note that it waits on the operator | Tell the user which thread waits, and for what |
    | A PR | **Review** it |
    | A spec with tickets, or a map | Run **Intake** on it: its tickets become tasks |
    | An answer | Give it to the user |
-   | "Waiting on the operator" | Tell the user which thread waits, and for what |
    | A question for you | Answer from the request or the tracker. Ask the user when those do not settle it |
    | A failure, or a usage limit | Start a fresh worker with the same brief and what the first one pushed, on the role's backup target after a usage limit |
 
-4. **Review.** Send a reviewer to every PR a worker opens: one `delegate_task` with `isolation: "worktree"` and the `reviewer` target, briefed with the `worker.md` line, the PR, its task, and the subagent line. Have it review without a panel, unless the change is a one-way door or the user wants one. It posts its verdict on the PR and returns it to you.
-   - `FAIL`: send the verdict's link to the worker that opened the PR, with `t3_thread_send`, which wakes its thread again. When it reports the fix, send a reviewer again.
-   - `PASS`: **Land** it.
+4. **Review** every PR a worker opens. Checks come first, since they are cheap and a reviewer is not.
+   - **Wait for green checks.** Call `watch_pull_request` with `until: "merged"`, then read the checks with `pull_request_read`. Send a red check to the PR's worker with `t3_thread_send`, which wakes its thread again. T3 wakes you when a check fails and when a required check passes. A check that is not required passes without waking you, so read the checks again each time anything wakes you.
+   - **Send a reviewer** once the checks are green: one `delegate_task` with `isolation: "worktree"` and the `reviewer` target. Brief it with the `worker.md` line, the PR, its task, the thread id of the worker that opened the PR, and the subagent line. Have it review without a panel, unless the change is a one-way door or the user wants one.
+   - **Let them settle it.** The reviewer and the worker message each other until they agree, for at most three rounds. You hear back once.
 
-   Repeat until a review passes. A verdict belongs to the head it names, so new commits need a new review. Green CI and the worker's own report are not reviews.
+   | The reviewer returns | Do |
+   | --- | --- |
+   | `PASS` | **Land** the PR |
+   | `NO AGREEMENT` | Give the user both positions, and do what they decide |
 
-5. **Land** each PR whose review passed. Watching CI and merging are yours, not the worker's.
-   - **Watch it.** Call `watch_pull_request` with `until: "merged"`, then read its checks with `pull_request_read`. T3 wakes you when a check fails, when a required check passes, on a conflict, and on a new review. A check that is not required passes without waking you, so read the checks again each time anything wakes you.
-   - **A check fails, or main conflicts.** Send it to the PR's worker with `t3_thread_send`. Its fix is new commits, so it gets a new review.
-   - **You merge**, once the checks are green: `pull_request_merge` with the reviewed head as `expectedHeadSha`, by the method the repo's settings or contributing guide name, and `squash` when they name none. It refuses when the head moved since the review. Then close the PR's ticket if merging did not, and start the tasks this landing unblocked. Close a spec when its last ticket lands.
-   - **A person merges** when the `### Landing` line under `## Agent skills` in the repo's `AGENTS.md` says so, or when `AGENTS.md`, the contributing guide, or branch protection reserves merging for a person. With no `### Landing` line, ask the user once and offer to record the answer there. Once every open PR has a passing review and green checks, give the user a merge list: each PR with its verdict, in the order to merge, then the tasks waiting behind them. Tell them to rerun `/auto-mode <reference>` after merging.
+   A verdict belongs to the head it names. Green CI and the worker's own report are not reviews.
+
+5. **Land** each PR with a `PASS`. Watching CI and merging are yours, not the worker's.
+   - **Read the checks again.** Fixes made during the review are new commits, so the checks run again on the head the verdict names.
+   - **A check fails, main conflicts, or commits arrive after the verdict.** Send the problem to the PR's worker with `t3_thread_send`. Then send the new head to the same reviewer's thread, so it reviews only what changed.
+   - **You merge**, once the checks are green: `pull_request_merge` with the head the verdict names as `expectedHeadSha`, by the method the repo's settings or contributing guide name, and `squash` when they name none. It refuses when the head moved since the review. Then close the PR's ticket if merging did not, and start the tasks this landing unblocked. Close a spec when its last ticket lands.
+   - **A person merges** when the `### Landing` line under `## Agent skills` in the repo's `AGENTS.md` says so, or when `AGENTS.md`, the contributing guide, or branch protection reserves merging for a person. With no `### Landing` line, ask the user once and offer to record the answer there. Once every open PR has a `PASS` and green checks, give the user a merge list: each PR with its verdict, in the order to merge, then the tasks waiting behind them. Tell them to rerun `/auto-mode <reference>` after merging.
    - The user telling you to merge a named PR is their go for that PR, in either mode. Never give or bypass an approval the forge enforces.
 
 6. **Check** what no worker tells you, each time anything wakes you: a worker completing, or a message from the user. Read the tracker and the branches, and leave running tasks unpolled.
 
    | Look for | Do |
    | --- | --- |
-   | An open PR whose head has no review | **Review** it |
-   | A PR with a passing review and green checks | **Land** it |
+   | An open PR with green checks and no reviewer | **Review** it |
+   | A PR with a `PASS` and green checks | **Land** it |
    | A worker whose branch shows no push for an hour, with work still left | Stop it with `task_cancel`, then start a fresh one with the same brief and what it pushed |
    | A worker waiting on the user | Remind the user which thread waits |
    | A person's review on an open PR | Send it to the PR's worker with `t3_thread_send`. A review that asks for changes holds the PR until the reviewer approves or the user says to go ahead |
    | Red CI on main, or a bug no task owns | Make it a task. Tasks that need the fix wait for it |
-   | The same friction or the same `FAIL` reason from two workers, or the user correcting the same thing twice | Make it a task for the `correct` skill, and start it before any other new worker |
+   | The same friction from two workers, the same finding from two reviewers, or the user correcting the same thing twice | Make it a task for the `correct` skill, and start it before any other new worker |
    | A follow-up a reviewer reported | File it as an issue in `needs-triage`, linked to where it came from |
 
 You are done when every task has shipped, or the user dropped it. Shipped means landed, answered, or handed to the user on a merge list.

@@ -42,7 +42,7 @@ The defaults are the canonical roles, each label named after its role: the state
 
 **Section D: Landing.** Ask one question:
 
-> Once a build has verified a PR, should the coordinator merge it, or leave the merge to you? (recommended: **the coordinator**)
+> Once a PR has passed review and its checks, should the coordinator merge it, or leave the merge to you? (recommended: **the coordinator**)
 
 The `auto-mode` coordinator reads the answer. It still hands the merge to a person wherever branch protection requires an approval it cannot give.
 
@@ -71,7 +71,7 @@ Show the user a draft of the `## Agent skills` block and of each `docs/agents/` 
 
 ### Landing
 
-[who merges a verified PR: "the coordinator" or "a person"].
+[who merges a reviewed PR: "the coordinator" or "a person"].
 ```
 
 **`docs/agents/`**, starting from the seed templates in this folder:

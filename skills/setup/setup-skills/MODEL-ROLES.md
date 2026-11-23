@@ -7,7 +7,7 @@
 3. Propose all three default and backup pairs. For unset roles, pick models from the live catalog by the table below, each at high effort. Prefer native providers. Flag unavailable targets and offer runnable replacements. Ask the user to confirm or edit all three pairs, including effort.
 4. Validate the confirmed targets using the catalog checks below. Write all three pairs to the chosen file. Reread the JSON and report the saved path and choices.
 
-The coordinator is the thread the user talks to, so it runs on that thread's model and has no role here. An `auto-mode` worker runs on `implementer`, and a verifier on `reviewer`.
+The coordinator is the thread the user talks to, so it runs on that thread's model and has no role here. An `auto-mode` worker runs on `implementer`, and the reviewer of a PR on `reviewer`.
 
 | Role | Default | Backup |
 | --- | --- | --- |

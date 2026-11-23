@@ -9,8 +9,8 @@ One rule runs it all: **one task, one worker, one PR.** The skills are written f
 
 1. **The coordinator makes each thing a task** and starts a worker for it.
 2. **The worker sizes its own task.** If it fits in one PR, the worker builds it. If it is bigger, or a decision is open, the worker interviews you in its own thread, writes a spec and its tickets, and hands the tickets back. Each ticket becomes a new task.
-3. **A verifier checks each PR** and posts a verdict, `PASS` or `FAIL`.
-4. **The coordinator lands what passes**, or hands you a merge list when merging is yours.
+3. **The coordinator sends a reviewer to each PR.** When the review fails, the coordinator tells the worker that opened the PR to fix it, and this repeats until a review passes.
+4. **The coordinator watches CI and merges**, or hands you a merge list when merging is yours.
 5. **Anything that comes up becomes a new task**: a bug nobody owns, a teammate's review, a mistake that repeats.
 
 ```mermaid
@@ -20,7 +20,8 @@ flowchart TB
     worker["WORKER<br/>sizes its own task"]
     build["fits in one PR:<br/>builds it<br/>/tdd, /diagnosing-bugs, /pr"]
     split["bigger, or a decision open:<br/>/interview with you in its thread,<br/>then /to-spec"]
-    verifier["VERIFIER<br/>/code-review, verdict on the PR"]
+    reviewer["REVIEWER<br/>/code-review, verdict on the PR"]
+    merge["COORDINATOR<br/>watches CI, merges"]
     land(["Landed,<br/>or on your merge list"])
 
     you --> coord
@@ -28,21 +29,23 @@ flowchart TB
     worker --> build
     worker --> split
     split -.->|tickets become tasks| coord
-    build -->|PR| verifier
-    verifier -->|PASS| land
-    verifier -.->|FAIL| build
+    build -->|PR| reviewer
+    reviewer -->|PASS| merge
+    merge --> land
+    reviewer -.->|"FAIL: the coordinator sends it back"| build
 
     style coord stroke:#7aa7d8,stroke-width:2px
     style worker stroke:#6cc2b4,stroke-width:2px
-    style verifier stroke:#6cc2b4,stroke-width:2px
+    style reviewer stroke:#6cc2b4,stroke-width:2px
+    style merge stroke:#7aa7d8,stroke-width:2px
 ```
 
 The whole flow is two files. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
 
 | File | Who reads it | What it holds |
 | --- | --- | --- |
-| [`auto-mode/SKILL.md`](./skills/auto-mode/SKILL.md) | The coordinator | The loop: intake, start, receive, verify, land, check |
-| [`auto-mode/worker.md`](./skills/auto-mode/worker.md) | Every worker and verifier | How to size a task, build it, split it, or verify a PR |
+| [`auto-mode/SKILL.md`](./skills/auto-mode/SKILL.md) | The coordinator | The loop: intake, start, receive, review, land, check |
+| [`auto-mode/worker.md`](./skills/auto-mode/worker.md) | Every worker and reviewer | How to size a task, build it, split it, or review a PR |
 
 Every other skill is a tool a worker picks up when its task calls for it. You type one more yourself: [setup-skills](./skills/setup/setup-skills/SKILL.md), once per repo.
 

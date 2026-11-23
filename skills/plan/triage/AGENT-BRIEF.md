@@ -51,7 +51,7 @@ Omit for an enhancement.
 
 ## The route
 
-**Route** names the `/auto-mode` playbook that builds the issue, so the agent that picks it up knows its size:
+**Route** names the size of the work, so the worker that picks the issue up starts on the right path:
 
 - `bug`: something is broken and nobody has named the cause. The fix starts with diagnosis.
 - `change`: one PR, with every decision settled in this brief.

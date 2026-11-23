@@ -9,52 +9,32 @@ The person a run works for. Skills written for a conversation call this person t
 _Avoid_: Owner, end user
 
 **Coordinator**:
-The one agent the operator talks to. It takes every task the operator hands it, starts the workers for each, and makes sure each one ships. It owns the verdict on each head and the landing order, and it is the only agent that merges.
+The one agent the operator talks to. It makes everything the operator asks for a task, starts a worker for each, and makes sure each one ships. It is the only agent that merges.
 _Avoid_: Orchestrator, main agent
 
-**Worker**:
-A fresh agent the coordinator starts with one job and a brief that opens with `implement/worker.md`. There are four: planner, implementer, verifier, and explorer.
-_Avoid_: Helper, child
-
-**Planner**:
-The worker that settles one task with the operator, who answers in the planner's own thread: an interview, a spec and its tickets, a map, or a triage.
-_Avoid_: Interviewer, sub-coordinator
-
-**Implementer**:
-The worker that builds one task and carries its PR from the first commit until it lands.
-_Avoid_: Owner, author
-
-**Verifier**:
-The worker that checks one head it did not write and returns `PASS` or `FAIL`. It runs on the `reviewer` model role.
-_Avoid_: Reviewer, checker, QA agent
-
-**Explorer**:
-The worker that researches the code or the docs when a build's tickets need it.
-_Avoid_: Researcher, scout
-
 **Task**:
-What one implementer builds, landing through one PR: one ticket, several tickets that share a file, or a job the coordinator adds.
+One outcome the operator asked for, or one ticket. One worker carries it, and it lands through one PR when it changes code.
 _Avoid_: Unit, job
 
-**Plan comment**:
-The one comment a coordinator keeps on a spec's issue, holding the build's tasks, the files each may touch, what blocks what, and the landing mode.
-_Avoid_: Ledger, status comment
+**Worker**:
+A fresh agent the coordinator starts with one task and a brief that opens with `auto-mode/worker.md`. It sizes the task, then builds it or splits it into tickets. The operator answers it in its own thread.
+_Avoid_: Helper, child, implementer, planner
+
+**Verifier**:
+The agent that checks one head it did not write and posts `PASS` or `FAIL` on the PR. It runs on the `reviewer` model role.
+_Avoid_: Reviewer, checker, QA agent
 
 **Verdict comment**:
-The comment a coordinator posts on a PR for each verdict: `PASS` or `FAIL`, the head SHA, the patch-id, and the findings.
+The comment a verifier posts on a PR: `PASS` or `FAIL`, the head SHA, and the findings.
 _Avoid_: Review, approval
 
 **Friction**:
-What cost a worker time during its task, reported as facts at the end of its report and kept on the PR.
+What cost a worker time during its task, returned as facts at the end of its report and kept on the PR.
 _Avoid_: Mistake log, complaints
 
 **Repeat**:
-The same friction, failure reason, or question from two workers, or one correction from the operator. A repeat starts a `correct` task.
+The same friction or failure reason from two workers, or the same correction from the operator twice. A repeat becomes a task for the `correct` skill.
 _Avoid_: Pattern, recurring issue
-
-**Playbook**:
-A short list of steps in `auto-mode/playbooks/` that names the skills one size of task runs through.
-_Avoid_: Mode, workflow, lane
 
 ## Verification
 

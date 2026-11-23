@@ -44,7 +44,7 @@ The defaults are the canonical roles, each label named after its role: the state
 
 > Once a build has verified a PR, should the coordinator merge it, or leave the merge to you? (recommended: **the coordinator**)
 
-The `implement` skill reads the answer. It still hands the merge to a person wherever branch protection requires an approval it cannot give.
+The `auto-mode` coordinator reads the answer. It still hands the merge to a person wherever branch protection requires an approval it cannot give.
 
 ## 3. Confirm
 

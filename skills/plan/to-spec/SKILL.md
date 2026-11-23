@@ -1,6 +1,6 @@
 ---
 name: to-spec
-description: "Turn the current conversation, or a written plan, into a spec and its tracer-bullet tickets on the issue tracker, with one approval and no interview. Use when a person has talked a feature through and wants it written up and split into work for agents, usually before /implement."
+description: "Turn the current conversation, or a written plan, into a spec and its tracer-bullet tickets on the issue tracker, with one approval and no interview. Use when a person has talked a feature through and wants it written up and split into tickets that workers can build."
 disable-model-invocation: true
 ---
 

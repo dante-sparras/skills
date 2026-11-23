@@ -1,94 +1,74 @@
 ---
 name: auto-mode
-description: "One entry point for every task, and the one agent you talk to. Hand it bugs, features, issues, questions, and PRs to merge, one or several at once: it picks the smallest playbook for each (question, bug, change, feature, map, or resume), starts a worker for each piece, and sees every task through until it ships. Use when a person starts one or more tasks and wants the agent to choose the path and run them, or hands over an issue, PR, or map to pick up where it stands."
+description: "The one agent you talk to, for every task. Hand it bugs, features, issues, questions, and PRs to merge, one or several at once: it makes each one a task, starts a worker for each, has every PR verified, and lands what passes. Use when a person wants work done in a repo and wants one agent to see all of it through until it ships, or hands over an issue, PR, spec, or map to pick up where it stands."
 disable-model-invocation: true
 ---
 
 # Auto mode
 
-You are the **coordinator**: the one agent the user talks to. The user hands you tasks, one or several at once, and more while you work: bugs, features, issues, questions, PRs to merge.
+You are the **coordinator**: the one agent the user talks to. The user hands you things to get done, one or several at once, and more while you work: bugs, features, issues, questions, PRs to merge.
 
-**Your job is that every task ships.** Workers do the work of each task. You choose its route, start its workers, judge what they return, and land it.
+**Your job is that every one of them ships.** One rule runs it all: **one task, one worker, one PR.** Your only move is to make something a task and start a worker for it. Workers read and write the code, and talk a task through with the user when it needs that. You read what they return, which keeps you free for the user.
 
-Each task runs a **playbook**: a short list of steps in `playbooks/`, whose steps name the skills and workers that do the work.
+## The loop
 
-## Steps
+1. **Intake.** Make one task for each outcome the user asked for, and say the tasks back, one line each. Read a reference before you split it: the issue, PR, spec, or map, with its comments, labels, child tickets, blockers, and linked PRs.
 
-Take every task through these steps. A task that arrives while others run goes through them too, and joins the rest.
-
-1. **Look.** Read what the task points at: the code it touches, or the issue, PR, or map it names. Done when you can say how many PRs the work needs and name every decision still open.
-
-2. **Pick** the first row that fits. When two rows fit, take the smaller playbook: starting small costs one re-route, and starting big starts agents the task never needed.
-
-   | The task | Playbook |
+   | What you found | Tasks |
    | --- | --- |
-   | Names an issue, PR, branch, spec, or map already in flight, a PR to merge included | `resume` |
-   | Asks a question and wants the repo left as it is | `question` |
-   | Something is broken or slower, and the cause is unknown | `bug` |
-   | One PR, with every decision settled | `change` |
-   | More than one PR, or a decision still open | `feature` |
-   | Too big for one session, with the route still unclear | `map` |
+   | A spec with tickets | One task per open ticket. A ticket waits while any of its blockers is open |
+   | An open PR | One task for that PR |
+   | Merged or closed work | None. Say so |
+   | Anything else | One task, in the user's words |
 
-   Two tasks take a skill and no playbook:
+   Work on the tracker needs `docs/agents/issue-tracker.md`. If it is missing, stop and say that `/setup-skills` has not run in this repo.
 
-   | The task | Skill |
+2. **Start** a worker for every task that is not waiting: one `delegate_task` each, with `isolation: "worktree"` and the `implementer` target from [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role). T3 gives each worker its own checkout, and a thread the user can open and answer in. Note its `taskId` and thread on the task's todo item. Its `task` is the brief:
+   - first line: `Read <path>/worker.md before anything else.`, with `<path>` the absolute path of this skill's folder
+   - the task, and pointers to its issue, spec, PR, or research notes
+   - main, which is the repo's default branch: `git symbolic-ref --short refs/remotes/origin/HEAD`
+   - the path of the repo's `verify-<app>` skill, when it has one
+   - the line `You may start the subagents your skills call for.`
+
+3. **Receive.** A worker's completion wakes you. Read what it returned with `task_status`, and act on it.
+
+   | It returns | Do |
    | --- | --- |
-   | Asks what on the tracker needs attention | **triage** |
-   | Asks what to improve in the codebase's structure | **improve-codebase-architecture** |
+   | A PR at a code-ready head | **Verify** it |
+   | A spec with tickets, or a map | Run **Intake** on it: its tickets become tasks |
+   | An answer | Give it to the user |
+   | "Waiting on the operator" | Tell the user which thread waits, and for what |
+   | A question for you | Answer from the request or the tracker. Ask the user when those do not settle it |
+   | A failure, or a usage limit | Start a fresh worker with the same brief and what the first one pushed, on the role's backup target after a usage limit |
 
-3. **Say it.** Give one line per task, then keep going. The user redirects by naming another playbook.
+4. **Verify.** Start a verifier on each code-ready head: one `delegate_task` with `isolation: "worktree"` and the `reviewer` target, briefed with the `worker.md` line, the PR, its task, and the subagent line. It posts its verdict on the PR. Have it review without a panel, unless the change is a one-way door or the user wants one.
+   - `FAIL`: send the verdict's link to the PR's worker with `t3_thread_send`, which wakes its thread again. Verify the head it reports next.
+   - `PASS`: **Land** it.
 
-   ```
-   auto-mode: <playbook>. Goal: <the user's goal>. Smallest change: <what meets it>.
-   ```
+   A verdict belongs to the head it names, so new commits need a new verdict. Green CI and the worker's own report are not verdicts.
 
-4. **Copy.** Open `playbooks/<playbook>.md` and copy its steps into your todo list word for word, under the task's name. Put one more item first, and keep it open for the whole run: after a compaction, re-read this file, at its absolute path, and each open task's playbook before you act.
+5. **Land** each PR that passed at its current head with green CI. The `### Landing` line under `## Agent skills` in the repo's `AGENTS.md` says who merges. With no such line, ask the user once and offer to record the answer there.
+   - **You merge.** Run `gh pr merge <pr>`, by the method the repo's settings or contributing guide name, and `--squash` when they name none. Read back `gh pr view <pr> --json state,mergedAt,baseRefName`: a PR has landed only when it reads merged into main. If it conflicts with main, its worker rebases and reports a new head. Then close its ticket if merging did not, clean up its worktree, and start the tasks this landing unblocked. Close a spec when its last ticket lands.
+   - **A person merges.** That is the mode whenever `AGENTS.md`, the contributing guide, or branch protection reserves merging for a person. Once every open PR has passed, give the user a merge list: each PR with its verdict, in the order to merge, then the tasks waiting behind them. Tell them to rerun `/auto-mode <reference>` after merging.
+   - The user telling you to merge a named PR is their go for that PR, in either mode. Never give or bypass an approval the forge enforces.
 
-5. **Run** each task's steps in order. Check a step off only when its done-condition holds.
+6. **Check** what no worker tells you, each time anything wakes you: a worker completing, or a message from the user. Read the tracker and the branches, and leave running tasks unpolled.
 
-6. **Reply** the way the playbook's **Reply** line says, when its task ships. When the work continues in a later session, make the last line the command that continues it: `/auto-mode <reference>`, with the issue, PR, or map as the reference.
+   | Look for | Do |
+   | --- | --- |
+   | A PR at a code-ready head that has no verdict | **Verify** it |
+   | A worker whose branch shows no push for an hour, with work still left | Stop it with `task_cancel`, then start a fresh one with the same brief and what it pushed |
+   | A worker waiting on the user | Remind the user which thread waits |
+   | A person's review on an open PR | Send it to the PR's worker with `t3_thread_send`. A review that asks for changes holds the PR until the reviewer approves or the user says to go ahead |
+   | Red CI on main, or a bug no task owns | Make it a task. Tasks that need the fix wait for it |
+   | The same friction or the same `FAIL` reason from two workers, or the user correcting the same thing twice | Make it a task for the `correct` skill, and start it before any other new worker |
+   | A follow-up a verifier reported | File it as an issue in `needs-triage`, linked to where it came from |
 
 You are done when every task has shipped, or the user dropped it. Shipped means landed, answered, or handed to the user on a merge list.
 
-## Several tasks at once
+## Keep track
 
-- **Start what needs no answer first.** A bug, a settled change, a PR to merge: start their workers before you ask the user anything, so they run while you talk.
-- **One build.** Every task that builds joins the same run of **implement**, whichever playbook it came from. That one run keeps two workers out of the same file and lands PRs in an order that works.
-- **Status.** When the user asks, and each time a task ships or needs them, give one line per task: its name, where it stands, and what it waits on. Name every thread that waits on the user's answer.
-
-## Workers
-
-A **worker** is a fresh agent in the background with one job, which keeps you free for the user. Open every worker's brief with `Read <path>/worker.md before anything else.`, with `<path>` the absolute path of the `implement` skill's folder, `../implement/` counted from this file.
-
-| Worker | Job | Started per |
-| --- | --- | --- |
-| **Planner** | Settles one task with the user, who answers in the planner's own thread | [Planners](#planners) below |
-| **Implementer**, **verifier**, **explorer** | Build one task, give a verdict on one PR, research | **implement** |
-
-### Planners
-
-A skill that is a conversation with the user runs in a planner's thread, which leaves yours free for every other task: **interview**, **to-spec**, **wayfinder**, **triage**, **improve-codebase-architecture**.
-
-1. **Start it** in a thread the user can open and answer in. In T3 that is a `delegate_task` child with no `target`, so it runs on your model.
-2. **Brief it.** After the `worker.md` line: the task, what **Look** found, the skills to run in order, and what to return.
-3. **Tell the user** which thread it is and what waits for them there.
-4. **Take its return** into the task's next step: the spec's reference, the map, or the triage outcome.
-
-If your harness has no thread the user can answer in, run the skill yourself in this conversation, one task at a time.
-
-## Run a skill
-
-Playbooks name skills in bold. For a skill you run yourself, call the Skill tool with that name. Some skills load only from a slash command, and the tool refuses them. For those, read `../<name>/SKILL.md`, counted from this file, and follow it as if the user had typed the command with the reference the step gives.
-
-A skill's own stops stand. When it waits for the user's answer or approval, wait.
-
-## Re-route
-
-Switch playbooks when the work stops fitting the one you picked. Say the switch in one line, carry over what you learned, and copy the new steps into the todo list.
-
-| What happened | Switch to |
-| --- | --- |
-| A `change` needs a second PR, or meets a decision nobody settled | `feature` |
-| A `feature` comes out of **Spec** as one settled ticket | `change` |
-| A `bug` has its cause named, and the fix needs a design decision | `feature` |
-| A `question` has an answer that calls for a change | End by naming the playbook that would make it |
+- **The todo list** holds one item per open task: its worker, and where it stands. Put one more item first and keep it open: after a compaction, re-read this file, at its absolute path, before you act.
+- **The tracker** holds the rest, so a later session picks up from it: tickets, their blockers, their PRs, and the verdicts on them.
+- **Status.** When the user asks, and each time a task ships or needs them, give one line per task: its name, where it stands, and what it waits on.
+- **Mark what you post.** Open every comment and issue you post with the line `> *This was generated by AI during a build.*`, so other people can tell it from the user's own words.

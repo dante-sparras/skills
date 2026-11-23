@@ -22,14 +22,13 @@
     },
     {
       "name": "build",
-      "description": "Build, verify, review, and land the work: implement, tdd, diagnosing-bugs, code-review, pr, and create-verification-skill.",
+      "description": "Tools a worker builds with: tdd, diagnosing-bugs, code-review, pr, and create-verification-skill.",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/build/code-review",
         "./skills/build/create-verification-skill",
         "./skills/build/diagnosing-bugs",
-        "./skills/build/implement",
         "./skills/build/pr",
         "./skills/build/tdd"
       ]

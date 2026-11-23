@@ -37,9 +37,9 @@ A Breakage or Spec finding survives only when you rerun its command and the outp
    - Run one reviewer per model family among the runnable default and backup. The same model offered by two providers is one family, and so are one vendor's other models.
    - Run the default first. Run the backup in parallel when it adds a family. If the default is unavailable or hits a usage limit, promote the backup, and reuse its review if it already started.
    - When the role resolves to inheritance, run one reviewer on the current model.
-   - **No panel.** When your caller asks for a review without a panel, or your harness refuses nested agents, review the diff yourself against the same brief and say so under **Panel**.
+   - **No panel.** When your caller asks for a review without a panel, review the diff yourself against the same brief and say so under **Panel**.
 
-6. **Launch** the reviewers in parallel, each with a fresh context and an isolated worktree at `HEAD`. In T3, use `delegate_task` with `mode: "async"` and `isolation: "worktree"`. Outside T3, use the native agent tool with worktree isolation. Every reviewer gets the same prompt:
+6. **Launch** the reviewers in parallel, each with a fresh context and an isolated worktree at `HEAD`. Use `delegate_task` with `mode: "async"` and `isolation: "worktree"`. Every reviewer gets the same prompt:
    - the diff command, the commit list, and the patch path with an instruction to apply it first, when step 1 saved one
    - the intent, and the spec's path or contents
    - the standards files, the tooling list, the glossary path, and the smell baseline pasted in full, since the reviewer cannot reach it any other way

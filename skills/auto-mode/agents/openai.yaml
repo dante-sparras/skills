@@ -1,5 +1,5 @@
 interface:
   display_name: "Auto Mode"
-  short_description: "Take any number of tasks, start workers for each, and ship them"
+  short_description: "Make each request a task, start a worker for it, and ship it"
 policy:
   allow_implicit_invocation: false

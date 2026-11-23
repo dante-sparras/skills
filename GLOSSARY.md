@@ -9,7 +9,7 @@ The person a run works for. Skills written for a conversation call this person t
 _Avoid_: Owner, end user
 
 **Coordinator**:
-The one agent the operator talks to. It makes everything the operator asks for a task, starts a worker for each, and makes sure each one ships. It sends a reviewer to every PR, and it is the only agent that watches CI and merges.
+The one agent the operator talks to. It makes everything the operator asks for a task, starts a worker for each, and makes sure each one ships. It sends a reviewer to every PR once its checks are green, and it is the only agent that watches CI and merges.
 _Avoid_: Orchestrator, main agent
 
 **Task**:
@@ -21,11 +21,11 @@ A fresh agent the coordinator starts with one task and a brief that opens with `
 _Avoid_: Helper, child, implementer, planner
 
 **Reviewer**:
-The agent the coordinator sends to one PR it did not write. It reruns the checks, proves the behavior, runs `code-review`, and posts `PASS` or `FAIL` on the PR. It runs on the `reviewer` model role.
+The agent the coordinator sends to one PR it did not write. It proves the behavior, runs `code-review`, and settles its findings with the PR's worker by message. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
 _Avoid_: Verifier, checker, QA agent
 
 **Verdict comment**:
-The comment a reviewer posts on a PR: `PASS` or `FAIL`, the head SHA, and the findings.
+The comment a reviewer posts on a PR once it and the worker are done: `PASS` or `NO AGREEMENT`, the head SHA, and how each finding was settled.
 _Avoid_: Review, approval
 
 **Friction**:

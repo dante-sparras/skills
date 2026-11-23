@@ -8,37 +8,45 @@ Start with [`/auto-mode`](./skills/auto-mode/SKILL.md) and hand it your tasks, o
 One rule runs it all: **one task, one worker, one PR.** The skills are written for T3 Code: each worker is a `delegate_task` child with its own thread and checkout.
 
 1. **The coordinator makes each thing a task** and starts a worker for it.
-2. **The worker sizes its own task.** If it fits in one PR, the worker builds it. If it is bigger, or a decision is open, the worker interviews you in its own thread, writes a spec and its tickets, and hands the tickets back. Each ticket becomes a new task.
-3. **The coordinator sends a reviewer to each PR.** When the review fails, the coordinator tells the worker that opened the PR to fix it, and this repeats until a review passes.
-4. **The coordinator watches CI and merges**, or hands you a merge list when merging is yours.
+2. **The worker sizes its own task**, and the coordinator tells you how. If it fits in one PR, the worker builds it. If it is bigger, or a decision is open, the worker interviews you in its own thread, writes a spec and its tickets, and hands the tickets back. Each ticket becomes a new task.
+3. **The coordinator sends a reviewer to each PR**, once its checks are green. The reviewer and the worker message each other until they agree on what needs fixing. After three rounds without agreement, the coordinator brings both positions to you.
+4. **The coordinator merges** once the checks are green again, or hands you a merge list when merging is yours.
 5. **Anything that comes up becomes a new task**: a bug nobody owns, a teammate's review, a mistake that repeats.
 
 ```mermaid
-flowchart TB
-    you(["You<br/>any number of tasks"])
-    coord["COORDINATOR<br/>one task, one worker, one PR"]
-    worker["WORKER<br/>sizes its own task"]
-    build["fits in one PR:<br/>builds it<br/>/tdd, /diagnosing-bugs, /pr"]
-    split["bigger, or a decision open:<br/>/interview with you in its thread,<br/>then /to-spec"]
-    reviewer["REVIEWER<br/>/code-review, verdict on the PR"]
-    merge["COORDINATOR<br/>watches CI, merges"]
-    land(["Landed,<br/>or on your merge list"])
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    autonumber
+    actor You
+    participant C as Coordinator
+    participant W as Worker
+    participant R as Reviewer
 
-    you --> coord
-    coord -->|a task| worker
-    worker --> build
-    worker --> split
-    split -.->|tickets become tasks| coord
-    build -->|PR| reviewer
-    reviewer -->|PASS| merge
-    merge --> land
-    reviewer -.->|"FAIL: the coordinator sends it back"| build
+    You->>C: Tasks, one or many
+    C->>W: One task per worker
+    W->>C: How it sized its task
+    C->>You: One line per task
 
-    style coord stroke:#7aa7d8,stroke-width:2px
-    style worker stroke:#6cc2b4,stroke-width:2px
-    style reviewer stroke:#6cc2b4,stroke-width:2px
-    style merge stroke:#7aa7d8,stroke-width:2px
+    alt Path A: the task fits in one PR
+        W->>C: Opens a PR
+        Note over C: Waits for green checks
+        C->>R: Review this PR
+        loop Until they agree, at most three rounds
+            R->>W: Findings
+            W->>R: Fixed, or why it should stay
+        end
+        R->>C: PASS, or no agreement
+        Note over C: Merges once checks are green.<br/>No agreement goes to you
+        C->>You: Merged, or on your merge list
+    else Path B: the task is bigger, or a decision is open
+        W->>You: Interview, in the worker's own thread
+        You->>W: Answers, and approval of the tickets
+        W->>C: A spec and its tickets
+        Note over C: Each ticket becomes a new task, from step 2
+    end
 ```
+
+Read the diagram top to bottom. Each arrow is a message, and the numbers give the order. A task takes path A or path B.
 
 The whole flow is two files. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
 

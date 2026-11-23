@@ -7,7 +7,8 @@ Your brief overrides a rule below only when it says so in so many words. If it s
 ## Every worker
 
 - **Your brief is the contract.** The bar in it is the whole bar: add no gate, sign-off, or review round above it. With no bar stated, the change is no worse than its base and passes its own tests.
-- **Decide what you can undo.** Make the choice, then say what you chose and why. For a choice you cannot undo, or a decision the task leaves open, ask the operator in this thread and wait for the answer. If you end a turn still waiting, make your last line say what you wait on.
+- **Decide what you can undo.** Make the choice, then say what you chose and why. For a choice you cannot undo, or a decision the task leaves open, ask the operator in this thread and wait for the answer.
+- **Send the coordinator notes.** Use `t3_thread_send` with `mode: "queue"`, to the coordinator's thread id in your brief. Send one line when you have sized your task, and one when you wait on the operator. Your final answer goes to the coordinator by itself.
 - **Run a skill by name or by path.** When these rules or your brief name a skill, call the Skill tool with its name. If you have no such tool, or it cannot load the skill, read `../<name>/SKILL.md`, counted from this file, and follow it.
 - **Return evidence.** Give the head SHA, the commands you ran, and their output. Say what you skipped and what stays unproven.
 - **Return friction.** End with what cost you time: a file or fact you had to search for, a command that failed before it worked, a rule you learned from a failure, a tool that returned far more than you needed. One line each, naming the file or command. Write `Friction: none` when nothing did.
@@ -16,7 +17,7 @@ Your brief overrides a rule below only when it says so in so many words. If it s
 
 ## Size your task first
 
-Read what your task points at, then take the first row that fits. Say how you sized it in one line before you go on: the operator redirects you here.
+Read what your task points at, then take the first row that fits. Send the coordinator one line on how you sized it, and say the same here before you go on: the operator redirects you in this thread.
 
 | Your task | Do |
 | --- | --- |
@@ -34,7 +35,7 @@ An issue's agent brief already names the size in its **Route** line: `bug`, `cha
 
 ## Build
 
-Your job is to open one PR, and to fix what comes back on it. The coordinator sends the reviewer, watches CI, and merges.
+Your job is to open one PR, and to settle with its reviewer what needs fixing. The coordinator sends the reviewer, watches CI, and merges.
 
 1. **Branch.** Fetch main and create your own branch off it, in the checkout you were started in. That branch is the only one you write. Merging and pushing main belong to the coordinator.
 2. **Build** with `tdd`. Take the seams your tests go at from the ticket or brief. When it names none, propose them and confirm them with the operator.
@@ -42,7 +43,7 @@ Your job is to open one PR, and to fix what comes back on it. The coordinator se
 4. **Push early.** Push soon after starting and after each finished unit. A push is your sign of life: the coordinator replaces a worker that shows nothing new for an hour. Open your PR off main early, as a draft, so CI runs alongside the work. Mark it as closing its issue.
 5. **Finish.** Rebase onto current main and prove the change on the real artifact, with the repo's `verify-<app>` skill when the proof needs the running app. Then write the PR body with the `pr` skill and mark the PR ready for review.
 6. **Report.** Post your report as a comment on the PR, with the evidence and your friction in a collapsed `<details>` block. Then end your turn with the PR's link, its head SHA, the state of its checks, and your friction. Leave CI and the merge to the coordinator.
-7. **Fix what comes back.** The coordinator wakes this thread when a review fails, a check goes red, main conflicts, or a person reviews. Fix each finding, or answer its thread with the reason it stays. Then push and report the new head the same way.
+7. **Settle what comes back.** The PR's reviewer wakes this thread with findings, and the coordinator wakes it for a red check, a conflict, or a person's review. For each point, fix it, or answer with the reason it should stay. Push, then end your turn with the new head SHA, what you fixed, and what stays and why. That reply goes to whoever woke you.
 
 Make every write to your branch with `git push --force-with-lease`, pinned to the SHA you last pushed. If the lease fails because someone else pushed, stop and report it.
 
@@ -56,17 +57,23 @@ The task is more than one PR, or a decision is still open. You build nothing: ea
 
 ## Review
 
-You are the **reviewer** of one PR you did not write. You return a verdict: `PASS` or `FAIL`.
+You are the **reviewer** of one PR you did not write. You and the PR's worker settle between you what needs fixing, and you return one verdict to the coordinator: `PASS` or `NO AGREEMENT`.
 
 1. **Check out** the head.
-2. **Rerun** the repo's checks.
-3. **Prove** the task's behavior on the real surface. Drive the running app with the repo's `verify-<app>` skill when the proof needs it.
-4. **Run `code-review`** on the diff: `origin/main` as the fixed point, the PR's ticket or task as the spec, and the PR's purpose as the intent. When your brief says to review without a panel, tell `code-review` so.
-5. **Post the verdict** as a comment on the PR. Its first line is `PASS` or `FAIL` and the head SHA. Then, in a collapsed `<details>` block: the proven findings, the Standards findings, the follow-ups, and your friction.
-6. **Return** `PASS` or `FAIL`, the head SHA, the comment's link, the follow-ups, and your friction.
+2. **Prove** the task's behavior on the real surface. Drive the running app with the repo's `verify-<app>` skill when the proof needs it. CI already ran the repo's checks, so rerun them only when the PR has no CI.
+3. **Run `code-review`** on the diff: `origin/main` as the fixed point, the PR's ticket or task as the spec, and the PR's purpose as the intent. When your brief says to review without a panel, tell `code-review` so.
+4. **Talk it through with the worker**, when you have findings.
+   - Post the findings as a comment on the PR.
+   - Send them to the worker's thread, whose id your brief gives, with `t3_thread_send`.
+   - Wait for its run with `t3_thread_wait`, following what the wait returns, then read its reply with `t3_thread_read`.
+   - For each finding, the worker fixed it or gave a reason it should stay. Check each fix at the new head, and accept each reason that holds.
+   - Send what is still open, and go round again. You agree when nothing is open.
+5. **Stop after three rounds.** With findings still open, the verdict is `NO AGREEMENT`.
+6. **Post the verdict** as a comment on the PR. Its first line is `PASS` or `NO AGREEMENT`, and the head SHA. Then, in a collapsed `<details>` block: each finding and how it was settled, or both positions on each one still open, then the follow-ups and your friction.
+7. **Return** the verdict, the head SHA, the comment's link, the follow-ups, and your friction.
 
-What fails a head:
+What is worth a finding:
 
-- `FAIL` only for a problem you can show: a failing run at the head, a finding the review proved, or a wrong line in the diff.
-- A problem main already has fails the head only when the PR copies it or newly reaches it. Report anything else as a follow-up.
-- Standards findings never fail a head. List them apart: the PR's worker fixes each one or says why it stays.
+- A problem you can show: a failing run at the head, a finding `code-review` proved, or a wrong line in the diff.
+- A problem main already has counts only when the PR copies it or newly reaches it. Report anything else as a follow-up.
+- A Standards finding goes to the worker too, and never blocks: accept the worker's reason for any that stay.

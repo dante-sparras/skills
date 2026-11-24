@@ -14,6 +14,46 @@ You need T3 Code with **Settings → Labs → Workflows** on, a GitHub repo, and
 
 Work moves in two halves: you shape it into issues with an agent, and the **factory** ships each issue on its own.
 
+```mermaid
+%%{init: {"flowchart": {"subGraphTitleMargin": {"top": 6, "bottom": 12}}}}%%
+flowchart TD
+    you(["<b>You</b>"]):::you
+    intake["<b>/factory</b><br/>Your agent files the issues"]:::you
+    ready[("<b>ready-for-agent</b><br/>Issues an agent can build")]
+    ask["<b>Workflows page</b><br/>Where the factory asks you"]:::you
+    triage[("<b>needs-triage</b><br/>Issues that wait on you")]:::you
+
+    subgraph factory["The factory runs on its own"]
+        start{{"<b>Every 10 minutes</b><br/>Starts each unblocked issue"}}
+        worker["<b>Worker</b><br/>Builds the issue in one PR"]
+        checks{"Checks"}
+        review["<b>Reviewer</b><br/>Argues each finding with the worker"]
+        merge["<b>Merge</b>"]
+        learn["<b>After the merge</b><br/>Proves each finished spec<br/>Counts repeated friction"]
+    end
+
+    you -- "What you want done" --> intake
+    intake --> ready
+    ready --> start
+    start --> worker
+    worker -- "A PR" --> checks
+    checks -- "Red, or a conflict" --> worker
+    checks -- "Green" --> review
+    review -- "PASS, or no agreement" --> ask
+    worker <-. "A question, your answer" .-> ask
+    ask -- "Your go" --> merge
+    merge --> learn
+    start -. "A red main, as a bug" .-> ready
+    learn -. "Spec gaps and guardrails" .-> ready
+    learn -. "Follow-ups" .-> triage
+    triage --> you
+
+    classDef you fill:#1f6feb,stroke:#1158c7,color:#ffffff
+    style factory fill:#8b949e1f,stroke:#8b949e
+```
+
+Blue is where you come in. A solid arrow follows one issue, from what you ask for to its merge. A dotted arrow is something the factory does unasked: it brings you a worker's question, and it files issues of its own.
+
 1. **Shape.** Type [`/factory`](./skills/factory/SKILL.md) and say what you want done, one thing or several: bugs, features, issues, questions, PRs. The agent you typed it to answers questions itself. Everything else becomes an issue in `ready-for-agent` that an agent can build in one PR, through `triage`, `interview`, or `plan`, with you in the conversation.
 2. **Ship.** The [factory](./skills/factory/factory.md) is a T3 Code workflow. Every ten minutes it starts a **worker** for each ready issue whose blockers are closed, up to a limit per repo. The worker opens a PR, and wakes again for a red check, a conflict, or a collaborator's comment. Once the checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges.
 3. **Learn.** When a spec's last ticket lands, a reviewer proves the spec's user stories on main, and each gap becomes a ticket. Friction that repeats across runs becomes an issue the factory fixes with the `correct` skill. Follow-ups land in `needs-triage`, ready for step 1.
@@ -30,41 +70,6 @@ The factory never merges, rules, or decides for you. Everything it needs from yo
 ### When main is red
 
 The factory checks main on every pass. When a check fails there, it files one `bug` issue for the fix and starts nothing else in that repo until the issue closes, so no worker builds on a broken base.
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    autonumber
-    actor You
-    participant C as Your agent
-    participant F as Factory
-    participant W as Worker
-    participant R as Reviewer
-
-    You->>C: Work, one thing or many
-    C->>You: Answers, and questions to settle what to build
-    C->>F: Issues in ready-for-agent
-    F->>W: One issue per worker
-    opt The worker needs a decision
-        W->>F: A question, with answers to pick from
-        F->>You: The question, in the Workflows page
-        You->>F: Your answer
-        F->>W: Your answer, in the worker's thread
-    end
-    W->>F: A PR
-    Note over F: Waits for green checks
-    F->>R: Review this PR
-    loop Until they agree on every finding, at most three rounds
-        R->>W: Findings
-        W->>R: Per finding: a fix, or a counter-argument
-    end
-    R->>F: PASS, or no agreement
-    F->>You: Merge this PR? Or rule on the open findings
-    You->>F: Your go
-    Note over F,R: When a spec's last ticket lands,<br/>a reviewer proves the spec on main
-```
-
-Read the diagram top to bottom. Each arrow is a message, and the numbers give the order.
 
 The flow lives in six files in `factory/`. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
 

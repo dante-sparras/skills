@@ -41,7 +41,7 @@ Open every message to another agent with a status word.
 
 ## Pull requests
 
-Use T3's PR tools, not `gh`: `pull_request_create`, `pull_request_update`, `pull_request_read` with the PR's `number` and `include: ["checks"]`, `pull_request_respond` to comment, and `ci_logs` for a failed check. Those tools take text only, so an image or video is the one exception: attach it with `gh pr edit <number> --attach <file>`, as the `pr` skill says. Issues go through `docs/agents/issue-tracker.md`.
+Use T3's PR tools, not `gh`: `pull_request_create`, `pull_request_update`, `pull_request_read` with the PR's `number` and `include: ["checks"]`, `pull_request_respond` to comment, and `ci_logs` for a failed check. Those tools take text only, so an image or video is the one exception: attach it with `gh pr edit <number> --attach <file>`, as the `pr-body` skill says. Issues go through `docs/agents/issue-tracker.md`.
 
 ## Skills
 

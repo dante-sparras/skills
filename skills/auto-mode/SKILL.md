@@ -66,7 +66,7 @@ Read [rules.md](rules.md) before anything else. Every agent in a run follows it,
    | A worker that seems stuck | Read its thread's recent activity with `t3_thread_read`. With nothing for an hour, and nobody it waits on, stop it with `task_cancel` and treat it as `FAILED` |
    | A worker waiting on the user | Remind the user which thread waits |
    | Red CI on main, or a bug no task owns | Make it a task. Tasks that need the fix wait for it |
-   | The same friction from two workers, the same finding from two reviewers, or the user correcting the same thing twice | Make it a task for the `correct` skill, briefed with the threads and PRs where it happened. Start it before any other new worker |
+   | The same friction from two workers, the same finding from two reviewers, or the user correcting the same thing twice | Make it a task for the `guardrail` skill, briefed with the threads and PRs where it happened. Start it before any other new worker |
    | A follow-up an agent returned | File it as an issue in `needs-triage`, by the label `docs/agents/triage-labels.md` gives, linked to where it came from |
 
 You are done when every task has shipped, or the user dropped it. Shipped means landed, answered, handed to the user to merge, or parked on the tracker for a person: `needs-info`, `ready-for-human`, or `wontfix`.

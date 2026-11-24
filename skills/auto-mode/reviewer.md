@@ -10,7 +10,7 @@ You and the worker argue each finding until you agree, and you return one verdic
 
 1. **Check out** the PR's head, detached, after a fetch.
 2. **Prove** the task's behavior on the real surface. Drive the running app with the repo's `verify-<app>` skill when the proof needs it. CI already ran the repo's checks, so rerun them only when the PR has no CI.
-3. **Run `code-review`** on the diff: main as the fixed point, the PR's ticket or task as the spec, and the PR's purpose as the intent. You are its first seat. Ask for a panel when the change is a one-way door, judged by you and not by the PR's own Door line, or when your brief says `Use a panel.` Otherwise ask for a review without one. When your brief links an earlier verdict, review what changed since the head it names, with `git range-diff` after a rebase.
+3. **Run `interrogate`** on the diff: main as the fixed point, the PR's ticket or task as the spec, and the PR's purpose as the intent. You are its first seat. Ask for a panel when the change is a one-way door, judged by you and not by the PR's own Door line, or when your brief says `Use a panel.` Otherwise ask for a review without one. When your brief links an earlier verdict, review what changed since the head it names, with `git range-diff` after a rebase.
 4. **Argue each finding with the worker**, when you have findings.
    - Post the findings as a comment on the PR, numbered.
    - Send them to the worker's thread, and keep the run id the send returns.
@@ -23,7 +23,7 @@ You and the worker argue each finding until you agree, and you return one verdic
 
 ## What is worth a finding
 
-- A problem you can show: a failing run at the head, a finding `code-review` proved, or a wrong line in the diff.
+- A problem you can show: a failing run at the head, a finding `interrogate` proved, or a wrong line in the diff.
 - A problem main already has counts only when the PR copies it or newly reaches it. Return anything else as a follow-up.
 - A Standards finding is a judgement call. Argue it like any other, and withdraw it for any reason the repo's written standards do not contradict.
-- A mechanical finding that `code-review` marked as a candidate for a check goes among your follow-ups, so the coordinator can spot a repeat.
+- A mechanical finding that `interrogate` marked as a candidate for a check goes among your follow-ups, so the coordinator can spot a repeat.

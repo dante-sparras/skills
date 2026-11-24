@@ -1,0 +1,3 @@
+interface:
+  display_name: "New Verify Skill"
+  short_description: "Generate a skill that drives the real app and proves behavior"

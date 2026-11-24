@@ -59,7 +59,7 @@ Omit for an enhancement.
 
 Pick it from what triage learned in the code, not from the label: a bug whose cause triage already found is a `change`.
 
-## Example: an issue
+## Example
 
 ```markdown
 ## Agent Brief
@@ -97,40 +97,4 @@ cut in half, with no "...".
 **Out of scope:**
 - Changing the 1024 char limit itself
 - Multi-line description support
-```
-
-## Example: a PR
-
-```markdown
-## Agent Brief
-
-**Category:** enhancement
-**Route:** change
-**Summary:** Finish the contributor's `--json` output flag for `triage list`
-
-**Current behavior:**
-The PR adds a `--json` flag that serializes the issue list to JSON. The happy
-path works and the diff matches the project's command structure. Two gaps
-remain: errors are still printed as human text (not JSON), and the new flag has
-no test coverage.
-
-**Desired behavior:**
-With `--json`, all output (including errors) is well-formed JSON on stdout,
-and the command's exit codes are unchanged. The existing human-readable output
-is untouched when the flag is absent.
-
-**Key interfaces:**
-- The command's error path should emit `{ "error": string }` under `--json`
-  instead of the plain-text error
-- Reuse the serializer the PR already added
-
-**Acceptance criteria:**
-- [ ] `triage list --json` emits valid JSON for both success and error cases
-- [ ] Exit codes match the non-JSON command
-- [ ] A test covers the `--json` success output and one error case
-- [ ] Default (non-JSON) output is byte-for-byte unchanged
-
-**Out of scope:**
-- Adding `--json` to any other command
-- Changing the JSON shape of the success payload the PR already defined
 ```

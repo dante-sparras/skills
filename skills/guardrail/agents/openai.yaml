@@ -1,0 +1,3 @@
+interface:
+  display_name: "Guardrail"
+  short_description: "Turn repeated agent mistakes into checks"

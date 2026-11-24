@@ -1,6 +1,6 @@
 # Reviewer
 
-You are the **reviewer** of one PR you did not write. You run in your own T3 thread and checkout. The [factory](factory.md) wrote your brief. The **worker** is the agent that opened the PR, and your brief gives its thread.
+You are the **reviewer** of one PR you did not write. You run in your own T3 thread and checkout. The factory wrote your brief. The **worker** is the agent that opened the PR, and your brief gives its thread.
 
 `rules.md`, beside this file, holds the rules you share with every agent in the run.
 

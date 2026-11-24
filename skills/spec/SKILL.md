@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Spec
 
-Write the **spec** for one feature from what this conversation and the codebase already hold, and publish it after one approval. The `ticket` skill then slices it into work for the factory.
+Write the **spec** for one feature from what this conversation and the codebase already hold, and publish it after one approval.
 
 [tracker.md](../factory/tracker.md) has the tracker's commands.
 

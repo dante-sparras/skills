@@ -60,7 +60,7 @@ List the `ready-for-agent` issues an agent can start now:
 
 1. **Gather.** Read all of it: body, comments, labels, author, dates, and the diff for a PR. If earlier triage notes exist, check which questions the reporter has answered, and treat settled questions as settled. Then check the codebase, in the glossary's vocabulary:
    - **Already built?** Search for the requested behavior by domain concept, not by the request's wording, and say where you looked.
-   - **Already rejected?** Read `.out-of-scope/*.md` and surface any file that resembles the request.
+   - **Already rejected?** Search the closed `wontfix` issues for the same request, and surface any match with the reason it was given.
 
 2. **Recommend** a category and a state, with your reasons and what the code showed. Wait for the maintainer's direction.
 
@@ -76,9 +76,8 @@ List the `ready-for-agent` issues an agent can start now:
    | `ready-for-human` | Post a brief of the same shape, and say why it cannot be delegated: a judgment call, external access, a design decision, manual testing |
    | `needs-info` | Post triage notes from the template below |
    | `needs-triage` | Apply the role, and comment when there is partial progress to keep |
-   | `wontfix`, already built | Close with a comment that points to where the behavior lives. Leave `.out-of-scope/` alone |
-   | `wontfix`, rejected bug | Close with a polite explanation |
-   | `wontfix`, rejected enhancement | Record it per [OUT-OF-SCOPE.md](OUT-OF-SCOPE.md), link the file from a comment, then close |
+   | `wontfix`, already built | Close with a comment that points to where the behavior lives |
+   | `wontfix`, rejected | Close with a polite comment that gives the decision and its reason, so a later request for the same thing finds it |
 
 6. **Hand off.** Tell the maintainer what happens next. For `ready-for-agent`, give the route the brief names and the command that builds it: `/coordinate <issue>`. For `needs-info`, say that the issue returns to `needs-triage` when the reporter replies. Inside a `coordinate` worker, return the issue and its route to the coordinator in place of the command.
 

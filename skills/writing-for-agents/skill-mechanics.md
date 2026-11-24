@@ -22,4 +22,4 @@ Split off a model-invoked skill when it has a distinct leading word that should 
 
 ## Router skills
 
-When user-invoked skills multiply past what you can remember, add a **router skill**: one user-invoked skill that names the others and when to reach for each. A router that only names them can hint and no more. A router that reads their `SKILL.md` files by path runs them, as `coordinate`'s workers do.
+When user-invoked skills multiply past what you can remember, add a **router skill**: one user-invoked skill that names the others and when to reach for each. A router that only names them can hint and no more. A router that reads their `SKILL.md` files by path runs them, as the factory's workers do.

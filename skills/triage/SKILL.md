@@ -49,12 +49,7 @@ When PRs are in scope, include external PRs and tag each line `[PR]` or `[issue]
 
 ## Show what is ready
 
-List the `ready-for-agent` issues an agent can start now:
-
-- Drop every issue with an open blocker, per the tracker doc's count of open blockers.
-- Group tickets under their spec.
-- Mark a ticket that has an open PR as already being built.
-- For each issue left, give the route its agent brief names, or `build` for a ticket of a spec, and the command that builds it: `/coordinate <issue>`.
+The factory starts each `ready-for-agent` issue within ten minutes of its last blocker closing, and `t3 workflow list` shows what it runs. List the rest of the queue: the `ready-for-agent` issues with an open blocker, per the tracker doc's count of open blockers, grouped under their spec, each with what blocks it.
 
 ## Triage one issue or PR
 
@@ -72,14 +67,14 @@ List the `ready-for-agent` issues an agent can start now:
 
    | State | Do |
    | --- | --- |
-   | `ready-for-agent` | Post an agent brief, per [agent-brief.md](agent-brief.md) |
+   | `ready-for-agent` | Post an agent brief, per [agent-brief.md](agent-brief.md). Only work that fits one PR gets this state: for anything bigger, run [interview](../interview/SKILL.md) and [to-spec-and-tickets](../to-spec-and-tickets/SKILL.md), whose tickets go to `ready-for-agent` |
    | `ready-for-human` | Post a brief of the same shape, and say why it cannot be delegated: a judgment call, external access, a design decision, manual testing |
    | `needs-info` | Post triage notes from the template below |
    | `needs-triage` | Apply the role, and comment when there is partial progress to keep |
    | `wontfix`, already built | Close with a comment that points to where the behavior lives |
    | `wontfix`, rejected | Close with a polite comment that gives the decision and its reason, so a later request for the same thing finds it |
 
-6. **Hand off.** Tell the maintainer what happens next. For `ready-for-agent`, give the route the brief names and the command that builds it: `/coordinate <issue>`. For `needs-info`, say that the issue returns to `needs-triage` when the reporter replies. Inside a `coordinate` worker, return the issue and its route to the coordinator in place of the command.
+6. **Hand off.** Tell the maintainer what happens next. For `ready-for-agent`, say that the factory starts it within ten minutes of its last blocker closing. For `needs-info`, say that the issue returns to `needs-triage` when the reporter replies.
 
 ## Quick state override
 

@@ -9,15 +9,15 @@ The person a run works for. `triage` calls them the maintainer.
 _Avoid_: Operator, owner
 
 **Coordinator**:
-The one agent the user talks to. It makes everything the user asks for a task, starts a worker for each, and makes sure each one ships. It sends a reviewer to every PR once its checks are green, and it is the only agent that watches CI and merges.
+The agent the user talks to, started with `/coordinate`. It answers questions itself, and turns everything else into issues in `ready-for-agent` for the factory to ship. It builds nothing.
 _Avoid_: Orchestrator, main agent
 
 **Factory**:
-The T3 Code workflow in `coordinate/factory.ts` that runs the coordinator's loop for each issue labelled `ready-for-agent`, with no coordinator agent. It asks the user before every merge, checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
+The T3 Code workflow in `coordinate/factory.ts` that ships each issue labelled `ready-for-agent`: it starts a worker, sends a reviewer to the PR, and asks the user before every merge. It also checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
 _Avoid_: Pipeline, automation, bot
 
 **Task**:
-One outcome the user asked for, or one ticket. One worker carries it, and it lands through one PR when it changes code.
+One issue in `ready-for-agent`. One worker carries it, and it lands through one PR.
 _Avoid_: Unit, job
 
 **Spec**:
@@ -25,15 +25,15 @@ The issue that describes one feature: the problem, the solution, the user storie
 _Avoid_: PRD
 
 **Ticket**:
-One tracer-bullet slice of a spec, published as an issue that names its blockers. One ticket becomes one task.
+One tracer-bullet slice of a spec, published as an issue that names its blockers. Each ticket is a task.
 _Avoid_: Story, subtask
 
 **Worker**:
-A fresh agent the coordinator starts with one task and a brief that opens with `coordinate/rules.md` and `coordinate/worker.md`. It sizes the task, then takes one of four paths: answer a question, talk it through with the user, build one PR, or split the work into tickets. The user answers it in its own thread.
+A fresh agent the factory starts with one task and a brief that opens with `coordinate/rules.md` and `coordinate/worker.md`. It builds the task in one PR and argues its reviewer's findings. The user answers it in its own thread.
 _Avoid_: Helper, planner
 
 **Reviewer**:
-The agent the coordinator sends to one PR it did not write, with a brief that opens with `coordinate/rules.md` and `coordinate/reviewer.md`. It proves the behavior, runs `review-changes`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
+The agent the factory sends to one PR it did not write, with a brief that opens with `coordinate/rules.md` and `coordinate/reviewer.md`. It proves the behavior, runs `review-changes`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
 _Avoid_: Verifier, checker, QA agent
 
 **Verdict comment**:
@@ -57,7 +57,7 @@ The seats of one `review-changes` run, one per model family. A reviewer is its f
 _Avoid_: Reviewers, jury
 
 **Follow-up**:
-Something worth doing that is outside an agent's task. It goes in the agent's result, and the coordinator files it as an issue.
+Something worth doing that is outside an agent's task. It goes in the agent's result, and the factory files it as an issue in `needs-triage`.
 _Avoid_: TODO, nice-to-have
 
 **Map**:
@@ -65,27 +65,15 @@ The issue the `map` skill keeps for work too big for one session. Its children a
 _Avoid_: Roadmap, epic
 
 **Brief**:
-The task text the coordinator starts a worker or a reviewer with. An agent brief is a different thing: the comment `triage` posts on an issue.
+The task text the factory starts a worker or a reviewer with. An agent brief is a different thing: the comment `triage` posts on an issue.
 _Avoid_: Prompt, instructions
 
-**Status word**:
-The word that opens every message between agents in a run: `SIZED`, `WAITING ON USER`, `QUESTION FOR COORDINATOR`, `BLOCKED`, `DONE`, `REPLY`, or `FAILED`.
-_Avoid_: State, signal
-
-**Reviewable**:
-A PR that is ready for a reviewer: its worker is done, it is not a draft, its checks are green, and no verdict covers its current head.
-_Avoid_: Ready, open
-
-**Landable**:
-A PR that may merge: it has a `PASS` or the user's ruling for its current head, green checks, and no conflict or hold.
-_Avoid_: Approved, mergeable
-
 **Friction**:
-What cost a worker time during its task, returned as facts at the end of its result and kept in its PR's agent notes.
+What cost an agent time during its task, returned in its result as a kind and a target, the repo path or command it is about, and kept in a worker's PR agent notes.
 _Avoid_: Mistake log, complaints
 
 **Repeat**:
-The same friction from two workers, the same finding from two reviewers, or the same correction from the user twice. A repeat becomes a task for the `add-guardrail` skill.
+The same friction, by kind and target, from two runs, or once for a `broken` tool. The factory counts friction as each run ends, and files a repeat as an issue that the `add-guardrail` skill fixes.
 _Avoid_: Pattern, recurring issue
 
 ## Verification

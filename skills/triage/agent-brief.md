@@ -17,7 +17,7 @@ For an issue, the brief says what to build. For a PR, it says what is left to do
 ## Agent Brief
 
 **Category:** bug / enhancement
-**Route:** bug / change / feature
+**Route:** bug / change
 **Summary:** one line on what needs to happen
 
 **Current behavior:**
@@ -51,11 +51,12 @@ Omit for an enhancement.
 
 ## The route
 
-**Route** names the size of the work, so the worker that picks the issue up starts on the right path:
+**Route** tells the factory's worker how to start:
 
 - `bug`: something is broken and nobody has named the cause. The fix starts with diagnosis.
 - `change`: one PR, with every decision settled in this brief.
-- `feature`: more than one PR. The brief is the starting point for a spec, not the contract for a build.
+
+Work bigger than one PR gets no agent brief: it becomes a spec and its tickets.
 
 Pick it from what triage learned in the code, not from the label: a bug whose cause triage already found is a `change`.
 

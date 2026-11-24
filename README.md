@@ -5,19 +5,15 @@ Dante's agent skills
 
 1. Install every skill: `npx skills add dante-sparras/skills`.
 2. Type `/setup-skills` once in each repo you work in.
-3. Type `/coordinate` and hand it your tasks.
+3. Type `/coordinate` and hand it your work.
 
 ## How the skills fit together
 
-Start with [`/coordinate`](./skills/coordinate/SKILL.md) and hand it your tasks, one or several at once: bugs, features, issues, questions, PRs to merge. The agent you typed it to becomes the **coordinator**: the one agent you talk to, whose job is that every task ships.
+Work moves in two halves: you shape it into issues with an agent, and the **factory** ships each issue on its own.
 
-One rule runs it all: **one task, one worker, one PR.** The skills are written for T3 Code: each worker is a `delegate_task` child with its own thread and checkout.
-
-1. **The coordinator makes each thing a task** and starts a worker for it.
-2. **The worker sizes its own task**, and the coordinator tells you how. If it fits in one PR, the worker builds it. It asks you about a single open decision in its own thread. A question gets an answer, and work that needs talking through first, such as triage or a map, happens with you there too. If the task is more than one PR, the worker interviews you there, writes a spec and its tickets, and hands the tickets back. Each ticket becomes a new task.
-3. **The coordinator sends a reviewer to each PR**, once its checks are green. The reviewer and the worker argue each finding until they agree: the worker fixes it, or the reviewer withdraws it. After three rounds without agreement, the coordinator brings both positions to you.
-4. **The coordinator merges** once the checks are green again, or hands you a merge list when merging is yours. When a spec's last ticket lands, a reviewer proves the spec's user stories on main, and each gap it finds becomes a ticket.
-5. **Anything that comes up becomes a new task**: a bug nobody owns, a teammate's review, a mistake that repeats.
+1. **Shape.** Type [`/coordinate`](./skills/coordinate/SKILL.md) and hand it your work, one thing or several: bugs, features, issues, questions, PRs. The agent you typed it to is the **coordinator**. It answers questions itself. Everything else becomes an issue in `ready-for-agent` that an agent can build in one PR, through `triage`, `interview`, `to-spec-and-tickets`, or `map`, with you in the conversation.
+2. **Ship.** The [factory](./skills/coordinate/factory.md) is a T3 Code workflow. Every ten minutes it starts a **worker** for each ready issue whose blockers are closed. The worker opens a PR. Once its checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges. A disagreement waits on your ruling.
+3. **Learn.** When a spec's last ticket lands, a reviewer proves the spec's user stories on main, and each gap becomes a ticket. Friction that repeats across runs becomes an issue the factory fixes with `add-guardrail`. Follow-ups land in `needs-triage`, ready for step 1.
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -25,49 +21,41 @@ sequenceDiagram
     autonumber
     actor You
     participant C as Coordinator
+    participant F as Factory
     participant W as Worker
     participant R as Reviewer
 
-    You->>C: Tasks, one or many
-    C->>W: One task per worker
-    W->>C: How it sized its task
-    C->>You: One line per task
-
-    alt Path A: the task fits in one PR
-        W->>C: Opens a PR
-        Note over C: Waits for green checks
-        C->>R: Review this PR
-        loop Until they agree on every finding, at most three rounds
-            R->>W: Findings
-            W->>R: Per finding: a fix, or a counter-argument
-        end
-        R->>C: PASS, or no agreement
-        Note over C: Merges once checks are green.<br/>No agreement goes to you
-        C->>You: Merged, or on your merge list
-    else Path B: the task is more than one PR
-        W->>You: Interview, in the worker's own thread
-        You->>W: Answers, and approval of the tickets
-        W->>C: A spec and its tickets
-        Note over C: Each ticket becomes a new task, from step 2
-        Note over C,R: When the last ticket lands,<br/>a reviewer proves the spec on main
+    You->>C: Work, one thing or many
+    C->>You: Answers, and questions to settle what to build
+    C->>F: Issues in ready-for-agent
+    F->>W: One issue per worker
+    W->>F: A PR
+    Note over F: Waits for green checks
+    F->>R: Review this PR
+    loop Until they agree on every finding, at most three rounds
+        R->>W: Findings
+        W->>R: Per finding: a fix, or a counter-argument
     end
+    R->>F: PASS, or no agreement
+    F->>You: Merge this PR? Or rule on the open findings
+    You->>F: Your go
+    Note over F,R: When a spec's last ticket lands,<br/>a reviewer proves the spec on main
 ```
 
-Read the diagram top to bottom. Each arrow is a message, and the numbers give the order. A task takes path A or path B.
+Read the diagram top to bottom. Each arrow is a message, and the numbers give the order.
 
-The whole flow is four files: one per role, and the rules they share. The factory adds a fifth. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
+The flow lives in six files in `coordinate/`. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
 
 | File | Who reads it | What it holds |
 | --- | --- | --- |
-| [`coordinate/SKILL.md`](./skills/coordinate/SKILL.md) | The coordinator | How to take in tasks, start workers, react to what comes back, and review and land PRs |
-| [`coordinate/worker.md`](./skills/coordinate/worker.md) | Every worker | The four paths for a task: answer, talk it through, build, or split |
-| [`coordinate/reviewer.md`](./skills/coordinate/reviewer.md) | The reviewer of a PR, or of a finished spec | How to review a PR and argue each finding with its worker, and how to check a spec once its tickets have landed |
-| [`coordinate/rules.md`](./skills/coordinate/rules.md) | All three | Trust, the AI marker, messages, git, PR tools, and how to run a skill |
-| [`coordinate/factory.md`](./skills/coordinate/factory.md) | You, and `setup-skills` | The factory: what it runs, how to install it, and how to retry or stop a run |
+| [`coordinate/SKILL.md`](./skills/coordinate/SKILL.md) | The coordinator | How to turn work into issues the factory can build |
+| [`coordinate/factory.ts`](./skills/coordinate/factory.ts) | T3 Code | The factory itself |
+| [`coordinate/factory.md`](./skills/coordinate/factory.md) | You, and `setup-skills` | What the factory runs, how to install it, and how to retry or stop a run |
+| [`coordinate/worker.md`](./skills/coordinate/worker.md) | Every worker | How to build an issue in one PR and settle its review |
+| [`coordinate/reviewer.md`](./skills/coordinate/reviewer.md) | The reviewer of a PR, or of a finished spec | How to review a PR and argue each finding with its worker, and how to check a spec |
+| [`coordinate/rules.md`](./skills/coordinate/rules.md) | Workers and reviewers | Trust, the AI marker, results, messages, git, PR tools, and how to run a skill |
 
-The **factory** runs the same loop with no coordinator: a T3 Code workflow that starts a worker for each issue you label `ready-for-agent`, and asks you before every merge. It also checks each spec once its last ticket lands, and turns friction that repeats across runs into a guardrail issue it then builds. [factory.md](./skills/coordinate/factory.md) says how it works, and `/setup-skills` installs it.
-
-Every other skill is a tool a worker picks up when its task calls for it. None of them triggers on its own: an agent reads a skill only when the flow sends it there, and you can still type any of them. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo.
+Every other skill is a tool an agent picks up when its work calls for it. None of them triggers on its own: an agent reads a skill only when the flow sends it there, and you can still type any of them. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo, which also installs the factory.
 
 ## Skills
 
@@ -75,8 +63,8 @@ Every skill lives at `skills/<name>/`, the same layout it installs to. The skill
 
 | Category | Skill | What it does |
 | --- | --- | --- |
-| **Run**: the one you start with | [coordinate](./skills/coordinate/SKILL.md) | The entry point. Makes each request a task, starts a worker for it, and ships it |
-| **Setup**: done once per repo | [setup-skills](./skills/setup-skills/SKILL.md) | Sets up a repo's tracker, labels, and model roles for these skills |
+| **Run**: the one you start with | [coordinate](./skills/coordinate/SKILL.md) | The entry point. Turns what you want done into issues the factory ships |
+| **Setup**: done once per repo | [setup-skills](./skills/setup-skills/SKILL.md) | Sets up a repo's tracker, labels, and model roles, and installs the factory |
 | | [create-verify-skill](./skills/create-verify-skill/SKILL.md) | Generates a `verify-<app>` skill that drives the real app |
 | **Define**: settle what to build | [interview](./skills/interview/SKILL.md) | Questions you in rounds until a plan or decision is settled |
 | | [triage](./skills/triage/SKILL.md) | Moves issues and outside PRs through triage states |

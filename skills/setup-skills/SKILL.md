@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 For model setup alone, go straight to [Configure model roles](model-roles.md#configure-model-roles).
 
-Otherwise write the per-repo settings the engineering skills read: the issue tracker, the labels, the domain docs, and who merges. Explore, show what you found, confirm, then write.
+Otherwise write the per-repo settings the engineering skills read: the issue tracker, the labels, and the domain docs. Then install the factory, which ships the work. Explore, show what you found, confirm, then write.
 
 ## 1. Explore
 
@@ -39,12 +39,6 @@ The defaults are the canonical roles, each label named after its role: the state
 
 **Section C: Domain docs.** Write **single-context**, one `GLOSSARY.md` at the root, without asking. Offer **multi-context**, a root `GLOSSARY-MAP.md` pointing to per-context glossaries, only when exploration found monorepo signals.
 
-**Section D: Landing.** Ask one question:
-
-> Once a PR has passed review and its checks, should the coordinator merge it, or leave the merge to you? (recommended: **the coordinator**)
-
-The coordinator reads the answer. It still hands the merge to a person wherever branch protection requires an approval it cannot give.
-
 ## 3. Confirm
 
 Show the user a draft of the `## Agent skills` block and of each `docs/agents/` file. Let them edit before you write.
@@ -67,10 +61,6 @@ Show the user a draft of the `## Agent skills` block and of each `docs/agents/` 
 ### Domain docs
 
 Read `GLOSSARY.md` at the repo root before exploring, or each glossary that `GLOSSARY-MAP.md` lists for the topic. Use its terms, and stay off the synonyms it lists under `_Avoid_`.
-
-### Landing
-
-[who merges a reviewed PR: "the coordinator" or "a person"].
 ```
 
 **`docs/agents/`**, starting from the seed templates in this folder:
@@ -90,11 +80,12 @@ Follow [Configure model roles](model-roles.md#configure-model-roles).
 
 ## 6. Install the factory
 
-The [factory](../coordinate/factory.md) is a T3 Code workflow that starts a worker for each issue labelled `ready-for-agent`, and asks the user before every merge. Offer it only when the tracker is GitHub and `t3 workflow list` exits 0. When workflows are off, say that **Settings → Labs → Workflows** turns them on, and skip this section. Ask one question:
+The [factory](../coordinate/factory.md) is the T3 Code workflow that ships the work: it starts a worker for each issue labelled `ready-for-agent`, and asks the user before every merge. Nothing ships without it.
 
-> Should the factory pick up issues labelled `ready-for-agent` on its own? It asks you before every merge. (recommended: **yes**)
+- **The tracker is not GitHub.** The factory reads GitHub only. Say so, and skip this section.
+- **`t3 workflow list` fails.** Workflows are off. Say that **Settings → Labs → Workflows** turns them on, and that this section runs again with `/setup-skills`. Skip it for now.
 
-On a yes, follow [Install](../coordinate/factory.md#install): copy the file, then register this repo with the settings you settled above. Fill the label fields from the labels you settled in Section B, leaving out each one that keeps its default name. Fill `worker` and `reviewer` from the roles you just set, resolved as [Resolve a role](model-roles.md#resolve-a-role) says, and leave them out when no roles are set. Show the user the settings before you write them, and finish with the dispatcher check.
+Otherwise follow [Install](../coordinate/factory.md#install): copy the file, then register this repo with the settings you settled above. Fill the label fields from the labels you settled in Section B, leaving out each one that keeps its default name. Fill `worker` and `reviewer` from the roles you just set, resolved as [Resolve a role](model-roles.md#resolve-a-role) says, and leave them out when no roles are set. Show the user the settings before you write them, and finish with the dispatcher check.
 
 ## Report
 

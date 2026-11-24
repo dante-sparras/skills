@@ -1,5 +1,5 @@
-// The skills factory: a T3 Code workflow that runs the coordinator's loop for issues labelled
-// ready-for-agent, with no coordinator agent and no person to start it.
+// The skills factory: a T3 Code workflow that ships each issue labelled ready-for-agent through a
+// worker, a reviewer, and the user's go to merge, with no person to start it.
 //
 // Install by copying this file to the `workflows` folder of T3 home as `skills-factory.ts`, and
 // register each repo under `skills-factory/projects/<owner>/<repo>` in the workflow store.
@@ -99,16 +99,15 @@ const FRICTION = described(
 const WorkerResult = Schema.Struct({
   status: described(
     Schema.Literals(["DONE", "BLOCKED", "FAILED"]),
-    "DONE when your path finished. BLOCKED when you need something before you can go on. FAILED when something stopped you.",
+    "DONE when your PR is ready, or the issue needed no change. BLOCKED when you need something before you can go on. FAILED when something stopped you, or the work needs more than one PR.",
   ),
   blockedOn: described(
     Schema.NullOr(Schema.Literals(["verify-skill"])),
     "verify-skill when you are BLOCKED only because your proof needs the running app and the repo has no verify skill. Null otherwise.",
   ),
-  path: described(Schema.Literals(["answer", "talk", "build", "split"]), "The path you took, as worker.md names them."),
   summary: described(
     Schema.String,
-    "Your result: the answer, what you settled, or what you built, with your evidence, what you skipped, and what stays unproven. For BLOCKED or FAILED, what you need or what stopped you.",
+    "What you built, with your evidence, what you skipped, and what stays unproven. For BLOCKED or FAILED, what you need or what stopped you.",
   ),
   pr: described(Schema.NullOr(Schema.String), "The full URL of the PR you opened or continued. Null when there is none."),
   headSha: described(Schema.NullOr(Schema.String), "The PR's head SHA after your last push. Null when there is no PR."),
@@ -366,7 +365,6 @@ const brief = (config, role, lines, verifySkill) =>
     `Skills folder: ${config.skillsFolder}`,
     `Default branch: ${config.defaultBranch}`,
     `Verify skill: ${verifySkill ?? "none"}`,
-    "Coordinator: a T3 workflow. Follow \"In a T3 workflow\" in rules.md.",
     "",
     "You may start the subagents your skills call for.",
   ].join("\n");
@@ -541,7 +539,7 @@ const afterMerge = (config, issue) =>
 const ship = workflow(
   "skills-factory-ship",
   {
-    version: 2,
+    version: 3,
     payload: ShipInput,
     // The issue leaves the queue however the run ends, unless the run parked it to wait on
     // another issue. A person adds the label back to retry.
@@ -581,7 +579,7 @@ const ship = workflow(
     );
     const verifySkill = yield* step("verify-skill", { returns: Schema.NullOr(Schema.String) }, findVerifySkill(config));
 
-    // ---- The worker sizes the task and takes its path.
+    // ---- The worker builds the issue.
     const worker = yield* hire(
       "worker",
       {
@@ -670,9 +668,9 @@ const ship = workflow(
     }
 
     if (result.status !== "DONE") return yield* halt(`the worker returned ${result.status}: ${result.summary}`);
-    if (result.path !== "build" || result.pr === null) {
-      yield* ledger.wrapUp(`The skills factory finished this issue on the ${result.path} path.\n\n${result.summary}`);
-      return { path: result.path, summary: result.summary };
+    if (result.pr === null) {
+      yield* ledger.wrapUp(`The skills factory finished this issue without a PR.\n\n${result.summary}`);
+      return { summary: result.summary };
     }
 
     // ---- The PR's path: green checks, collaborators heard, a review of the current head, then
@@ -699,7 +697,7 @@ const ship = workflow(
     const landed = Effect.fn(function* (how) {
       const next = yield* step.try("after-merge", { returns: Schema.String }, afterMerge(config, issue));
       yield* ledger.wrapUp(next.outcome === "failed" ? `The PR merged, but the factory could not check its spec: ${next.reason}` : null);
-      return { path: "build", pr: pr.url, merged: how };
+      return { pr: pr.url, merged: how };
     });
 
     for (let pass = 1; ; pass++) {

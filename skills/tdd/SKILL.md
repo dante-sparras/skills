@@ -83,7 +83,7 @@ Work without a new test still gets an executable check: a targeted script, a rep
 
 - **Check the real artifact.** Run the feature, read the actual value, inspect the diff. "It compiles", a self-report, and cached output are proxies.
 - **Check a bug fix on the surface where the bug showed up.** A unit test shows branch behavior, not that the bug is gone.
-- **Use the running app when the check needs it** (a UI, CLI, or service flow), through the repo's `verify-<app>` skill. Outside a `coordinate` run, read [create-verify-skill](../create-verify-skill/SKILL.md) and follow it first when the repo has none. A worker uses the one its brief names, and tells the coordinator when it names none.
+- **Use the running app when the check needs it** (a UI, CLI, or service flow), through the repo's `verify-<app>` skill. A factory worker uses the one its brief names, and returns `BLOCKED` on the verify skill when it names none. Anyone else reads [create-verify-skill](../create-verify-skill/SKILL.md) and follows it first when the repo has none.
 - **Script the check** when you can, so it reruns the same way.
 - **When a check fails**, suspect the observation method before the system.
 

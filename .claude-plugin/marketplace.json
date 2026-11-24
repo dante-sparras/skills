@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "dante-skills",
-      "description": "Hand the coordinator your tasks, and it plans, builds, tests, reviews, and lands each one.",
+      "description": "Hand the coordinator your work, and the factory builds, reviews, and lands it, one issue at a time.",
       "source": "./",
       "strict": false,
       "skills": [

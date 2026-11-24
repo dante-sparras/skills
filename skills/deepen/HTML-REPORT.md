@@ -38,10 +38,16 @@ The page follows `html_render`'s contract, which that tool's description states 
       <section id="candidates">...</section>
       <section id="top-recommendation">...</section>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
     <script>
-      const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      mermaid.initialize({ startOnLoad: false, theme: dark ? "dark" : "neutral" });
+      // Take the colours from T3's theme, not from the OS.
+      const css = getComputedStyle(document.documentElement);
+      const v = (name) => css.getPropertyValue(name).trim();
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: "base",
+        themeVariables: { primaryColor: v("--card"), primaryTextColor: v("--foreground"), primaryBorderColor: v("--border"), lineColor: v("--muted-foreground") },
+      });
       mermaid.run({ querySelector: ".mermaid" });
     </script>
   </body>
@@ -74,7 +80,7 @@ Pick the pattern that fits each candidate, and vary them across the report.
 
 | Pattern | Use for | How |
 | --- | --- | --- |
-| **Mermaid graph** | Dependencies and call flow: "X calls Y calls Z, and look at the mess". A sequence diagram suits "before: 6 round-trips, after: 1" | A `flowchart` in a `<pre class="mermaid">`, with `classDef` marking leakage edges |
+| **Mermaid graph** | Dependencies and call flow: "X calls Y calls Z, and look at the mess". A sequence diagram suits "before: 6 round-trips, after: 1" | A `flowchart` in a `<pre class="mermaid">`, with `linkStyle <index> stroke:...` marking each leakage edge, since `classDef` styles nodes only |
 | **Hand-built boxes and arrows** | An "after" that must read as one thick-bordered deep module with faded internals, which Mermaid cannot weight | Modules as bordered `<div>`s. Arrows as inline SVG over a relative container |
 | **Cross-section** | Layered shallowness | Stacked horizontal bands. Before: six thin layers. After: one thick band named for the consolidated responsibility |
 | **Mass diagram** | An interface as wide as its implementation | Two rectangles per module, interface and implementation. Before: nearly equal heights. After: a short interface over a tall implementation |

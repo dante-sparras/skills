@@ -17,7 +17,7 @@ Use the vocabulary in [SKILL.md](SKILL.md) for the architecture, and `GLOSSARY.m
 
    Apply the **deletion test** to each suspect: a module whose deletion would spread complexity across its callers is worth keeping, and one whose deletion makes complexity vanish is a candidate.
 
-3. **Report.** Write the candidates as one HTML page, per [HTML-REPORT.md](HTML-REPORT.md), to `<tmpdir>/architecture-review-<timestamp>.html`, so nothing lands in the repo. The temp dir is `$TMPDIR`, else `/tmp`, or `%TEMP%` on Windows. Show it in the thread with `html_preview`, then `html_render`.
+3. **Report.** Write the candidates as one HTML page, per [HTML-REPORT.md](HTML-REPORT.md), to `<tmpdir>/architecture-review-<timestamp>.html`, so nothing lands in the repo. The temp dir is `$TMPDIR`, else `/tmp`, or `%TEMP%` on Windows. Show it in the thread with `html_preview`, then `html_render`, giving it a `title` and the `contentHeight` the preview returned as `height`. The frame takes at most 2,000 pixels, so split a longer report into two pages.
 
    Propose no interfaces yet. Ask: "Which of these would you like to explore?"
 

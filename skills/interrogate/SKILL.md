@@ -11,7 +11,7 @@ Adversaries try to break the diff between `HEAD` and a fixed point. Each reports
 
 The axes stay apart from the first step to the report, so one never masks another: code can follow every standard and build the wrong thing, or meet the spec and corrupt state on a retry the spec never mentioned.
 
-A Breakage or Spec finding survives only when you rerun its command and the output shows the failure. Report the findings and leave the fixes to the caller.
+A Breakage or Spec finding survives when you rerun its command and the output shows the failure, or when nothing can run it and it cites the exact line it breaks. Report the findings and leave the fixes to the caller.
 
 ## Steps
 
@@ -20,48 +20,48 @@ A Breakage or Spec finding survives only when you rerun its command and the outp
    - The commits are `git log <fixed-point>..HEAD --oneline`.
    - For uncommitted changes the user wants reviewed, save `git diff HEAD` to a patch file outside the repo. That leaves out new files, so append each path from `git ls-files --others --exclude-standard` with `git diff --no-index -- /dev/null <path>`, in a POSIX shell. That command exits 1 for a non-empty file, which is not an error.
 
-2. **State the intent** in two or three sentences, from the user's message, the commit messages, and the PR description. Ask the user when it is unclear. Every reviewer gets it, and a finding counts only when it breaks it.
+2. **State the intent** in two or three sentences, from the user's message, the commit messages, and the PR description. Ask the user when it is unclear. Every seat gets it, and a finding counts only when it breaks it.
 
 3. **Find the spec.** Take the first that exists:
    1. The spec your caller or the user passed: a path, an issue, or text.
    2. An issue the commit messages reference (`#123`, `Closes #45`), fetched per `docs/agents/issue-tracker.md`. If that file is missing, say that `/setup-skills` has not run in this repo and carry on down this list.
    3. A file under `docs/` or `specs/` that matches the branch name or the feature.
-   4. The user's answer when you ask where the spec is. If there is none, the reviewers skip the Spec axis and the report says "no spec available".
+   4. The user's answer when you ask where the spec is. If there is none, the seats skip the Spec axis and the report says "no spec available".
 
 4. **Find the standards.**
    - List every file that documents how code should be written, with `CODING_STANDARDS.md` and `CONTRIBUTING.md` when they exist. Note `GLOSSARY.md`, or each context's glossary under `GLOSSARY-MAP.md`.
-   - List what the repo's tooling already enforces: its `lint`, `typecheck`, and `test` scripts, its pre-commit hooks, and its CI workflows. Reviewers skip everything on this list, because a check already fails on it.
+   - List what the repo's tooling already enforces: its `lint`, `typecheck`, and `test` scripts, its pre-commit hooks, and its CI workflows. Seats skip everything on this list, because a check already fails on it.
    - Add the [smell baseline](#smell-baseline), which applies even when the repo documents nothing.
 
 5. **Pick the panel.** Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) for the `reviewer`.
-   - Run one reviewer per model family among the runnable default and backup. The same model offered by two providers is one family, and so are one vendor's other models.
+   - Run one seat per model family among the runnable default and backup. The same model offered by two providers is one family, and so are one vendor's other models.
    - Start the default and the backup together when the backup adds a family. If the default is unavailable or hits a usage limit, the backup's review stands in for it.
-   - A caller that is itself reviewing, in a clean checkout of the head, is the first seat: start only the other family.
-   - When the role resolves to inheritance, run one reviewer on the current model.
+   - A caller that is itself reviewing, in a clean checkout of the head, is the first seat: start only the other family, and remove your own repro files when you are done.
+   - When the role resolves to inheritance, run one seat on the current model.
    - **No panel.** When your caller asks for a review without a panel, review the diff yourself against the same brief and say so under **Panel**.
 
-6. **Launch** the reviewers in parallel, each with a fresh context and an isolated worktree at `HEAD`. Use `delegate_task` with `mode: "async"` and `isolation: "worktree"`. Every reviewer gets the same prompt:
+6. **Launch** the seats in parallel, each with a fresh context and an isolated worktree at `HEAD`. Use `delegate_task` with `mode: "async"` and `isolation: "worktree"`. Every seat gets the same prompt:
    - the diff command, the commit list, and the patch path with an instruction to apply it first, when step 1 saved one
    - the intent, and the spec's path or contents
-   - the standards files, the tooling list, the glossary path, and the smell baseline pasted in full, since the reviewer cannot reach it any other way
-   - the [reviewer brief](#reviewer-brief)
+   - the standards files, the tooling list, the glossary path, and the smell baseline pasted in full, since the seat cannot reach it any other way
+   - the [seat brief](#seat-brief)
 
-   If a reviewer returns nothing, continue with the rest and note the dropout.
+   If a seat returns nothing, continue with the rest and note the dropout.
 
 7. **Verify.**
-   - Rerun each Breakage and Spec finding's command yourself, in the reviewer's worktree when it still exists, or after writing the reported repro file into a checkout of `HEAD`. Keep a finding when the output shows the failure, and the failure breaks the intent or the spec, or is a regression: the same command passes at the fixed point. Keep a finding no command can show, such as a wrong line of config, a migration, or a doc, when it cites the exact hunk, what it breaks, and why it cannot be run.
+   - Rerun each Breakage and Spec finding's command yourself, in the seat's worktree when it still exists, or after writing the reported repro file into a checkout of `HEAD`. Keep a finding when the output shows the failure, and the failure breaks the intent or the spec, or is a regression: the same command passes at the fixed point. Keep a finding no command can show, such as a wrong line of config, a migration, or a doc, when it cites the exact hunk, what it breaks, and why it cannot be run.
    - Keep each Standards finding that cites a real rule, or names a smell against a real hunk. These are not rerun.
-   - Merge findings that share a root cause, and list every reviewer that found each.
+   - Merge findings that share a root cause, and list every seat that found each.
    - Mark each mechanical finding (a fixed syntax pattern, a banned API, an import shape, a file-location rule) as a candidate for the `guardrail` skill to turn into a check.
 
 8. **Report.**
    - **Intent**: the restatement from step 2.
    - **Panel**: each seat's model and family, any seat that fell back and why, and whether the families differed.
-   - `## Breakage`, `## Spec`, `## Standards`: each verified finding with its command and output, or its rule or smell, and the reviewers that found it. Agreement across families is stronger evidence than agreement within one, so say which kind a shared finding has. Write "no verified findings" for an empty axis.
-   - **Dropped**: per reviewer, how many findings were dropped and why.
+   - `## Breakage`, `## Spec`, `## Standards`: each verified finding with its command and output, or its rule or smell, and the seats that found it. Agreement across families is stronger evidence than agreement within one, so say which kind a shared finding has. Write "no verified findings" for an empty axis.
+   - **Dropped**: per seat, how many findings were dropped and why.
    - A one-line summary: the verified findings per axis, and the worst issue within each axis. Findings are never ranked across axes.
 
-## Reviewer brief
+## Seat brief
 
 > Break this change. Read the diff, then the code around it and the callers it touches. Try each of these: inputs and states the author did not test (empty, huge, concurrent, malformed, repeated), error and retry paths, a spec requirement that is missing, partial, or wrong, and code outside the diff that depends on what changed.
 >

@@ -18,14 +18,14 @@ _Avoid_: Unit, job
 
 **Spec**:
 The issue that describes one feature: the problem, the solution, the user stories, and the decisions made. `plan` writes it, and its tickets are its sub-issues.
-_Avoid_: PRD, plan
+_Avoid_: PRD
 
 **Ticket**:
 One tracer-bullet slice of a spec, published as an issue that names its blockers. One ticket becomes one task.
 _Avoid_: Story, subtask
 
 **Worker**:
-A fresh agent the coordinator starts with one task and a brief that opens with `coordinate/rules.md` and `coordinate/worker.md`. It sizes the task, then opens a PR for it or splits it into tickets, and fixes what review finds. The user answers it in its own thread.
+A fresh agent the coordinator starts with one task and a brief that opens with `coordinate/rules.md` and `coordinate/worker.md`. It sizes the task, then takes one of four paths: answer a question, talk it through with the user, build one PR, or split the work into tickets. The user answers it in its own thread.
 _Avoid_: Helper, planner
 
 **Reviewer**:
@@ -55,6 +55,22 @@ _Avoid_: TODO, nice-to-have
 **Map**:
 The issue the `map` skill keeps for work too big for one session. Its children are decision tickets, each a question to settle, not work to build.
 _Avoid_: Roadmap, epic
+
+**Brief**:
+The task text the coordinator starts a worker or a reviewer with. An agent brief is a different thing: the comment `triage` posts on an issue.
+_Avoid_: Prompt, instructions
+
+**Status word**:
+The word that opens every message between agents in a run: `SIZED`, `WAITING ON USER`, `QUESTION FOR COORDINATOR`, `BLOCKED`, `DONE`, `REPLY`, or `FAILED`.
+_Avoid_: State, signal
+
+**Reviewable**:
+A PR that is ready for a reviewer: its worker is done, it is not a draft, its checks are green, and no verdict covers its current head.
+_Avoid_: Ready, open
+
+**Landable**:
+A PR that may merge: it has a `PASS` or the user's ruling for its current head, green checks, and no conflict or hold.
+_Avoid_: Approved, mergeable
 
 **Friction**:
 What cost a worker time during its task, returned as facts at the end of its result and kept in its PR's agent notes.

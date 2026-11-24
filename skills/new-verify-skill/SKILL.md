@@ -7,7 +7,7 @@ description: "Generate a project-local `verify-<app>` skill that launches the re
 
 Generate a project-local **verification skill** that drives the real app and proves behavior: launch it, exercise a feature the way a user would, and capture evidence. Write it for the next agent, who reads it cold, mid-task, and has never seen the app.
 
-Write it to `.claude/skills/verify-<app>/`, or to `.agents/skills/verify-<app>/` when the repo's agents run on Codex. If a `verify-<app>` skill already exists, drive and fix that one instead of generating a second.
+Write it to `.claude/skills/verify-<app>/`. Agents on other providers reach it by the path their brief gives. If a `verify-<app>` skill already exists, drive and fix that one instead of generating a second.
 
 ## 1. Interview the repo
 
@@ -51,7 +51,7 @@ Each feature file answers, from the user's point of view, what the feature is, h
 
 ## 4. Prove it cold
 
-Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role). Start a fresh `reviewer` in this same checkout, with `isolation: "shared"`, so it sees the skill before it is committed. Give it only the path to the generated skill and one mapped feature. One feature is enough. The map exists so later runs cover the rest. It follows the skill's own instructions end to end (launch, doctor, drive the feature, capture evidence, clean up), then confirms the evidence still exists at the named location and reports each step that failed or that it had to guess.
+Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role). Start a fresh `reviewer` in this same checkout, with `isolation: "shared"`, so it sees the skill before it is committed. Use `mode: "async"`, since a cold run takes far longer than a waited call allows. Give it only the path to the generated skill and one mapped feature, and tell it to change no files. One feature is enough. The map exists so later runs cover the rest. It follows the skill's own instructions end to end (launch, doctor, drive the feature, capture evidence, clean up), then confirms the evidence still exists at the named location and reports each step that failed or that it had to guess.
 
 Fix what it reports and start a fresh `reviewer` again until a run passes with no guesses. After every failed run, run the generated cleanup yourself so broken attempts don't strand processes and ports. A cleanup that deletes the evidence fails the run.
 

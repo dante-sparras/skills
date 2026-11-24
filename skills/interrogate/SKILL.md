@@ -73,19 +73,6 @@ A Breakage or Spec finding survives only when you rerun its command and the outp
 
 ## Smell baseline
 
-Fowler's code smells (_Refactoring_, ch. 3), matched against the diff. Each is a labelled judgement call, such as "possible Feature Envy", never a hard violation. A documented repo standard wins: where it endorses what a smell would flag, drop the smell.
+Fowler's code smells (_Refactoring_, ch. 3), matched against the diff: Mysterious Name, Duplicated Code, Feature Envy, Data Clumps, Primitive Obsession, Repeated Switches, Shotgun Surgery, Divergent Change, Speculative Generality, Message Chains, Middle Man, and Refused Bequest.
 
-| Smell | What it is | Fix |
-| --- | --- | --- |
-| Mysterious Name | A name that hides what the thing does or holds | Rename it. If no honest name comes, the design is murky |
-| Duplicated Code | The same logic shape in more than one hunk or file | Extract the shape and call it from both |
-| Feature Envy | A method that reaches into another object's data more than its own | Move the method onto the data it envies |
-| Data Clumps | The same few fields or params travelling together | Bundle them into one type and pass that |
-| Primitive Obsession | A primitive or string standing in for a domain concept | Give the concept its own small type |
-| Repeated Switches | The same `switch` or `if` cascade on one type, in several places | Use polymorphism, or one map both sites share |
-| Shotgun Surgery | One logical change scattered across many files | Gather what changes together into one module |
-| Divergent Change | One module edited for several unrelated reasons | Split it so each module changes for one reason |
-| Speculative Generality | Abstraction, parameters, or hooks for needs the spec lacks | Delete it, and inline until a real need shows |
-| Message Chains | Long `a.b().c().d()` navigation the caller depends on | Hide the walk behind one method on the first object |
-| Middle Man | A class or function that mostly delegates onward | Cut it and call the real target |
-| Refused Bequest | A subclass that ignores or overrides most of what it inherits | Drop the inheritance and use composition |
+Each is a labelled judgement call, such as "possible Feature Envy", never a hard violation, and each finding names the fix. A documented repo standard wins: where it endorses what a smell would flag, drop the smell.

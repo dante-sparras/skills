@@ -89,20 +89,9 @@ Pick the pattern that fits each candidate, and vary them across the report.
 </pre>
 ```
 
-## Style
+## Style and tone
 
-- Editorial, not corporate dashboard: generous whitespace, few colours.
-- One accent from the chart variables, plus `--destructive` for leakage and `--warning` for warnings.
+- Editorial, not corporate dashboard: generous whitespace, one accent from the chart variables, and `--destructive` for leakage.
 - Diagrams about 320px tall, so before and after sit side by side without scrolling.
-- Module labels inside diagrams small, uppercase, and letter-spaced, so they read as schematic.
-
-## Tone
-
-Plain, concise English in the `deepen` vocabulary: module, interface, implementation, depth, deep, shallow, seam, adapter, leverage, locality.
-
-- "Order intake module is shallow: interface nearly matches the implementation."
-- "Pricing leaks across the seam."
-- "Deepen: one interface, one place to test."
-- "Two adapters justify the seam: HTTP in prod, in-memory in tests."
-
-Name each win in those terms, such as "locality: bugs concentrate in one module", where a looser report would say "easier to maintain". If a sentence could be a bullet, make it one. If a bullet could be cut, cut it.
+- Plain, concise English in the vocabulary of [SKILL.md](SKILL.md): "Order intake module is shallow: interface nearly matches the implementation." "Pricing leaks across the seam."
+- Name each win in those terms, such as "locality: bugs concentrate in one module", where a looser report would say "easier to maintain".

@@ -15,16 +15,16 @@ Six phases, in order. Skip one only with a stated reason. Read `GLOSSARY.md`, wh
 
 Ways to build one, roughly in this order:
 
-1. **A failing test** at the seam that reaches the bug: unit, integration, or e2e.
-2. **A curl or HTTP script** against a running dev server.
-3. **A CLI invocation** with a fixture input, diffing stdout against a known-good snapshot.
-4. **A headless browser script** that drives the UI and asserts on DOM, console, or network.
-5. **A replayed trace.** Save a real request, payload, or event log to disk and replay it through the code path in isolation.
-6. **A throwaway harness.** A minimal subset of the system, one service with mocked deps, that hits the bug's code path with one function call.
-7. **A property or fuzz loop.** For "sometimes wrong output", run 1,000 random inputs and look for the failure mode.
-8. **A bisection harness.** When the bug appeared between two known states (commits, datasets, versions), automate "boot at state X, check" so `git bisect run` can drive it.
-9. **A differential loop.** The same input through the old version and the new, or two configs, with the outputs diffed.
-10. **A person in the loop.** Last resort. When a person must click, give them numbered steps in your thread, one batch at a time, and ask them to paste back what each step showed.
+1. A failing test at the seam that reaches the bug.
+2. A curl or HTTP script against a running dev server.
+3. A CLI run on a fixture, diffed against a known-good snapshot.
+4. A headless browser script that asserts on DOM, console, or network.
+5. A replayed trace: a saved request, payload, or event log run through the code path alone.
+6. A throwaway harness: one service with mocked deps, and one function call.
+7. A property or fuzz loop, for output that is only sometimes wrong.
+8. A bisection harness for `git bisect run`, when the bug appeared between two known states.
+9. A differential loop: one input through the old version and the new, with the outputs diffed.
+10. A person in the loop, as a last resort: give them numbered steps in your thread, and ask them to paste back what each step showed.
 
 Then **tighten** it:
 

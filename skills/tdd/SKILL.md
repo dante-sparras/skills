@@ -67,7 +67,7 @@ Keep a test that passes both. Rewrite or delete the rest. To get there:
 - Pair every "this never happens" assertion with a case where it does happen.
 - Assert the error type callers branch on, not the message.
 
-See [tests.md](tests.md) for examples and [mocking.md](mocking.md) for where mocks belong.
+Mock only at the edges of the system: external APIs, time, and randomness. Everything you control stays real, passed in as a dependency.
 
 ## Guardrails
 

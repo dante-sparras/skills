@@ -88,6 +88,14 @@ Read `GLOSSARY.md` at the repo root before exploring, or each glossary that `GLO
 
 Follow [Configure model roles](model-roles.md#configure-model-roles).
 
+## 6. Install the factory
+
+The [factory](../coordinate/factory.md) is a T3 Code workflow that starts a worker for each issue labelled `ready-for-agent`, and asks the user before every merge. Offer it only when the tracker is GitHub and `t3 workflow list` exits 0. When workflows are off, say that **Settings → Labs → Workflows** turns them on, and skip this section. Ask one question:
+
+> Should the factory pick up issues labelled `ready-for-agent` on its own? It asks you before every merge. (recommended: **yes**)
+
+On a yes, follow [Install](../coordinate/factory.md#install): copy the file, then register this repo with the settings you settled above. Fill `worker` and `reviewer` from the roles you just set, resolved as [Resolve a role](model-roles.md#resolve-a-role) says, and leave them out when no roles are set. Show the user the settings before you write them, and finish with the dispatcher check.
+
 ## Report
 
-Tell the user which files you wrote. They can edit `docs/agents/*.md` directly, and rerun model setup alone to change the roles.
+Tell the user which files you wrote, and whether the factory is installed. They can edit `docs/agents/*.md` directly, and rerun model setup alone to change the roles.

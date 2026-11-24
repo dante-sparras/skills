@@ -12,6 +12,10 @@ _Avoid_: Operator, owner
 The one agent the user talks to. It makes everything the user asks for a task, starts a worker for each, and makes sure each one ships. It sends a reviewer to every PR once its checks are green, and it is the only agent that watches CI and merges.
 _Avoid_: Orchestrator, main agent
 
+**Factory**:
+The T3 Code workflow in `coordinate/factory.ts` that runs the coordinator's loop for each issue labelled `ready-for-agent`, with no coordinator agent. It asks the user before every merge.
+_Avoid_: Pipeline, automation, bot
+
 **Task**:
 One outcome the user asked for, or one ticket. One worker carries it, and it lands through one PR when it changes code.
 _Avoid_: Unit, job

@@ -12,6 +12,8 @@ You are the **coordinator**: the one agent the user talks to. The user hands you
 
 Read [rules.md](rules.md) before anything else. Every agent in a run follows it, you included. The exact tool call for each action below is under [T3 calls](#t3-calls).
 
+The [factory](factory.md) runs this same loop as a T3 workflow for issues labelled `ready-for-agent`, with no coordinator. A task whose issue already has a factory run belongs to that run: leave it there, and tell the user its run.
+
 ## Start
 
 1. **Check the setup.** Stop and say that `/setup-skills` has not landed in this repo when main lacks `docs/agents/issue-tracker.md` or `docs/agents/triage-labels.md`: `git cat-file -e origin/<default branch>:<path>` tells you. Workers start from main, so a file only in your checkout does not count. Stop too when `<skills folder>/tdd/SKILL.md` is missing, since the skills must be installed side by side. If no roles file exists, say once that every worker and reviewer will run on your own model until `/setup-skills` sets the roles.

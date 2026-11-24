@@ -55,7 +55,7 @@ sequenceDiagram
 
 Read the diagram top to bottom. Each arrow is a message, and the numbers give the order. A task takes path A or path B.
 
-The whole flow is four files: one per role, and the rules they share. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
+The whole flow is four files: one per role, and the rules they share. The factory adds a fifth. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
 
 | File | Who reads it | What it holds |
 | --- | --- | --- |
@@ -63,6 +63,9 @@ The whole flow is four files: one per role, and the rules they share. [GLOSSARY.
 | [`coordinate/worker.md`](./skills/coordinate/worker.md) | Every worker | The four paths for a task: answer, talk it through, build, or split |
 | [`coordinate/reviewer.md`](./skills/coordinate/reviewer.md) | The reviewer of a PR, or of a finished spec | How to review a PR and argue each finding with its worker, and how to check a spec once its tickets have landed |
 | [`coordinate/rules.md`](./skills/coordinate/rules.md) | All three | Trust, the AI marker, messages, git, PR tools, and how to run a skill |
+| [`coordinate/factory.md`](./skills/coordinate/factory.md) | You, and `setup-skills` | The factory: what it runs, how to install it, and how to retry or stop a run |
+
+The **factory** runs the same loop with no coordinator: a T3 Code workflow that starts a worker for each issue you label `ready-for-agent`, and asks you before every merge. [factory.md](./skills/coordinate/factory.md) says how it works, and `/setup-skills` installs it.
 
 Every other skill is a tool a worker picks up when its task calls for it. None of them triggers on its own: an agent reads a skill only when the flow sends it there, and you can still type any of them. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo.
 

@@ -78,7 +78,7 @@ Blue is where you come in. A solid arrow follows one issue to its merge. A dotte
 
 ### 2. Ship
 
-The [factory](./skills/factory/factory.md) is a T3 Code workflow. For each ready issue whose blockers are closed:
+The [factory](./docs/factory.md) is a T3 Code workflow. For each ready issue whose blockers are closed:
 
 1. A **worker** builds it in one PR, and fixes red checks and conflicts.
 2. A **reviewer** argues each finding with the worker, for at most three rounds.
@@ -103,7 +103,7 @@ The factory merges only what you approved, unless you turn on `autoMerge` for a 
 
 GitHub does not let you approve a PR your own account opened, so the label is your approval.
 
-[factory.md](./skills/factory/factory.md) has the details, and [GLOSSARY.md](./GLOSSARY.md) defines the terms.
+[docs/factory.md](./docs/factory.md) has the details, and [GLOSSARY.md](./GLOSSARY.md) defines the terms.
 
 ## Skills
 

@@ -8,7 +8,7 @@
    - Effort is saved as the model's own reasoning option, since its id differs by model: `effort`, `reasoningEffort`, `reasoning_effort`, or `variant`. Take the id and the value from the catalog. Leave `options` out for a model that offers none.
 4. Validate the confirmed targets using the catalog checks below. Write all three pairs to the chosen file. Reread the JSON and report the saved path and choices.
 
-An agent you type a skill to runs on its own thread's model and has no role here. A factory worker runs on `worker`, and the reviewer of a PR or a spec on `reviewer`. The factory reads these files itself as each run starts, so a change takes effect on the next run.
+The factory reads these files itself as each run starts, so a change takes effect on the next run.
 
 | Role | Default | Backup |
 | --- | --- | --- |

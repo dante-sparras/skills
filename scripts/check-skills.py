@@ -246,7 +246,8 @@ def main():
         for path, line, problem in shape_problems(skill_dir):
             report(path, line, problem)
 
-    docs = sorted(skills_root.rglob("*.md")) + [p for p in (repo / "README.md", repo / "GLOSSARY.md") if p.is_file()]
+    docs = sorted(skills_root.rglob("*.md")) + sorted((repo / "docs").glob("*.md"))
+    docs += [p for p in (repo / "README.md", repo / "GLOSSARY.md") if p.is_file()]
     for path in docs:
         for line, problem in link_problems(path, skills):
             report(path, line, problem)

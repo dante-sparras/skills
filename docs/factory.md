@@ -1,6 +1,6 @@
 # The factory
 
-The **factory** is a T3 Code workflow, [factory.ts](factory.ts), that ships the issues you label `ready-for-agent`, with no person to start it. On each pass it checks main, looks for open issues with that label, and starts a run for each one it can. A pass runs every ten minutes, when a skill files an issue, and when a PR merges, so a ticket starts as soon as its blocker lands. Each run takes one issue down the same path:
+The **factory** is a T3 Code workflow, [factory.ts](../skills/factory/factory.ts), that ships the issues you label `ready-for-agent`, with no person to start it. On each pass it checks main, looks for open issues with that label, and starts a run for each one it can. A pass runs every ten minutes, when a skill files an issue, and when a PR merges, so a ticket starts as soon as its blocker lands. Each run takes one issue down the same path:
 
 1. **A worker** builds the issue in one PR, briefed with `rules.md` and `worker.md`.
 2. **Checks.** The run waits for the PR's checks. A red check or a conflict wakes the worker on its own thread.
@@ -40,25 +40,24 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
 - A GitHub repo with the labels the `factory` skill creates, and `gh` signed in. The factory reads blockers, comments, and sub-issues, and merges, through `gh`.
 - The skills installed side by side, since workers reach them by relative paths.
 
-[SKILL.md](SKILL.md) installs it, holds its settings, and says how to retry, stop, or pause a run.
+[SKILL.md](../skills/factory/SKILL.md) installs it, holds its settings, and says how to retry, stop, or pause a run.
 
 ## Where issues come from
 
-The factory builds only what an issue already settles, one PR per issue. The skills a person types file those issues: `debug` for a bug, `ticket` for a change that fits one PR, `spec` and then `ticket` for a feature, and `triage` for what is already on the tracker. Each follows [handoff.md](handoff.md).
+The factory builds only what an issue already settles, one PR per issue. The skills a person types file those issues: `debug` for a bug, `ticket` for a change that fits one PR, `spec` and then `ticket` for a feature, and `triage` for what is already on the tracker. Each follows [handoff.md](../skills/factory/handoff.md).
 
 ## The files
 
-The factory lives in the `factory` skill's folder, so it installs with the skills.
+The factory lives in the `factory` skill's folder, so it installs with the skills. This file does not: it is for you, and no agent reads it.
 
 | File | Who reads it | What it holds |
 | --- | --- | --- |
-| [factory.ts](factory.ts) | T3 Code | The factory itself: `ship` builds an issue up to a reviewed PR, `land` merges it, `spec` checks a finished spec, and `dispatch` is the pass that starts them |
-| [SKILL.md](SKILL.md) | The agent you type `/factory` to | How to set a repo up, its settings, what waits on you, and how to retry, stop, or pause a run |
-| This file | You | What the factory runs, and what happens after a run |
-| [model-roles.md](model-roles.md) | Any skill that starts an agent | Which model each role runs on, and how to set the roles |
-| [handoff.md](handoff.md) | Any agent that files an issue for the factory | The checks before an issue goes to `ready-for-agent` |
-| [agent-brief.md](agent-brief.md) | The same agents, and workers | The one shape of an issue the factory builds |
-| [tracker.md](tracker.md) | Every agent that touches the tracker | The labels, and the `gh` commands for issues and PRs |
-| [worker.md](worker.md) | Every worker | How to build an issue in one PR and settle its review |
-| [reviewer.md](reviewer.md) | The reviewer of a PR, or of a finished spec | How to review a PR and argue each finding with its worker, and how to check a spec |
-| [rules.md](rules.md) | Workers and reviewers | Trust, the AI marker, results, messages, git, PR tools, and how to run a skill |
+| [factory.ts](../skills/factory/factory.ts) | T3 Code | The factory itself: `ship` builds an issue up to a reviewed PR, `land` merges it, `spec` checks a finished spec, and `dispatch` is the pass that starts them |
+| [SKILL.md](../skills/factory/SKILL.md) | The agent you type `/factory` to | How to set a repo up, its settings, what waits on you, and how to retry, stop, or pause a run |
+| [model-roles.md](../skills/factory/model-roles.md) | Any skill that starts an agent | Which model each role runs on, and how to set the roles |
+| [handoff.md](../skills/factory/handoff.md) | Any agent that files an issue for the factory | The checks before an issue goes to `ready-for-agent` |
+| [agent-brief.md](../skills/factory/agent-brief.md) | The same agents, and workers | The one shape of an issue the factory builds |
+| [tracker.md](../skills/factory/tracker.md) | Every agent that touches the tracker | The labels, and the `gh` commands for issues and PRs |
+| [worker.md](../skills/factory/worker.md) | Every worker | How to build an issue in one PR and settle its review |
+| [reviewer.md](../skills/factory/reviewer.md) | The reviewer of a PR, or of a finished spec | How to review a PR and argue each finding with its worker, and how to check a spec |
+| [rules.md](../skills/factory/rules.md) | Workers and reviewers | Trust, the AI marker, results, messages, git, PR tools, and how to run a skill |

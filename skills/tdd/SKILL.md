@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # TDD
 
-TDD is the red → green loop. This skill says when the loop runs, and how to run it so the tests are worth keeping. The `prove` skill covers the work the loop skips.
+TDD is the red → green loop.
 
 Read `GLOSSARY.md`, when the repo has one, so test names and interfaces use the project's domain language.
 

@@ -56,6 +56,16 @@ Use T3's PR tools, not `gh`: `pull_request_create`, `pull_request_update`, `pull
 - **Follow-ups.** Something worth doing outside your task goes in your result as a follow-up, never into your PR.
 - **Friction.** End with what cost you time: a file or fact you had to search for, a command that failed before it worked, a rule you learned from a failure, a tool that returned far more than you needed. One line each, naming the file or command. Write `Friction: none` when nothing did. A worker also writes it into its PR's agent notes, where later sessions find it.
 
+## In a T3 workflow
+
+Your brief says `Coordinator: a T3 workflow` when the [factory](factory.md) runs your task. No coordinator agent reads your notes, so three things change.
+
+- **Your result is data.** Return it with `t3_submit_output`, in the shape your turn asks for, in place of a final text. Its fields say what goes where. Your evidence goes in `summary`.
+- **Skip the notes to the coordinator.** Show the user your `SIZED` line with `send_to_user`. Where this file or your role's file says to send `BLOCKED` and wait, submit `BLOCKED` as your result instead. The factory parks the task for a person.
+- **A wait on the user ends your turn, not your task.** End the turn without a result, and submit it from the turn where the user answers. When your thread has been quiet for two hours, T3 asks you for the result.
+
+A worker's turn that the reviewer starts is not asked for data. End it with `REPLY`, as `worker.md` says.
+
 ## After a compaction
 
 Keep one todo item open for the whole run: re-read this file and your role's file, at their absolute paths, before you act.

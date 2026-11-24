@@ -1,8 +1,3 @@
-"""Check each skill's description: it has a "Use when" sentence, and it is short.
-
-A description stays in context on every turn, and an agent follows one that summarises the
-skill's steps in place of the skill. So the steps stay in the body.
-"""
 import re
 import sys
 from pathlib import Path

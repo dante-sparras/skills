@@ -1,4 +1,3 @@
-"""Tests for skills/factory/factory.ts, the T3 Code workflow. Needs Node 18 or newer."""
 import json
 import re
 import shutil
@@ -211,7 +210,6 @@ def labelled(event_id, label="approved", event="labeled", actor="dante"):
 
 
 ON = [{"name": "approved"}]
-# Each case: the PR, its label events, the newest label event from before the head appeared, and the approver.
 APPROVALS = [
     ("the label was put on after this head appeared", {"labels": ON, "reviews": []}, [labelled(50)], 40, None, {"approved": True, "by": "label"}),
     ("the label is from before this head", {"labels": ON, "reviews": []}, [labelled(50)], 50, None, {"approved": False, "by": None}),
@@ -245,7 +243,6 @@ def seen(**changed):
     return {"state": "OPEN", "head": HEAD, "base": "main", "draft": False, "merge": "CLEAN", "checks": "passing", "updatedAt": "t", "approved": False, "fresh": 0, "outside": [], **changed}
 
 
-# Each case: what the ship run left, the PR as it is now, the settings now, and what to do.
 DECISIONS = [
     ("nothing happened yet", READY, seen(), NOW, {"act": "wait"}),
     ("the user said go", READY, seen(approved=True), NOW, {"act": "merge"}),
@@ -360,7 +357,6 @@ class Factory(unittest.TestCase):
         cls.comment_ids = [next(results) for _ in range(2)]
 
     def test_registers_every_workflow(self):
-        # The factory skill, factory.md and the factory's own `start` calls name these. Rename them together.
         self.assertEqual(self.registered, ["skills-factory-ship", "skills-factory-land", "skills-factory-spec", "skills-factory-dispatch"])
 
     def test_finds_blockers_in_an_issue_body(self):
@@ -418,7 +414,6 @@ class Factory(unittest.TestCase):
                 self.assertEqual(got, want)
 
     def test_no_step_name_is_written_twice_in_a_workflow(self):
-        # T3 pauses a run the moment two of its steps share a name, so a clash only shows live.
         text = FACTORY.read_text(encoding="utf-8")
         starts = [text.index(f"const {name} = workflow(") for name in ["ship", "land", "specCheck", "dispatch"]]
         call = re.compile(r"\b(?:step\.try|step|ask|askUser|agent\.try|hire|wake|pullRequests\.wait|sleep|headNow|keepHandled)\(\s*([`\"])([^`\"]+)\1")
@@ -442,7 +437,6 @@ class Factory(unittest.TestCase):
         for (name, _, _, _, _, want), got in zip(APPROVALS, self.approvals):
             with self.subTest(name):
                 self.assertEqual(got, want)
-        # The newest event of the label took it off, so there is no go. It is still the mark for a new head.
         self.assertEqual(self.last_approvals, [0, 0])
         self.assertEqual(self.newest_event, 8)
 

@@ -1,13 +1,3 @@
-"""Link every skill in this repo into an agent's skills folder, and drop the links that have gone stale.
-
-    python scripts/link-skills.py [--skills <folder>] [--dry-run] [<agent skills folder> ...]
-
-With no folder named, it syncs ~/.claude/skills and ~/.agents/skills, whichever exist. Run it again
-after a pull that adds, renames, or removes a skill.
-
-A link is a junction on Windows and a symlink elsewhere. Only links that point into this repo's
-skills folder are ever removed: a real folder, or a link to somewhere else, is left alone and reported.
-"""
 import argparse
 import os
 import sys
@@ -17,7 +7,6 @@ DEFAULT_TARGETS = ["~/.claude/skills", "~/.agents/skills"]
 
 
 def link_target(path):
-    """Where a symlink or junction points, or None when the path is neither."""
     try:
         target = os.readlink(path)
     except (OSError, ValueError):
@@ -53,7 +42,6 @@ def remove_link(link):
 
 
 def sync(skills, target, dry_run=False):
-    """Make `target` hold one link per skill in `skills`. Returns (action, name) pairs."""
     wanted = {p.parent.name: p.parent for p in sorted(skills.glob("*/SKILL.md"))}
     done = []
     if not dry_run:
@@ -82,7 +70,7 @@ def sync(skills, target, dry_run=False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description="Link every skill in this repo into an agent's skills folder, and drop the links that have gone stale.")
     parser.add_argument("targets", nargs="*", help="agent skills folders to sync")
     parser.add_argument("--skills", default=str(Path(__file__).resolve().parent.parent / "skills"), help="the skills folder to link from")
     parser.add_argument("--dry-run", action="store_true", help="print what would change, and change nothing")

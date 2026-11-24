@@ -1,4 +1,3 @@
-"""Run every check in this repo. CI runs this same command."""
 import subprocess
 import sys
 from pathlib import Path
@@ -9,6 +8,7 @@ CHECKS = [
     ["scripts/no-semicolons.py", "skills"],
     ["scripts/use-when-descriptions.py", "skills"],
     ["scripts/check-skills.py", "."],
+    ["scripts/no-comments.py", "."],
     ["-m", "unittest", "discover", "-s", "scripts", "-p", "test_*.py", "-q"],
 ]
 

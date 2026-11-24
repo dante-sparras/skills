@@ -1,11 +1,3 @@
-"""Check the wiring between skills: layout, names, shape, invocation flags, the manifest, links, and skill calls.
-
-Every skill lives at skills/<name>/, the same layout it installs to, so a link between two
-skills is written as ../<name>/... The plugin that .claude-plugin/marketplace.json declares
-lists every skill.
-
-Each problem prints as path:line: what is wrong, then how to fix it.
-"""
 import json
 import posixpath
 import re
@@ -24,9 +16,6 @@ DISPLAY_NAME = re.compile(r"^\s*display_name:\s*[\"']?(.*?)[\"']?\s*$", re.M)
 REFERENCE_NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*\.md$")
 REPORT_HEADING = re.compile(r"^#{1,6}\s+(?:\d+\.\s+)?(?:Reply|Report|Reporting|Output)\s*$", re.I)
 
-# The skills an agent may load on its own, each with why. Every other skill is user-invoked.
-# A skill belongs here when a person asks for it in plain words outside the factory, and it
-# does no harm when it loads unasked: it files nothing, labels nothing, and starts no long job.
 MODEL_INVOKED = {
     "debug": "A crash or a slowdown comes up in any session, and the skill is what stops an agent from guessing.",
     "pr": "Opening a PR comes up in any session, and the skill only shapes the PR's title and body.",
@@ -36,7 +25,6 @@ MODEL_INVOKED = {
 
 
 def find_skill_dirs(skills_root):
-    """Every skill folder: skills/<name>/."""
     return sorted(p.parent for p in skills_root.glob("*/SKILL.md"))
 
 
@@ -54,7 +42,6 @@ def frontmatter(lines):
 
 
 def prose_lines(text):
-    """Yield (number, line) for lines outside code fences."""
     fence = None
     for number, line in enumerate(text.splitlines(), start=1):
         match = FENCE.match(line)
@@ -94,7 +81,6 @@ def owning_skill(path, skills):
 
 
 def resolve_link(path, file_part, skills):
-    """Resolve a link the way it resolves once skills are installed side by side."""
     owner = owning_skill(path, skills) if skills else None
     if owner is None:
         return (path.parent / file_part).resolve()
@@ -154,7 +140,6 @@ def skill_problems(skill_dir, user_invoked):
 
 
 def invocation_problems(skill_dir, user_invoked, model_invoked=MODEL_INVOKED):
-    """Yield (path, line, problem) where a skill's invocation and MODEL_INVOKED disagree."""
     name = skill_dir.name
     if name not in user_invoked and name not in model_invoked:
         yield skill_dir / "SKILL.md", 2, (
@@ -171,12 +156,10 @@ def invocation_problems(skill_dir, user_invoked, model_invoked=MODEL_INVOKED):
 
 
 def stale_model_invoked(skills, model_invoked=MODEL_INVOKED):
-    """Yield each name in MODEL_INVOKED that no skill folder has."""
     return sorted(name for name in model_invoked if name not in skills)
 
 
 def shape_problems(skill_dir):
-    """Yield (path, line, problem) where a skill departs from the shape every skill shares."""
     skill_md = skill_dir / "SKILL.md"
     text = skill_md.read_text(encoding="utf-8")
     lines = text.splitlines()
@@ -224,7 +207,6 @@ def skill_call_problems(path, skills, user_invoked):
 
 
 def layout_problems(skills_root):
-    """Yield (path, problem) for skills that sit below skills/<name>/."""
     for nested in sorted(skills_root.glob("*/*/SKILL.md")):
         yield nested, (
             "sits in a subfolder. Move the skill to skills/<name>/SKILL.md: skills install side by side, "
@@ -233,7 +215,6 @@ def layout_problems(skills_root):
 
 
 def manifest_problems(repo, skill_dirs):
-    """Yield problems where .claude-plugin/marketplace.json and the skill folders disagree."""
     manifest = repo / MANIFEST
     if not manifest.is_file():
         yield "is missing. Add it with one plugin that lists every skill."

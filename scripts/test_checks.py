@@ -16,6 +16,7 @@ def load(filename):
 semicolons = load("no-semicolons.py")
 wiring = load("check-skills.py")
 use_when = load("use-when-descriptions.py")
+no_comments = load("no-comments.py")
 
 
 class Semicolons(unittest.TestCase):
@@ -36,6 +37,42 @@ class Semicolons(unittest.TestCase):
         self.assertEqual(len(problems), 1)
         self.assertEqual(problems[0][0], 6)
         self.assertIs(problems[0][2], semicolons.UNCLOSED)
+
+
+class Comments(unittest.TestCase):
+    def found(self, name, text):
+        return [text[begin:end] for begin, end in no_comments.comments(Path(name), text)]
+
+    def test_script_comments_are_found(self):
+        text = "const a = 1; // one\n/* two */\nconst b = 2;\n"
+        self.assertEqual(self.found("a.ts", text), ["// one", "/* two */"])
+
+    def test_script_text_that_only_looks_like_a_comment_is_skipped(self):
+        for text in [
+            'const url = "https://example.com"; const b = \'a // b\';\n',
+            "const t = `see // here ${a + `in // ner`} /* there */`;\n",
+            r"const r = /\/\//.test(s); const q = /[/]/g; const half = a / 2 / b;",
+            r"return /^\s*\/\//.test(line);",
+        ]:
+            self.assertEqual(self.found("a.mjs", text), [], text)
+
+    def test_comment_inside_a_template_expression_is_found(self):
+        self.assertEqual(self.found("a.js", "const t = `${a /* x */}`;\n"), ["/* x */"])
+
+    def test_python_comments_and_docstrings_are_found(self):
+        text = '"""Module."""\nA = "# no"  # yes\n\n\ndef f():\n    """Doc."""\n    return "text"\n'
+        self.assertEqual(self.found("a.py", text), ['"""Module."""', "# yes", '"""Doc."""'])
+
+    def test_shebang_and_plain_strings_are_skipped(self):
+        self.assertEqual(self.found("a.py", '#!/usr/bin/env python3\nA = """not a docstring"""\n'), [])
+
+    def test_config_comments_are_found(self):
+        text = 'color: "#fff"\nurl: a#b\nname: x # why\n# whole line\n'
+        self.assertEqual(self.found("a.yml", text), ["# why", "# whole line"])
+        self.assertEqual(self.found(".gitignore", "# built\ndist/\n"), ["# built"])
+
+    def test_other_files_are_skipped(self):
+        self.assertEqual(self.found("a.md", "# Title\n<!-- note -->\n"), [])
 
 
 class Wiring(unittest.TestCase):

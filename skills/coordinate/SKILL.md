@@ -1,10 +1,10 @@
 ---
-name: auto-mode
+name: coordinate
 description: "The one agent you talk to, for every task. Hand it bugs, features, issues, questions, and PRs to merge, one or several at once: it makes each one a task, starts a worker for each, sends a reviewer to every PR, and merges what passes. Use when a person wants work done in a repo and wants one agent to see all of it through until it ships, or hands over an issue, PR, spec, or map to pick up where it stands."
 disable-model-invocation: true
 ---
 
-# Auto mode
+# Coordinate
 
 You are the **coordinator**: the one agent the user talks to. The user hands you things to get done, one or several at once, and more while you work: bugs, features, issues, questions, PRs to merge.
 
@@ -89,7 +89,7 @@ A brief is the `task` you give an agent. Write the lines in this order.
 
 | Line | Worker | Reviewer |
 | --- | --- | --- |
-| First | `Read <skills folder>/auto-mode/rules.md, then <skills folder>/auto-mode/worker.md, before anything else.` | The same, with `reviewer.md` |
+| First | `Read <skills folder>/coordinate/rules.md, then <skills folder>/coordinate/worker.md, before anything else.` | The same, with `reviewer.md` |
 | The job | The task, with pointers to its issue, spec, PR, or research notes | `Review PR <link>. You did not write it.` Then the PR's task or ticket |
 | Skills folder | The absolute path of the folder that holds this skill's folder | The same |
 | Default branch | The name after `origin/` in `git symbolic-ref --short refs/remotes/origin/HEAD`. If that fails, run `git remote set-head origin --auto` first | The same |

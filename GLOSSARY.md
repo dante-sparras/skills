@@ -17,7 +17,7 @@ One outcome the operator asked for, or one ticket. One worker carries it, and it
 _Avoid_: Unit, job
 
 **Spec**:
-The issue that describes one feature: the problem, the solution, the user stories, and the decisions made. `to-spec` writes it, and its tickets are its sub-issues.
+The issue that describes one feature: the problem, the solution, the user stories, and the decisions made. `plan` writes it, and its tickets are its sub-issues.
 _Avoid_: PRD, plan
 
 **Ticket**:
@@ -25,11 +25,11 @@ One tracer-bullet slice of a spec, published as an issue that names its blockers
 _Avoid_: Story, subtask
 
 **Worker**:
-A fresh agent the coordinator starts with one task and a brief that opens with `auto-mode/rules.md` and `auto-mode/worker.md`. It sizes the task, then opens a PR for it or splits it into tickets, and fixes what review finds. The operator answers it in its own thread.
+A fresh agent the coordinator starts with one task and a brief that opens with `coordinate/rules.md` and `coordinate/worker.md`. It sizes the task, then opens a PR for it or splits it into tickets, and fixes what review finds. The operator answers it in its own thread.
 _Avoid_: Helper, planner
 
 **Reviewer**:
-The agent the coordinator sends to one PR it did not write, with a brief that opens with `auto-mode/rules.md` and `auto-mode/reviewer.md`. It proves the behavior, runs `interrogate`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
+The agent the coordinator sends to one PR it did not write, with a brief that opens with `coordinate/rules.md` and `coordinate/reviewer.md`. It proves the behavior, runs `interrogate`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
 _Avoid_: Verifier, checker, QA agent
 
 **Verdict comment**:

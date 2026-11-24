@@ -13,7 +13,7 @@ What changes when the document is a skill: the invocation choice, splitting by i
 
 Choose model-invoked only when the agent, or another skill, must reach the skill on its own. If it only ever fires by hand, make it user-invoked and pay no context load.
 
-- **Running a user-invoked skill from another skill.** An agent that reads `../<name>/SKILL.md` and follows it has run the skill. This is how an `auto-mode` worker reaches `to-spec` and `triage`.
+- **Running a user-invoked skill from another skill.** An agent that reads `../<name>/SKILL.md` and follows it has run the skill. This is how a `coordinate` worker reaches `plan` and `triage`.
 - **Shared reference.** A model-invoked skill that is all reference is a home for material several skills need, since any of them can invoke it. Reference shared by two user-invoked skills goes in a plain file both point at.
 
 ## Splitting by invocation
@@ -22,4 +22,4 @@ Split off a model-invoked skill when it has a distinct leading word that should 
 
 ## Router skills
 
-When user-invoked skills multiply past what you can remember, add a **router skill**: one user-invoked skill that names the others and when to reach for each. A router that only names them can hint and no more. A router that reads their `SKILL.md` files by path runs them, as `auto-mode`'s workers do.
+When user-invoked skills multiply past what you can remember, add a **router skill**: one user-invoked skill that names the others and when to reach for each. A router that only names them can hint and no more. A router that reads their `SKILL.md` files by path runs them, as `coordinate`'s workers do.

@@ -43,7 +43,7 @@ The defaults are the canonical roles, each label named after its role: the state
 
 > Once a PR has passed review and its checks, should the coordinator merge it, or leave the merge to you? (recommended: **the coordinator**)
 
-The `auto-mode` coordinator reads the answer. It still hands the merge to a person wherever branch protection requires an approval it cannot give.
+The coordinator reads the answer. It still hands the merge to a person wherever branch protection requires an approval it cannot give.
 
 **Section E: Required checks.** Runs on GitHub when the repo has CI and no ruleset or branch protection on the default branch requires a check. Ask one question:
 

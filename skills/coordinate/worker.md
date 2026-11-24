@@ -21,7 +21,7 @@ Read what your task points at, then take the first row that fits. Send your `SIZ
 | An issue in `ready-for-human` | Say why it is marked for a person. Build it only on the operator's go |
 | A PR that already exists | Continue its branch, do what is left, and return it the way [Build](#build) says. If you cannot push to its branch, say so and stop |
 | A map, or one of its decision tickets | Run `map` on it with the operator. Return the map and what was resolved |
-| A map with nothing left to decide | [Split](#split), starting at `to-spec` |
+| A map with nothing left to decide | [Split](#split), starting at `plan` |
 | A repeat the coordinator named | [Build](#build), with `guardrail` on the threads and PRs in your brief as step 2 |
 | The repo's `verify-<app>` skill, to be created | [Build](#build), with `new-verify-skill` as step 2 |
 | Something broken or slower, with the cause unknown | [Build](#build), with `debug` as step 2 |
@@ -48,5 +48,5 @@ Your job is to open one PR, and to argue each of its reviewer's findings until t
 The task is more than one PR. You build nothing: each ticket you write becomes another worker's task.
 
 1. **Settle** the open decisions with the operator: run `interview`.
-2. **Write it down.** Run `to-spec`, which publishes the spec and its tickets after the operator approves the breakdown. A task that arrived as a written spec, a plan, or a finished map skips the interview: give `to-spec` that reference.
+2. **Write it down.** Run `plan`, which publishes the spec and its tickets after the operator approves the breakdown. A task that arrived as a written spec, a plan, or a finished map skips the interview: give `plan` that reference.
 3. **Return** `DONE` with the spec's reference, its tickets, and the PR for any file you changed along the way.

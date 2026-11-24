@@ -92,11 +92,11 @@ class Wiring(unittest.TestCase):
         self.assertEqual([line for line, _ in wiring.link_problems(page, {"implement": build})], [1])
 
     def test_skills_sit_directly_under_skills(self):
-        self.skill("auto-mode")
+        self.skill("coordinate")
         self.skill("alpha")
         self.assertEqual(list(wiring.layout_problems(self.root / "skills")), [])
         names = [p.name for p in wiring.find_skill_dirs(self.root / "skills")]
-        self.assertEqual(names, ["alpha", "auto-mode"])
+        self.assertEqual(names, ["alpha", "coordinate"])
 
     def test_skill_in_a_subfolder_fails(self):
         self.write("skills/plan/alpha/SKILL.md", '---\nname: alpha\ndescription: "X. Use when y."\n---\n')
@@ -110,11 +110,11 @@ class Wiring(unittest.TestCase):
         self.assertEqual(list(wiring.manifest_problems(self.root, [alpha])), [])
 
     def test_manifest_leaves_the_entry_point_out(self):
-        entry = self.skill("auto-mode")
+        entry = self.skill("coordinate")
         alpha = self.skill("alpha")
         self.manifest([{"name": "plan", "skills": ["./skills/alpha"]}])
         self.assertEqual(list(wiring.manifest_problems(self.root, [entry, alpha])), [])
-        self.manifest([{"name": "plan", "skills": ["./skills/alpha", "./skills/auto-mode"]}])
+        self.manifest([{"name": "plan", "skills": ["./skills/alpha", "./skills/coordinate"]}])
         problems = list(wiring.manifest_problems(self.root, [entry, alpha]))
         self.assertEqual(len(problems), 1)
         self.assertIn("remove the entry", problems[0])

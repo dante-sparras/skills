@@ -54,7 +54,7 @@ List the `ready-for-agent` issues an agent can start now:
 - Drop every issue with an open blocker, per the tracker doc's count of open blockers.
 - Group tickets under their spec.
 - Mark a ticket that has an open PR as already being built.
-- For each issue left, give the route its agent brief names and the command that builds it: `/auto-mode <issue>`.
+- For each issue left, give the route its agent brief names and the command that builds it: `/coordinate <issue>`.
 
 ## Triage one issue or PR
 
@@ -80,7 +80,7 @@ List the `ready-for-agent` issues an agent can start now:
    | `wontfix`, rejected bug | Close with a polite explanation |
    | `wontfix`, rejected enhancement | Record it per [OUT-OF-SCOPE.md](OUT-OF-SCOPE.md), link the file from a comment, then close |
 
-6. **Hand off.** Tell the maintainer what happens next. For `ready-for-agent`, give the route the brief names and the command that builds it: `/auto-mode <issue>`. For `needs-info`, say that the issue returns to `needs-triage` when the reporter replies. Inside an `auto-mode` worker, return the issue and its route to the coordinator in place of the command.
+6. **Hand off.** Tell the maintainer what happens next. For `ready-for-agent`, give the route the brief names and the command that builds it: `/coordinate <issue>`. For `needs-info`, say that the issue returns to `needs-triage` when the reporter replies. Inside a `coordinate` worker, return the issue and its route to the coordinator in place of the command.
 
 ## Quick state override
 

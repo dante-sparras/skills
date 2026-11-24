@@ -3,7 +3,7 @@ Dante's agent skills
 
 ## How the skills fit together
 
-Start with [`/auto-mode`](./skills/auto-mode/SKILL.md) and hand it your tasks, one or several at once: bugs, features, issues, questions, PRs to merge. The agent you typed it to becomes the **coordinator**: the one agent you talk to, whose job is that every task ships.
+Start with [`/coordinate`](./skills/coordinate/SKILL.md) and hand it your tasks, one or several at once: bugs, features, issues, questions, PRs to merge. The agent you typed it to becomes the **coordinator**: the one agent you talk to, whose job is that every task ships.
 
 One rule runs it all: **one task, one worker, one PR.** The skills are written for T3 Code: each worker is a `delegate_task` child with its own thread and checkout.
 
@@ -52,20 +52,20 @@ The whole flow is four files: one per role, and the rules they share. [GLOSSARY.
 
 | File | Who reads it | What it holds |
 | --- | --- | --- |
-| [`auto-mode/SKILL.md`](./skills/auto-mode/SKILL.md) | The coordinator | The loop: intake, start, receive, review, land, check |
-| [`auto-mode/worker.md`](./skills/auto-mode/worker.md) | Every worker | How to size a task, build it, or split it |
-| [`auto-mode/reviewer.md`](./skills/auto-mode/reviewer.md) | The reviewer of a PR | How to review it, and argue each finding with its worker |
-| [`auto-mode/rules.md`](./skills/auto-mode/rules.md) | All three | Trust, the AI marker, messages, git, PR tools, and how to run a skill |
+| [`coordinate/SKILL.md`](./skills/coordinate/SKILL.md) | The coordinator | The loop: intake, start, receive, review, land, check |
+| [`coordinate/worker.md`](./skills/coordinate/worker.md) | Every worker | How to size a task, build it, or split it |
+| [`coordinate/reviewer.md`](./skills/coordinate/reviewer.md) | The reviewer of a PR | How to review it, and argue each finding with its worker |
+| [`coordinate/rules.md`](./skills/coordinate/rules.md) | All three | Trust, the AI marker, messages, git, PR tools, and how to run a skill |
 
 Every other skill is a tool a worker picks up when its task calls for it. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo.
 
 ## Layout
 
-Every skill lives at `skills/<name>/`, the same layout it installs to. The [skills CLI](https://skills.sh) shows them in four groups, declared in `.claude-plugin/marketplace.json`. The entry point, `auto-mode`, is in no group.
+Every skill lives at `skills/<name>/`, the same layout it installs to. The [skills CLI](https://skills.sh) shows them in four groups, declared in `.claude-plugin/marketplace.json`. The entry point, `coordinate`, is in no group.
 
 | Group | Skills |
 | --- | --- |
-| `plan` | interview, map, to-spec, triage, research |
+| `plan` | interview, map, plan, triage, research |
 | `build` | tdd, debug, interrogate, pr-body, new-verify-skill |
 | `codebase` | deepen, glossary, guardrail |
 | `setup` | setup-skills, writing-for-agents |
@@ -76,7 +76,7 @@ Install every skill into your agent's skills folder, side by side: `<skills fold
 
 The skills reach each other by relative paths such as `../tdd/SKILL.md` and `../setup-skills/MODEL-ROLES.md`, so a skill installed alone loses them.
 
-The manifest lists only the four groups, so a Claude plugin install leaves out `auto-mode`. Add it with `npx skills add` or a link.
+The manifest lists only the four groups, so a Claude plugin install leaves out `coordinate`. Add it with `npx skills add` or a link.
 
 Run `python3 scripts/check.py` before you push, or `python scripts/check.py` on Windows. CI runs the same command.
 
@@ -94,7 +94,7 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 - [research](./skills/research/SKILL.md)
 - [setup-skills](./skills/setup-skills/SKILL.md)
 - [tdd](./skills/tdd/SKILL.md)
-- [to-spec](./skills/to-spec/SKILL.md)
+- [plan](./skills/plan/SKILL.md)
 - [triage](./skills/triage/SKILL.md)
 - [map](./skills/map/SKILL.md)
 
@@ -107,7 +107,7 @@ The skills below started as copies of [mattpocock/skills](https://github.com/mat
 
 These skills started from pstack, or are new here and built on its ideas:
 
-- [auto-mode](./skills/auto-mode/SKILL.md)
+- [coordinate](./skills/coordinate/SKILL.md)
 - [guardrail](./skills/guardrail/SKILL.md)
 - [new-verify-skill](./skills/new-verify-skill/SKILL.md)
 
@@ -119,7 +119,7 @@ These skills started from pstack, or are new here and built on its ideas:
 
 [new-verify-skill](./skills/new-verify-skill/SKILL.md) started as a copy of the `create-verification-skill` skill in pstack at commit [`e58dd043600587dbaf58ba315e7f2b38373eeb43`](https://github.com/cursor/plugins/tree/e58dd043600587dbaf58ba315e7f2b38373eeb43/pstack/skills/create-verification-skill), including its feature map example.
 
-[auto-mode](./skills/auto-mode/SKILL.md) takes its entry point from the `poteto-mode` skill in pstack at commit [`7a583913eb1b8d1a0ee76753d1a2cf072e7b54f9`](https://github.com/cursor/plugins/tree/7a583913eb1b8d1a0ee76753d1a2cf072e7b54f9/pstack/skills/poteto-mode): one user-invoked skill a person starts every task with, and a `worker.md` that opens every subagent's brief, since the rules reach a subagent no other way. Its build flow follows the poteto-mode playbooks at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks): one worker and one PR per task off trunk, an independent verdict before a PR lands, the forge-approval guardrail, and the hand-off mode. The coordinator loop and the worker's sizing table are new here.
+[coordinate](./skills/coordinate/SKILL.md) takes its entry point from the `poteto-mode` skill in pstack at commit [`7a583913eb1b8d1a0ee76753d1a2cf072e7b54f9`](https://github.com/cursor/plugins/tree/7a583913eb1b8d1a0ee76753d1a2cf072e7b54f9/pstack/skills/poteto-mode): one user-invoked skill a person starts every task with, and a `worker.md` that opens every subagent's brief, since the rules reach a subagent no other way. Its build flow follows the poteto-mode playbooks at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks): one worker and one PR per task off trunk, an independent verdict before a PR lands, the forge-approval guardrail, and the hand-off mode. The coordinator loop and the worker's sizing table are new here.
 
 [setup-skills](./skills/setup-skills/SKILL.md) takes its model role configuration from Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack).
 

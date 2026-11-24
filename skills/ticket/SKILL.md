@@ -1,10 +1,10 @@
 ---
-name: tickets
+name: ticket
 description: "Slice a spec, a written plan, or the current conversation into tracer-bullet tickets the factory builds, each naming what blocks it. Use when a spec is ready to be built, or a person describes a change that fits one PR with nothing left to decide."
 disable-model-invocation: true
 ---
 
-# Tickets
+# Ticket
 
 Slice work into **tickets**, each one PR for one worker, and publish them in `ready-for-agent` after one approval.
 

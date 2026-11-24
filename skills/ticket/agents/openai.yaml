@@ -1,5 +1,5 @@
 interface:
-  display_name: "Tickets"
+  display_name: "Ticket"
   short_description: "Slice work into tickets the factory builds"
 policy:
   allow_implicit_invocation: false

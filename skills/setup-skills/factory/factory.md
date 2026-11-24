@@ -62,7 +62,7 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
 
 ## Where issues come from
 
-The factory builds only what an issue already settles, one PR per issue. The skills a person types file those issues: `debug` for a bug, `tickets` for a change that fits one PR, `spec` and then `tickets` for a feature, and `triage` for what is already on the tracker. Each follows [handoff.md](handoff.md).
+The factory builds only what an issue already settles, one PR per issue. The skills a person types file those issues: `debug` for a bug, `ticket` for a change that fits one PR, `spec` and then `ticket` for a feature, and `triage` for what is already on the tracker. Each follows [handoff.md](handoff.md).
 
 ## The files
 

@@ -47,7 +47,7 @@ The factory starts each `ready-for-agent` issue within ten minutes of its last b
 
 ## Work that is not on the tracker yet
 
-Triage starts from an issue or a PR. When the user describes something new, send them on: a bug goes to `/debug`, which reproduces and files it, a change that fits one PR goes to `/tickets`, and a feature goes to `/spec`.
+Triage starts from an issue or a PR. When the user describes something new, send them on: a bug goes to `/debug`, which reproduces and files it, a change that fits one PR goes to `/ticket`, and a feature goes to `/spec`.
 
 ## Triage one issue or PR
 
@@ -65,7 +65,7 @@ Triage starts from an issue or a PR. When the user describes something new, send
 
    | State | Do |
    | --- | --- |
-   | `ready-for-agent` | Post an agent brief, per [agent-brief.md](../setup-skills/factory/agent-brief.md), and follow [handoff.md](../setup-skills/factory/handoff.md). Only work that fits one PR gets this state: anything bigger becomes a spec and its tickets, so read [spec](../spec/SKILL.md) and follow it, then [tickets](../tickets/SKILL.md). The factory starts from issues, so a PR gets an issue of its own that carries the brief and names the PR, and a worker continues the PR's branch |
+   | `ready-for-agent` | Post an agent brief, per [agent-brief.md](../setup-skills/factory/agent-brief.md), and follow [handoff.md](../setup-skills/factory/handoff.md). Only work that fits one PR gets this state: anything bigger becomes a spec and its tickets, so read [spec](../spec/SKILL.md) and follow it, then [ticket](../ticket/SKILL.md). The factory starts from issues, so a PR gets an issue of its own that carries the brief and names the PR, and a worker continues the PR's branch |
    | `ready-for-human` | Post a brief of the same shape, and say why it cannot be delegated: a judgment call, external access, a design decision, manual testing |
    | `needs-info` | Post triage notes from the template below |
    | `needs-triage` | Apply the role, and comment when there is partial progress to keep |

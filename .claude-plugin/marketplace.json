@@ -25,7 +25,7 @@
         "./skills/setup-skills",
         "./skills/spec",
         "./skills/tdd",
-        "./skills/tickets",
+        "./skills/ticket",
         "./skills/triage",
         "./skills/writing-for-agents"
       ]

@@ -21,7 +21,7 @@ The issue that describes one feature: the problem, the solution, the user storie
 _Avoid_: PRD
 
 **Ticket**:
-One issue that `tickets` files: a tracer-bullet slice of a spec, or a change that fits one PR and has no spec. It names its blockers, and each ticket is a task.
+One issue that `ticket` files: a tracer-bullet slice of a spec, or a change that fits one PR and has no spec. It names its blockers, and each ticket is a task.
 _Avoid_: Story, subtask
 
 **Worker**:

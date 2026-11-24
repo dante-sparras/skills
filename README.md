@@ -7,7 +7,7 @@ You need T3 Code with **Settings → Labs → Workflows** on, a GitHub repo, and
 
 1. Install every skill: `npx skills add dante-sparras/skills`.
 2. Type `/setup-skills` once in each repo you work in. It creates the labels, sets the model roles, and installs the factory.
-3. Type the skill that fits what you have: `/debug` for a bug, `/tickets` for a small change, `/spec` then `/tickets` for a feature, `/triage` for the tracker.
+3. Type the skill that fits what you have: `/debug` for a bug, `/ticket` for a small change, `/spec` then `/ticket` for a feature, `/triage` for the tracker.
 4. Answer what the factory asks in T3 Code's **Workflows** page.
 
 ## How the skills fit together
@@ -18,7 +18,7 @@ Work moves in two halves: you shape it into issues with an agent, and the **fact
 %%{init: {"flowchart": {"subGraphTitleMargin": {"top": 6, "bottom": 12}}}}%%
 flowchart TD
     you(["<b>You</b>"]):::you
-    intake["<b>/debug · /triage</b><br/><b>/spec · /tickets</b><br/>Your agent files the issues"]:::you
+    intake["<b>/debug · /triage</b><br/><b>/spec · /ticket</b><br/>Your agent files the issues"]:::you
     ready[("<b>ready-for-agent</b><br/>Issues an agent can build")]
     ask["<b>Workflows page</b><br/>Where the factory asks you"]:::you
     triage[("<b>needs-triage</b><br/>Issues that wait on you")]:::you
@@ -59,8 +59,8 @@ Blue is where you come in. A solid arrow follows one issue, from what you ask fo
    | You have | Type |
    | --- | --- |
    | A bug | [`/debug`](./skills/debug/SKILL.md). It reproduces the bug, and files it with the steps |
-   | A change that fits one PR, with nothing left to decide | [`/tickets`](./skills/tickets/SKILL.md). It files one ticket |
-   | A feature | [`/spec`](./skills/spec/SKILL.md), then `/tickets`. `/spec` asks about whatever is still open, writes the spec, and `/tickets` slices it |
+   | A change that fits one PR, with nothing left to decide | [`/ticket`](./skills/ticket/SKILL.md). It files one ticket |
+   | A feature | [`/spec`](./skills/spec/SKILL.md), then `/ticket`. `/spec` asks about whatever is still open, writes the spec, and `/ticket` slices it |
    | A decision you want stress-tested before anything is written | [`/interview`](./skills/interview/SKILL.md) |
    | Issues nobody has looked at, or a PR with no issue | [`/triage`](./skills/triage/SKILL.md) |
    | A question the code cannot answer | [`/research`](./skills/research/SKILL.md), or ask in plain words |
@@ -95,7 +95,7 @@ Every skill lives at `skills/<name>/`, the same layout it installs to. The skill
 | | [research](./skills/research/SKILL.md) | Investigates a question against primary sources in the background |
 | | [glossary](./skills/glossary/SKILL.md) | Keeps the project's domain terms in `GLOSSARY.md` |
 | **Plan**: write it down as issues | [spec](./skills/spec/SKILL.md) | Turns a conversation into a spec, asking about whatever is still open |
-| | [tickets](./skills/tickets/SKILL.md) | Slices a spec, or a change that fits one PR, into tickets the factory builds |
+| | [ticket](./skills/ticket/SKILL.md) | Slices a spec, or a change that fits one PR, into tickets the factory builds |
 | **Build**: make the change and prove it works | [tdd](./skills/tdd/SKILL.md) | Test-first for bug fixes and core logic, and proof for everything else |
 | | [debug](./skills/debug/SKILL.md) | Reproduces a bug or a slowdown and files it, or finds the cause and fixes it with a regression test |
 | | [deepen-modules](./skills/deepen-modules/SKILL.md) | The deep-module vocabulary, and a survey that finds modules worth deepening |

@@ -212,7 +212,7 @@ const blockersInBody = (body) => {
   return [...found];
 };
 
-/** The issue number in a ticket's `## Parent` section, as the `tickets` skill writes it, or null. */
+/** The issue number in a ticket's `## Parent` section, as the `ticket` skill writes it, or null. */
 const parentInBody = (body) => {
   const lines = String(body ?? "").split(/\r?\n/);
   const at = lines.findIndex((line) => /^#{1,6}\s*parent\s*$/i.test(line));

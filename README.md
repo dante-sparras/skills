@@ -57,13 +57,13 @@ The whole flow is four files: one per role, and the rules they share. [GLOSSARY.
 | [`auto-mode/reviewer.md`](./skills/auto-mode/reviewer.md) | The reviewer of a PR | How to review it, and argue each finding with its worker |
 | [`auto-mode/rules.md`](./skills/auto-mode/rules.md) | All three | Trust, the AI marker, messages, git, PR tools, and how to run a skill |
 
-Every other skill is a tool a worker picks up when its task calls for it. You type one more yourself: [setup-skills](./skills/setup/setup-skills/SKILL.md), once per repo.
+Every other skill is a tool a worker picks up when its task calls for it. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo.
 
 ## Layout
 
-The entry point, `auto-mode`, lives at `skills/auto-mode/` and belongs to no category. Every other skill lives at `skills/<category>/<name>/`. The four categories are also the groups the [skills CLI](https://skills.sh) shows, declared in `.claude-plugin/marketplace.json`.
+Every skill lives at `skills/<name>/`, the same layout it installs to. The [skills CLI](https://skills.sh) shows them in four groups, declared in `.claude-plugin/marketplace.json`. The entry point, `auto-mode`, is in no group.
 
-| Category | Skills |
+| Group | Skills |
 | --- | --- |
 | `plan` | interview, wayfinder, to-spec, triage, research |
 | `build` | tdd, diagnosing-bugs, code-review, pr, create-verification-skill |
@@ -72,65 +72,63 @@ The entry point, `auto-mode`, lives at `skills/auto-mode/` and belongs to no cat
 
 ## Install
 
-Install every skill into your agent's skills folder, flat and side by side, each under its own name: `<skills folder>/<name>/`. `npx skills add` does this, and so does linking `skills/auto-mode/` and each `skills/<category>/<name>/` folder by hand.
+Install every skill into your agent's skills folder, side by side: `<skills folder>/<name>/`. `npx skills add` does this, and so does linking each `skills/<name>/` folder by hand.
 
-The skills reach each other by the installed layout, with paths such as `../tdd/SKILL.md` and `../setup-skills/MODEL-ROLES.md`. Those paths cross category folders, so they resolve once installed and not inside this repo, and a skill installed alone loses them.
+The skills reach each other by relative paths such as `../tdd/SKILL.md` and `../setup-skills/MODEL-ROLES.md`, so a skill installed alone loses them.
 
-Agents open those paths with a file tool. A shell follows `..` through a linked folder to the wrong place.
-
-The manifest lists only the four categories, so a Claude plugin install leaves out `auto-mode`. Add it with `npx skills add` or a link.
+The manifest lists only the four groups, so a Claude plugin install leaves out `auto-mode`. Add it with `npx skills add` or a link.
 
 Run `python3 scripts/check.py` before you push, or `python scripts/check.py` on Windows. CI runs the same command.
 
 ## Upstream
 
-The skills below started as copies of [mattpocock/skills](https://github.com/mattpocock/skills) at commit [`5863806dd4e15c63174bee4e7515a4256792ecfa`](https://github.com/mattpocock/skills/tree/5863806dd4e15c63174bee4e7515a4256792ecfa) and have been edited since. Each one lives in `skills/<category>/<name>/`.
+The skills below started as copies of [mattpocock/skills](https://github.com/mattpocock/skills) at commit [`5863806dd4e15c63174bee4e7515a4256792ecfa`](https://github.com/mattpocock/skills/tree/5863806dd4e15c63174bee4e7515a4256792ecfa) and have been edited since. Each one lives in `skills/<name>/`.
 
 ### Engineering
 
-- [code-review](./skills/build/code-review/SKILL.md)
-- [codebase-design](./skills/codebase/codebase-design/SKILL.md)
-- [diagnosing-bugs](./skills/build/diagnosing-bugs/SKILL.md)
-- [domain-modeling](./skills/codebase/domain-modeling/SKILL.md)
-- [improve-codebase-architecture](./skills/codebase/improve-codebase-architecture/SKILL.md)
-- [pr](./skills/build/pr/SKILL.md)
-- [research](./skills/plan/research/SKILL.md)
-- [setup-skills](./skills/setup/setup-skills/SKILL.md)
-- [tdd](./skills/build/tdd/SKILL.md)
-- [to-spec](./skills/plan/to-spec/SKILL.md)
-- [triage](./skills/plan/triage/SKILL.md)
-- [wayfinder](./skills/plan/wayfinder/SKILL.md)
+- [code-review](./skills/code-review/SKILL.md)
+- [codebase-design](./skills/codebase-design/SKILL.md)
+- [diagnosing-bugs](./skills/diagnosing-bugs/SKILL.md)
+- [domain-modeling](./skills/domain-modeling/SKILL.md)
+- [improve-codebase-architecture](./skills/improve-codebase-architecture/SKILL.md)
+- [pr](./skills/pr/SKILL.md)
+- [research](./skills/research/SKILL.md)
+- [setup-skills](./skills/setup-skills/SKILL.md)
+- [tdd](./skills/tdd/SKILL.md)
+- [to-spec](./skills/to-spec/SKILL.md)
+- [triage](./skills/triage/SKILL.md)
+- [wayfinder](./skills/wayfinder/SKILL.md)
 
 ### Productivity
 
-- [interview](./skills/plan/interview/SKILL.md)
-- [writing-for-agents](./skills/setup/writing-for-agents/SKILL.md)
+- [interview](./skills/interview/SKILL.md)
+- [writing-for-agents](./skills/writing-for-agents/SKILL.md)
 
 ### pstack
 
 These skills started from pstack, or are new here and built on its ideas:
 
 - [auto-mode](./skills/auto-mode/SKILL.md)
-- [correct](./skills/codebase/correct/SKILL.md)
-- [create-verification-skill](./skills/build/create-verification-skill/SKILL.md)
+- [correct](./skills/correct/SKILL.md)
+- [create-verification-skill](./skills/create-verification-skill/SKILL.md)
 
-[correct](./skills/codebase/correct/SKILL.md) started as a copy of the `correct` skill in Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/pstack) at commit [`e5136d82418d2db3165ea1050d17577cd618cc05`](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/pstack/skills/correct). It also absorbs the upstream `retro` skill from mattpocock/skills.
+[correct](./skills/correct/SKILL.md) started as a copy of the `correct` skill in Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/pstack) at commit [`e5136d82418d2db3165ea1050d17577cd618cc05`](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/pstack/skills/correct). It also absorbs the upstream `retro` skill from mattpocock/skills.
 
-[code-review](./skills/build/code-review/SKILL.md) takes its adversarial reviewer panel from the `interrogate` skill in pstack at commit [`ab1f702ce8e8b6557edb56b09f52cde8bfb83f17`](https://github.com/cursor/plugins/tree/ab1f702ce8e8b6557edb56b09f52cde8bfb83f17/pstack/skills/interrogate): the adversary brief, picking reviewers from different model families, and rerunning each finding before it is reported.
+[code-review](./skills/code-review/SKILL.md) takes its adversarial reviewer panel from the `interrogate` skill in pstack at commit [`ab1f702ce8e8b6557edb56b09f52cde8bfb83f17`](https://github.com/cursor/plugins/tree/ab1f702ce8e8b6557edb56b09f52cde8bfb83f17/pstack/skills/interrogate): the adversary brief, picking reviewers from different model families, and rerunning each finding before it is reported.
 
-[tdd](./skills/build/tdd/SKILL.md) takes its test-first rules from pstack at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/tdd): the bug-fix loop that sees red before the fix, when to skip a test, the closest checks that prove skipped work, the guardrails, and the evidence report. It also takes the two imagined edits that judge a test from [`principle-test-behavior-not-implementation`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-test-behavior-not-implementation), real-artifact proof from [`principle-prove-it-works`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-prove-it-works), and the red-then-green commit order and same-surface verification from the [Bug fix playbook](https://github.com/cursor/plugins/blob/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks/bug-fix.md). Seams, vertical slices, and the mocking and test examples stay from mattpocock/skills.
+[tdd](./skills/tdd/SKILL.md) takes its test-first rules from pstack at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/tdd): the bug-fix loop that sees red before the fix, when to skip a test, the closest checks that prove skipped work, the guardrails, and the evidence report. It also takes the two imagined edits that judge a test from [`principle-test-behavior-not-implementation`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-test-behavior-not-implementation), real-artifact proof from [`principle-prove-it-works`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-prove-it-works), and the red-then-green commit order and same-surface verification from the [Bug fix playbook](https://github.com/cursor/plugins/blob/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks/bug-fix.md). Seams, vertical slices, and the mocking and test examples stay from mattpocock/skills.
 
-[create-verification-skill](./skills/build/create-verification-skill/SKILL.md) started as a copy of the `create-verification-skill` skill in pstack at commit [`e58dd043600587dbaf58ba315e7f2b38373eeb43`](https://github.com/cursor/plugins/tree/e58dd043600587dbaf58ba315e7f2b38373eeb43/pstack/skills/create-verification-skill), including its feature map example.
+[create-verification-skill](./skills/create-verification-skill/SKILL.md) started as a copy of the `create-verification-skill` skill in pstack at commit [`e58dd043600587dbaf58ba315e7f2b38373eeb43`](https://github.com/cursor/plugins/tree/e58dd043600587dbaf58ba315e7f2b38373eeb43/pstack/skills/create-verification-skill), including its feature map example.
 
 [auto-mode](./skills/auto-mode/SKILL.md) takes its entry point from the `poteto-mode` skill in pstack at commit [`7a583913eb1b8d1a0ee76753d1a2cf072e7b54f9`](https://github.com/cursor/plugins/tree/7a583913eb1b8d1a0ee76753d1a2cf072e7b54f9/pstack/skills/poteto-mode): one user-invoked skill a person starts every task with, and a `worker.md` that opens every subagent's brief, since the rules reach a subagent no other way. Its build flow follows the poteto-mode playbooks at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks): one worker and one PR per task off trunk, an independent verdict before a PR lands, the forge-approval guardrail, and the hand-off mode. The coordinator loop and the worker's sizing table are new here.
 
-[setup-skills](./skills/setup/setup-skills/SKILL.md) takes its model role configuration from Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack).
+[setup-skills](./skills/setup-skills/SKILL.md) takes its model role configuration from Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack).
 
 ### Other credits
 
-[pr](./skills/build/pr/SKILL.md) adapts its visual examples and placement guidance from Dex Horthy's [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md).
+[pr](./skills/pr/SKILL.md) adapts its visual examples and placement guidance from Dex Horthy's [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md).
 
-[codebase-design](./skills/codebase/codebase-design/DESIGN-IT-TWICE.md) uses John Ousterhout's Design It Twice method.
+[codebase-design](./skills/codebase-design/DESIGN-IT-TWICE.md) uses John Ousterhout's Design It Twice method.
 
 ## License
 

@@ -69,90 +69,72 @@ class Wiring(unittest.TestCase):
         a = self.write("a.md", "`[x](gone.md)`\n\n```md\n[y](gone.md)\n```\n")
         self.assertEqual(list(wiring.link_problems(a)), [])
 
-    def skill(self, category, name):
-        self.write(f"skills/{category}/{name}/SKILL.md", f'---\nname: {name}\ndescription: "X. Use when y."\n---\n')
-        return self.root / "skills" / category / name
-
-    def test_link_to_a_skill_in_another_category_resolves_as_installed(self):
-        roles = self.skill("setup", "setup-skills")
-        self.write("skills/setup/setup-skills/ROLES.md", "## Resolve a role\n")
-        build = self.skill("build", "implement")
-        page = self.write("skills/build/implement/notes.md", "[r](../setup-skills/ROLES.md#resolve-a-role)\n")
-        skills = {"setup-skills": roles, "implement": build}
-        self.assertEqual(list(wiring.link_problems(page, skills)), [])
-
-    def test_link_through_the_category_folder_fails(self):
-        roles = self.skill("setup", "setup-skills")
-        self.write("skills/setup/setup-skills/ROLES.md", "## Resolve a role\n")
-        build = self.skill("build", "implement")
-        page = self.write("skills/build/implement/notes.md", "[r](../../setup/setup-skills/ROLES.md)\n")
-        skills = {"setup-skills": roles, "implement": build}
-        self.assertEqual([line for line, _ in wiring.link_problems(page, skills)], [1])
-
-    def test_skill_outside_a_category_folder_fails(self):
-        self.write("skills/alpha/SKILL.md", '---\nname: alpha\ndescription: "X. Use when y."\n---\n')
-        problems = list(wiring.layout_problems(self.root / "skills"))
-        self.assertEqual(len(problems), 1)
-        self.assertIn("category folder", problems[0][1])
-
-    def entry_point(self):
-        self.write("skills/auto-mode/SKILL.md", '---\nname: auto-mode\ndescription: "X. Use when y."\n---\n')
-        return self.root / "skills" / "auto-mode"
-
-    def test_entry_point_sits_outside_the_category_folders(self):
-        self.entry_point()
-        self.skill("plan", "alpha")
-        self.assertEqual(list(wiring.layout_problems(self.root / "skills")), [])
-        names = [p.name for p in wiring.find_skill_dirs(self.root / "skills")]
-        self.assertEqual(names, ["auto-mode", "alpha"])
-
-    def test_entry_point_in_a_category_folder_fails(self):
-        self.skill("plan", "auto-mode")
-        problems = list(wiring.layout_problems(self.root / "skills"))
-        self.assertEqual(len(problems), 1)
-        self.assertIn("skills/auto-mode/SKILL.md", problems[0][1])
-
-    def test_manifest_leaves_the_entry_point_out(self):
-        entry = self.entry_point()
-        alpha = self.skill("plan", "alpha")
-        self.manifest([{"name": "plan", "skills": ["./skills/plan/alpha"]}])
-        self.assertEqual(list(wiring.manifest_problems(self.root, [entry, alpha])), [])
-        self.manifest([{"name": "plan", "skills": ["./skills/plan/alpha", "./skills/auto-mode"]}])
-        problems = list(wiring.manifest_problems(self.root, [entry, alpha]))
-        self.assertEqual(len(problems), 1)
-        self.assertIn("remove the entry", problems[0])
-
-    def test_two_skills_cannot_share_a_name(self):
-        self.skill("plan", "alpha")
-        self.skill("build", "alpha")
-        self.assertEqual(len(list(wiring.layout_problems(self.root / "skills"))), 1)
+    def skill(self, name):
+        self.write(f"skills/{name}/SKILL.md", f'---\nname: {name}\ndescription: "X. Use when y."\n---\n')
+        return self.root / "skills" / name
 
     def manifest(self, plugins):
         import json
 
         self.write(".claude-plugin/marketplace.json", json.dumps({"plugins": plugins}))
 
+    def test_link_to_another_skill_resolves(self):
+        roles = self.skill("setup-skills")
+        self.write("skills/setup-skills/ROLES.md", "## Resolve a role\n")
+        build = self.skill("implement")
+        page = self.write("skills/implement/notes.md", "[r](../setup-skills/ROLES.md#resolve-a-role)\n")
+        skills = {"setup-skills": roles, "implement": build}
+        self.assertEqual(list(wiring.link_problems(page, skills)), [])
+
+    def test_link_to_a_missing_skill_fails(self):
+        build = self.skill("implement")
+        page = self.write("skills/implement/notes.md", "[r](../gone/ROLES.md)\n")
+        self.assertEqual([line for line, _ in wiring.link_problems(page, {"implement": build})], [1])
+
+    def test_skills_sit_directly_under_skills(self):
+        self.skill("auto-mode")
+        self.skill("alpha")
+        self.assertEqual(list(wiring.layout_problems(self.root / "skills")), [])
+        names = [p.name for p in wiring.find_skill_dirs(self.root / "skills")]
+        self.assertEqual(names, ["alpha", "auto-mode"])
+
+    def test_skill_in_a_subfolder_fails(self):
+        self.write("skills/plan/alpha/SKILL.md", '---\nname: alpha\ndescription: "X. Use when y."\n---\n')
+        problems = list(wiring.layout_problems(self.root / "skills"))
+        self.assertEqual(len(problems), 1)
+        self.assertIn("skills/<name>/SKILL.md", problems[0][1])
+
     def test_manifest_matching_the_folders_passes(self):
-        alpha = self.skill("plan", "alpha")
-        self.manifest([{"name": "plan", "skills": ["./skills/plan/alpha"]}])
+        alpha = self.skill("alpha")
+        self.manifest([{"name": "plan", "skills": ["./skills/alpha"]}])
         self.assertEqual(list(wiring.manifest_problems(self.root, [alpha])), [])
 
+    def test_manifest_leaves_the_entry_point_out(self):
+        entry = self.skill("auto-mode")
+        alpha = self.skill("alpha")
+        self.manifest([{"name": "plan", "skills": ["./skills/alpha"]}])
+        self.assertEqual(list(wiring.manifest_problems(self.root, [entry, alpha])), [])
+        self.manifest([{"name": "plan", "skills": ["./skills/alpha", "./skills/auto-mode"]}])
+        problems = list(wiring.manifest_problems(self.root, [entry, alpha]))
+        self.assertEqual(len(problems), 1)
+        self.assertIn("remove the entry", problems[0])
+
     def test_manifest_must_list_every_skill(self):
-        alpha = self.skill("plan", "alpha")
-        beta = self.skill("build", "beta")
-        self.manifest([{"name": "plan", "skills": ["./skills/plan/alpha"]}])
+        alpha = self.skill("alpha")
+        beta = self.skill("beta")
+        self.manifest([{"name": "plan", "skills": ["./skills/alpha"]}])
         problems = list(wiring.manifest_problems(self.root, [alpha, beta]))
         self.assertEqual(len(problems), 1)
-        self.assertIn("./skills/build/beta", problems[0])
+        self.assertIn("./skills/beta", problems[0])
 
-    def test_manifest_group_must_be_the_category_folder(self):
-        alpha = self.skill("plan", "alpha")
-        self.manifest([{"name": "build", "skills": ["./skills/plan/alpha"]}])
+    def test_manifest_lists_a_skill_once(self):
+        alpha = self.skill("alpha")
+        self.manifest([{"name": "plan", "skills": ["./skills/alpha"]}, {"name": "build", "skills": ["./skills/alpha"]}])
         self.assertEqual(len(list(wiring.manifest_problems(self.root, [alpha]))), 1)
 
     def test_manifest_entry_must_exist(self):
-        alpha = self.skill("plan", "alpha")
-        self.manifest([{"name": "plan", "skills": ["./skills/plan/alpha", "./skills/plan/gone"]}])
+        alpha = self.skill("alpha")
+        self.manifest([{"name": "plan", "skills": ["./skills/alpha", "./skills/gone"]}])
         self.assertEqual(len(list(wiring.manifest_problems(self.root, [alpha]))), 1)
 
     def test_name_must_match_folder(self):

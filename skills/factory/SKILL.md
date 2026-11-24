@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Factory
 
-The factory ships the work: it starts a worker for each issue labelled `ready-for-agent`, and asks the user before a merge. [factory.md](factory.md) says how it works. This skill sets it up and runs it. It takes in no work: the user types `/debug`, `/ticket`, `/spec`, or `/triage` for that.
+The factory ships the work: it starts a worker for each issue labelled `ready-for-agent`, and merges a PR once the user has approved it. [factory.md](factory.md) says how it works. This skill sets it up and runs it. It takes in no work: the user types `/debug`, `/ticket`, `/spec`, or `/triage` for that.
 
 `t3 workflow store list skills-factory/projects/<owner>/<repo>` prints the repo's settings when the factory is installed for it. Go by that, and by what the user asked. In PowerShell, `t3` is a `.cmd` file, so write each `"` inside a JSON argument as `\"`.
 
@@ -42,7 +42,7 @@ Nothing is written into the repo itself.
    | --- | --- | --- |
    | `gh` can push | `gh api repos/<owner>/<repo> --jq .permissions.push` prints `true` | No worker can open a PR |
    | The merge method is allowed | `gh api repos/<owner>/<repo> --jq '{allow_squash_merge, allow_merge_commit, allow_rebase_merge}'` allows the `mergeMethod` you set | Every merge fails. Set a method the repo allows |
-   | Nothing forces a person's review | `gh api repos/<owner>/<repo>/rules/branches/<default branch> --jq '[.[] \| select(.type == "pull_request")] \| length'` prints `0`, and `gh api repos/<owner>/<repo>/branches/<default branch>/protection --jq .required_pull_request_reviews` prints nothing or fails with 404 | The factory cannot approve its own PR, so every merge is the user's to make, with "I will merge it" |
+   | Nothing forces a person's review | `gh api repos/<owner>/<repo>/rules/branches/<default branch> --jq '[.[] \| select(.type == "pull_request")] \| length'` prints `0`, and `gh api repos/<owner>/<repo>/branches/<default branch>/protection --jq .required_pull_request_reviews` prints nothing or fails with 404 | GitHub blocks the factory's merge, since the `approved` label is not a review. Every merge is then the user's to make by hand, and the run finishes up after it |
    | PRs get checks | A workflow under `.github/workflows/` runs on `pull_request` | Nothing stalls: the factory waits a short while for checks, then goes on with the reviewer's proof alone. Say so |
    | The roles' models run | Each model in the roles file is in the catalog, per step 2 of [Resolve a role](model-roles.md#resolve-a-role) | A run falls back to the backup. With no roles file, every agent runs on the project's default model |
    | The app can be driven | The repo has a `verify-<app>` skill, or none of its changes shows in a running app | The first ticket that needs the app waits behind a ticket that creates the skill. Offer to read [create-verify-skill](../create-verify-skill/SKILL.md) and follow it now |
@@ -67,7 +67,7 @@ t3 workflow store set skills-factory/projects/<owner>/<repo> '<settings as JSON>
 | `maxActive` | How many runs may hold an agent at once, spec checks included. `4` is a good start |
 | `mergeMethod` | `squash`, `merge`, or `rebase`, by the repo's settings |
 | `enabled` | `true`. Set `false` to pause the repo |
-| `autoMerge` | `never`, the default, asks the user before every merge. `two-way` merges without asking when the reviewer passed the PR and judged it cheap to roll back. Set `two-way` only when the user asks for it |
+| `autoMerge` | `never`, the default, merges a PR only once the user has approved it. `two-way` also merges, without the user's review, a PR that the reviewer passed and judged cheap to roll back. Set `two-way` only when the user asks for it |
 
 The model roles are not settings. The factory reads them from the roles files as each run starts, as [model-roles.md](model-roles.md) says.
 
@@ -75,7 +75,7 @@ The model roles are not settings. The factory reads them from the roles files as
 
 Gather everything that waits on the user, and show it as one list, oldest first in each group. Leave out a group with nothing in it.
 
-1. **Questions and merges**: the project's threads that are not settled, from `t3_thread_list` with `settled: false`. A worker's thread with a pending question, which `t3_pending_request` lists, waits on an answer: a merge, a ruling, a worker's question, a collaborator's hold. `t3 workflow questions --json` lists a question that no thread could ask.
+1. **Reviews and questions**: the project's threads that are not settled, from `t3_thread_list` with `settled: false`. A worker's thread with an open PR waits for the user's review of it: give the PR's link, and say that the `approved` label merges it. A worker's thread with a pending question, which `t3_pending_request` lists, waits on an answer: a ruling, or a worker's question. `t3 workflow questions --json` lists a question that no thread could ask.
 2. **`needs-triage`**: the open issues with that label. Follow-ups, and issues the factory stopped on, each with a comment that says why.
 3. **Waiting on a blocker**: the open `ready-for-agent` issues with an open blocker, per [tracker.md](tracker.md)'s count of open blockers, each with what blocks it.
 4. **In progress**: `t3 workflow list --status running --json`, as one line per run.

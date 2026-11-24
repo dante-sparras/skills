@@ -179,6 +179,25 @@ ANSWERS = [
 ]
 QUESTION = {"title": "#7: merge https://x/pull/11?", "choices": CHOICES, "data": {"pr": "https://x/pull/11"}, "timeout": "7 days"}
 
+HEAD = "aaa111"
+
+
+def review(who, state, at=HEAD, role="COLLABORATOR"):
+    return {"author": {"login": who}, "authorAssociation": role, "state": state, "commit": {"oid": at}}
+
+
+APPROVALS = [
+    ("the approved label is the go", {"labels": [{"name": "approved"}], "reviews": []}, {"approved": True, "by": "label"}),
+    ("nothing yet", {"labels": [{"name": "enhancement"}], "reviews": []}, {"approved": False, "by": None}),
+    ("a collaborator approved this head", {"labels": [], "reviews": [review("ann", "APPROVED")]}, {"approved": True, "by": "review"}),
+    ("an approval of an older head", {"labels": [], "reviews": [review("ann", "APPROVED", "old000")]}, {"approved": False, "by": None}),
+    ("an outsider's approval", {"labels": [], "reviews": [review("eve", "APPROVED", role="NONE")]}, {"approved": False, "by": None}),
+    ("one approves, another asks for changes", {"labels": [], "reviews": [review("ann", "APPROVED"), review("bo", "CHANGES_REQUESTED")]}, {"approved": False, "by": None}),
+    ("they asked for changes, then approved", {"labels": [], "reviews": [review("bo", "CHANGES_REQUESTED"), review("bo", "COMMENTED"), review("bo", "APPROVED")]}, {"approved": True, "by": "review"}),
+    ("the label overrides a request for changes", {"labels": [{"name": "approved"}], "reviews": [review("bo", "CHANGES_REQUESTED")]}, {"approved": True, "by": "label"}),
+]
+WAITS = [(1, "1 minute"), (15, "1 minute"), (16, "5 minutes"), (36, "5 minutes"), (37, "30 minutes"), (368, "30 minutes")]
+
 CASES = (
     [["blockersInBody", body] for body, _ in BLOCKERS]
     + [["issueNumber", {"displayKey": key}] for key in ["#526", "526"]]
@@ -195,6 +214,10 @@ CASES = (
     + [["holdsSlot", *args] for _, args, _ in SLOTS]
     + [["answerOf", *args] for _, args, _ in ANSWERS]
     + [["askBrief", QUESTION]]
+    + [["approvalOf", pr, HEAD] for _, pr, _ in APPROVALS]
+    + [["reviewWait", checks] for checks, _ in WAITS]
+    + [["readyNote", "aaa111bbb222"], ["readyBrief", "https://x/pull/11", "https://x/pull/11#issuecomment-1"]]
+    + [["releaseBrief", "https://x/pull/11", "merged"]]
 )
 
 
@@ -225,6 +248,11 @@ class Factory(unittest.TestCase):
         cls.slots = [next(results) for _ in SLOTS]
         cls.answers = [next(results) for _ in ANSWERS]
         cls.ask_brief = next(results)
+        cls.approvals = [next(results) for _ in APPROVALS]
+        cls.waits = [next(results) for _ in WAITS]
+        cls.ready_note = next(results)
+        cls.ready_brief = next(results)
+        cls.release_brief = next(results)
 
     def test_registers_every_workflow(self):
         # The factory skill, factory.md and the factory's own `start` calls name these. Rename them together.
@@ -304,6 +332,39 @@ class Factory(unittest.TestCase):
         for line in ["#7: merge https://x/pull/11?", '"merge", "I will merge it", "stop"', "https://x/pull/11", "never choose for them", "t3_thread_organize"]:
             with self.subTest(line=line):
                 self.assertIn(line, self.ask_brief)
+
+    def test_the_users_go_is_the_approved_label_or_an_approval_of_this_head(self):
+        for (name, _, want), got in zip(APPROVALS, self.approvals):
+            with self.subTest(name):
+                self.assertEqual(got, want)
+
+    def test_looks_for_the_review_often_at_first_and_for_seven_days_in_all(self):
+        self.assertEqual(self.waits, [want for _, want in WAITS])
+        minutes = {"1 minute": 1, "5 minutes": 5, "30 minutes": 30}
+        text = FACTORY.read_text(encoding="utf-8")
+        checks = int(re.search(r"const MAX_REVIEW_CHECKS = (\d+);", text).group(1))
+        total = 15 * 1 + 21 * 5 + (checks - 36) * 30
+        self.assertEqual(total, 7 * 24 * 60)
+        self.assertEqual(minutes[self.waits[-1]], 30)
+
+    def test_the_user_is_told_how_to_say_go_and_no_agent_may_say_it(self):
+        self.assertTrue(self.ready_note.startswith(MARKER + "\n\n"))
+        for line in ["`aaa111b`", "`approved` label"]:
+            self.assertIn(line, self.ready_note)
+        for line in ["https://x/pull/11", "issuecomment-1", "`approved` label", "Never add that label yourself", "unsettle"]:
+            with self.subTest(line=line):
+                self.assertIn(line, self.ready_brief)
+
+    def test_a_thread_leaves_the_users_list_once_its_pr_needs_them_no_more(self):
+        for line in ["https://x/pull/11, merged", '`action: "settle"`', "Do nothing else"]:
+            with self.subTest(line=line):
+                self.assertIn(line, self.release_brief)
+
+    def test_no_question_asks_whether_to_merge(self):
+        text = FACTORY.read_text(encoding="utf-8")
+        for gone in ["`merge-${pass}`", "I will merge it", "`hold-${pass}`"]:
+            with self.subTest(gone=gone):
+                self.assertNotIn(gone, text)
 
     def test_main_is_red_only_on_a_finished_failure(self):
         for (name, _, _, want), got in zip(FAILING, self.failing):

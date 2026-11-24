@@ -6,7 +6,7 @@ Issues and specs live as GitHub issues. Use the `gh` CLI for issues, and T3's `p
 
 ## Labels
 
-Every label is named after its role, and the `factory` skill creates them: the states `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`, the categories `bug` and `enhancement`, and `spec`. [triage](../triage/SKILL.md#roles) says what each state and category means. `spec` marks a spec: the parent of tickets, not work to grab.
+Every label is named after its role, and the `factory` skill creates them: the states `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`, the categories `bug` and `enhancement`, and `spec`. [triage](../triage/SKILL.md#roles) says what each state and category means. `spec` marks a spec: the parent of tickets, not work to grab. One more label goes on a PR: `approved`, which is the user's review of it, and tells the factory to merge.
 
 ## Issues
 

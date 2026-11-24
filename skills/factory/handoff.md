@@ -15,4 +15,4 @@ The [factory](factory.md) ships every issue labelled `ready-for-agent`, with nob
    ```
 
    Name every issue you filed or labelled. GitHub's label lists trail a new issue by some seconds, and the pass reads the issues you name by their numbers. In PowerShell, `t3` is a `.cmd` file, so write each `"` inside a JSON argument as `\"`.
-6. **Tell the user** each issue you filed or labelled. The factory starts one at once when nothing blocks it, and otherwise as its last blocker merges. Everything it needs from the user waits in T3 Code's Workflows page, and `/factory` lists it.
+6. **Tell the user** each issue you filed or labelled. The factory starts one at once when nothing blocks it, and otherwise as its last blocker merges. Everything it needs from the user waits in the ticket's thread in T3 Code, and `/factory` lists it.

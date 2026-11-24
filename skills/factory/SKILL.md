@@ -75,7 +75,7 @@ The model roles are not settings. The factory reads them from the roles files as
 
 Gather everything that waits on the user, and show it as one list, oldest first in each group. Leave out a group with nothing in it.
 
-1. **Questions and merges**: `t3 workflow questions --json`. Each is a run of this repo waiting on an answer: a merge, a ruling, a worker's question, a collaborator's hold.
+1. **Questions and merges**: the project's threads that are not settled, from `t3_thread_list` with `settled: false`. A worker's thread with a pending question, which `t3_pending_request` lists, waits on an answer: a merge, a ruling, a worker's question, a collaborator's hold. `t3 workflow questions --json` lists a question that no thread could ask.
 2. **`needs-triage`**: the open issues with that label. Follow-ups, and issues the factory stopped on, each with a comment that says why.
 3. **Waiting on a blocker**: the open `ready-for-agent` issues with an open blocker, per [tracker.md](tracker.md)'s count of open blockers, each with what blocks it.
 4. **In progress**: `t3 workflow list --status running --json`, as one line per run.
@@ -87,7 +87,7 @@ Then offer the next step for the first group that has something: answer a questi
 ## Run it
 
 - **Start a pass now**, without waiting for the timer, with the command in step 5 of [handoff.md](handoff.md). The factory starts one itself when a PR merges.
-- **Answer a question** in T3 Code's Workflows page, or with `t3 workflow signal --run <run> --wait <question> '{"choice": "<one of its choices>"}'`. `t3 workflow questions` lists them.
+- **Answer a question** in the thread that asks it. A question that no thread could ask waits in T3 Code's Workflows page: answer it there, or with `t3 workflow signal --run <run> --wait <question> '{"choice": "<one of its choices>"}'`. `t3 workflow questions` lists those.
 - **Retry** an issue by putting `ready-for-agent` back. Every run ends by removing the label, unless it parked the issue behind another one. A run that stopped or was cancelled also moves the issue to `needs-triage`, and a run that stopped says why in a comment on the issue.
 - **Stop** one run with `t3 workflow cancel <run>`. `t3 workflow show <run>` shows its steps.
 - **Pause** a repo by setting `enabled` to `false` in its settings.

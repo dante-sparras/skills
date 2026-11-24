@@ -7,10 +7,11 @@ The **factory** is a T3 Code workflow, [factory.ts](factory.ts), that ships the 
 3. **Comments.** A comment or review from a collaborator wakes the worker with it, as a request to weigh. A collaborator's request for changes holds the merge until they approve, or until you say to merge without them. A comment from anyone else comes to you first, and reaches the worker only if you send it. Bots are left out.
 4. **A reviewer** reviews the head, briefed with `rules.md` and `reviewer.md`, and argues each finding with the worker until they agree, for at most three rounds.
 5. **A person's go.** Every merge waits on your answer: merge, merge it yourself, or stop. A `NO AGREEMENT` verdict waits on your ruling.
+   - **Where it asks.** Each question waits in the worker's thread, asked with the agent's question tool, so T3 shows that thread as waiting on you. Every agent settles its thread when its turn ends, so the threads you still see are the ones that need you. A thread that cannot ask leaves its question in T3 Code's Workflows page.
    - **Without asking.** A repo whose settings set `autoMerge` to `two-way` skips the merge question when the reviewer passed the PR and judged it a two-way door: cheap to roll back. The factory says so in a comment on the PR. A PR the two disagreed on, and one a collaborator holds, still wait on you.
 6. **The merge** goes through `gh pr merge --match-head-commit`, so GitHub refuses it if the head moved after the review. A moved head goes back through checks and review.
 
-Workers and reviewers return their results as data, which T3 checks against a schema, so a result with a field missing is sent back to the agent to fix. A worker that needs you to decide something returns its question as data too: the factory asks you, and wakes the worker on its own thread with your answer. A run survives a restart of T3 Code. It picks up at the step it was on.
+Workers and reviewers return their results as data, which T3 checks against a schema, so a result with a field missing is sent back to the agent to fix. A worker that needs you to decide something returns its question as data too: the factory has the worker ask you in its own thread, and wakes it with your answer. A run survives a restart of T3 Code. It picks up at the step it was on.
 
 ## What happens after a run
 

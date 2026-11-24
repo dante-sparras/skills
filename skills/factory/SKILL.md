@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Factory
 
-The factory ships the work: it starts a worker for each issue labelled `ready-for-agent`, and merges a PR once the user has approved it. [factory.md](factory.md) says how it works. This skill sets it up and runs it. It takes in no work: the user types `/debug`, `/ticket`, `/spec`, or `/triage` for that.
+Set up and run the **factory**: the T3 Code workflow that starts a worker for each issue labelled `ready-for-agent`, and merges a PR once the user has approved it. This skill takes in no work: the user types `/debug`, `/ticket`, `/spec`, or `/triage` for that.
 
 `t3 workflow store list skills-factory/projects/<owner>/<repo>` prints the repo's settings when the factory is installed for it. Go by that, and by what the user asked. In PowerShell, `t3` is a `.cmd` file, so write each `"` inside a JSON argument as `\"`.
 
@@ -64,10 +64,10 @@ t3 workflow store set skills-factory/projects/<owner>/<repo> '<settings as JSON>
 | `skillsFolder` | The absolute path of the folder that holds this skill's folder, with every other skill beside it |
 | `defaultBranch` | The name after `origin/` in `git symbolic-ref --short refs/remotes/origin/HEAD` |
 | `verifySkill` | The verify skill's path from the repo root, or `null` to use the first `.claude/skills/verify-*` folder on main |
-| `maxActive` | How many runs may hold an agent at once, spec checks included. A PR that waits for the user's review holds none, since no run is open for it. `4` is a good start |
+| `maxActive` | How many runs may hold an agent at once, spec checks included. `4` is a good start |
 | `mergeMethod` | `squash`, `merge`, or `rebase`, by the repo's settings |
 | `enabled` | `true`. Set `false` to pause the repo: nothing starts, open runs give their agents no more work, and no waiting PR is merged |
-| `approver` | The user's GitHub login, which `gh api user --jq .login` prints. Only an `approved` label that this account put on is a go. It is also the account the agents post from, which is how the factory tells an agent's comment from another person's |
+| `approver` | The user's GitHub login, which `gh api user --jq .login` prints. Only an `approved` label that this account put on is a go |
 | `autoMerge` | `never`, the default, merges a PR only once the user has approved it. `two-way` also merges, without the user's review, a PR that the reviewer passed and judged cheap to roll back. Set `two-way` only when the user asks for it |
 
 The model roles are not settings. The factory reads them from the roles files as each run starts, as [model-roles.md](model-roles.md) says.
@@ -92,8 +92,8 @@ Then offer the next step for the first group that has something: open the PR tha
 
 - **Start a pass now**, without waiting for the timer, with the command in step 5 of [handoff.md](handoff.md). The factory starts one itself when a PR merges.
 - **Answer a question** in the thread that asks it. A question that no thread could ask waits in T3 Code's Workflows page: answer it there, or with `t3 workflow signal --run <run> --wait <question> '{"choice": "<one of its choices>"}'`. `t3 workflow questions` lists those.
-- **Retry** an issue by putting `ready-for-agent` back. Every run ends by removing the label, unless it parked the issue behind another one. A run that stopped or was cancelled also moves the issue to `needs-triage`, and a run that stopped says why in a comment on the issue.
+- **Retry** an issue by putting `ready-for-agent` back on it. A run that stopped left the issue in `needs-triage`, with a comment that says why.
 - **Stop** one run with `t3 workflow cancel <run>`. `t3 workflow show <run>` shows its steps. A cancelled run cannot settle its worker's thread, so settle it with `t3_thread_organize`.
 - **Pause** a repo by setting `enabled` to `false` in its settings.
-- **Update** the workflow by copying `factory.ts` again, when it differs from the installed file. T3 does not see changes to the original. A run keeps the workflow version it started with, so copy an update when no run is open: `t3 workflow list --status running` and `--status waiting` show them. Runs are short, since none stays open while a PR waits for review. For one that is open, wait, or cancel it and put `ready-for-agent` back afterwards: the next run goes on with the same PR.
+- **Update** the workflow by copying `factory.ts` again, when it differs from the installed file. T3 does not see changes to the original. A run keeps the workflow version it started with, so copy an update when no run is open: `t3 workflow list --status running` and `--status waiting` show them. For one that is open, wait, or cancel it and put `ready-for-agent` back afterwards: the next run goes on with the same PR.
 - **Change a setting** by writing the whole settings object again, with the one field changed.

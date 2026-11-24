@@ -1,6 +1,6 @@
 # Handing work to the factory
 
-The [factory](factory.md) ships every issue labelled `ready-for-agent`, with nobody to start it. Follow this file whenever you file such an issue, or move one to that label. [tracker.md](tracker.md) has the tracker's commands.
+The factory ships every issue labelled `ready-for-agent`, with nobody to start it. Follow this file whenever you file such an issue, or move one to that label. [tracker.md](tracker.md) has the tracker's commands.
 
 1. **Check the factory**, once per conversation. Neither check stops you: tell the user what you found, and go on.
    - **Installed?** `t3 workflow store list skills-factory/projects/<owner>/<repo>` prints the factory's settings for the repo. With none, nothing builds the issue until `/factory` installs it.

@@ -13,7 +13,7 @@ What changes when the document is a skill: the invocation choice, splitting by i
 
 Choose model-invoked only when the agent, or another skill, must reach the skill on its own. If it only ever fires by hand, make it user-invoked and pay no context load. A skill earns model invocation on two counts: a person asks for it in plain words, with no flow to send the agent there, and it does no harm when it loads unasked.
 
-- **Running a user-invoked skill from another skill.** An agent that reads `../<name>/SKILL.md` and follows it has run the skill. Most skills in this repo are user-invoked and reached this way, so they never fire at the wrong moment, and cost no context until an agent reads them. The few an agent must reach unasked, such as `debug` on a crash, are model-invoked.
+- **Running a user-invoked skill from another skill.** An agent that reads `../<name>/SKILL.md` and follows it has run the skill.
 - **Shared reference.** A model-invoked skill that is all reference is a home for material several skills need, since any of them can invoke it. Reference shared by two user-invoked skills goes in a plain file both point at.
 
 ## Splitting by invocation

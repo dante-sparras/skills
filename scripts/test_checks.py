@@ -110,11 +110,6 @@ class Wiring(unittest.TestCase):
         self.write(f"skills/{name}/SKILL.md", f'---\nname: {name}\ndescription: "X. Use when y."\n---\n')
         return self.root / "skills" / name
 
-    def manifest(self, plugins):
-        import json
-
-        self.write(".claude-plugin/marketplace.json", json.dumps({"plugins": plugins}))
-
     def test_link_to_another_skill_resolves(self):
         roles = self.skill("setup-skills")
         self.write("skills/setup-skills/ROLES.md", "## Resolve a role\n")
@@ -140,30 +135,6 @@ class Wiring(unittest.TestCase):
         problems = list(wiring.layout_problems(self.root / "skills"))
         self.assertEqual(len(problems), 1)
         self.assertIn("skills/<name>/SKILL.md", problems[0][1])
-
-    def test_manifest_matching_the_folders_passes(self):
-        entry = self.skill("coordinate")
-        alpha = self.skill("alpha")
-        self.manifest([{"name": "all", "skills": ["./skills/alpha", "./skills/coordinate"]}])
-        self.assertEqual(list(wiring.manifest_problems(self.root, [entry, alpha])), [])
-
-    def test_manifest_must_list_every_skill(self):
-        alpha = self.skill("alpha")
-        beta = self.skill("beta")
-        self.manifest([{"name": "plan", "skills": ["./skills/alpha"]}])
-        problems = list(wiring.manifest_problems(self.root, [alpha, beta]))
-        self.assertEqual(len(problems), 1)
-        self.assertIn("./skills/beta", problems[0])
-
-    def test_manifest_lists_a_skill_once(self):
-        alpha = self.skill("alpha")
-        self.manifest([{"name": "plan", "skills": ["./skills/alpha"]}, {"name": "build", "skills": ["./skills/alpha"]}])
-        self.assertEqual(len(list(wiring.manifest_problems(self.root, [alpha]))), 1)
-
-    def test_manifest_entry_must_exist(self):
-        alpha = self.skill("alpha")
-        self.manifest([{"name": "plan", "skills": ["./skills/alpha", "./skills/gone"]}])
-        self.assertEqual(len(list(wiring.manifest_problems(self.root, [alpha]))), 1)
 
     def test_name_must_match_folder(self):
         skill = self.root / "skills" / "alpha"

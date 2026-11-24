@@ -30,7 +30,7 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
 
 ## Install
 
-`setup-skills` does this, under [Install the factory](../setup-skills/SKILL.md#6-install-the-factory).
+`setup-skills` does this, under [Install the factory](../SKILL.md#6-install-the-factory).
 
 1. **Copy** `factory.ts` to `skills-factory.ts` in the `workflows` folder of T3 home: `~/.t3/workflows/` by default. T3 reloads the folder on its own. Copy it again after the skills update, since T3 does not see changes to the original. A run keeps the workflow version it started with, so copy an update when no run is open, or keep the old file's body registered until its runs end.
 2. **Register the repo** in the workflow store, under `skills-factory/projects/<owner>/<repo>`:
@@ -43,7 +43,7 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
    | --- | --- |
    | `project` | The repo's folder, as an absolute path, or its T3 project id |
    | `repository` | `<owner>/<repo>` |
-   | `skillsFolder` | The absolute path of the folder that holds the `factory` folder |
+   | `skillsFolder` | The absolute path of the folder that holds the `setup-skills` folder, with every other skill beside it |
    | `defaultBranch` | The name after `origin/` in `git symbolic-ref --short refs/remotes/origin/HEAD` |
    | `readyLabel` | The `ready-for-agent` label in `docs/agents/triage-labels.md` |
    | `needsTriageLabel` | The `needs-triage` label there, for the follow-ups it files |
@@ -65,4 +65,4 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
 
 ## Where issues come from
 
-The factory builds only what an issue already settles, one PR per issue. Type `/factory` to hand over work in conversation: it answers questions itself, and turns the rest into issues the factory can build, through `triage`, `interview`, or `plan`.
+The factory builds only what an issue already settles, one PR per issue. The skills a person types file those issues: `debug` for a bug, `plan` for a change or a feature, after `interview` when a decision is still open, and `triage` for what is already on the tracker. Each follows [handoff.md](handoff.md).

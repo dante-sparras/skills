@@ -29,4 +29,4 @@ Each round of answers pushes the frontier outward. Recompute it and ask the next
 - **A fact from the environment.** Read [Resolve a role](../setup-skills/model-roles.md#resolve-a-role) and start a fresh `explorer` to look it up. Ask the rest of the frontier while it runs.
 - **A term that settles or sharpens.** In a repo, read [glossary](../glossary/SKILL.md) and follow it as terms come up, so each lands in `GLOSSARY.md` during the session.
 
-The session is done when the frontier is empty: every branch visited, nothing left silently assumed. Act on it only once the user confirms you have reached a shared understanding.
+The session is done when the frontier is empty: every branch visited, nothing left silently assumed. Act on it only once the user confirms you have reached a shared understanding. To have the result built, the user types `/plan`, which files it as tickets: say so.

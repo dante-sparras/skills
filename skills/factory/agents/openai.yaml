@@ -1,5 +1,0 @@
-interface:
-  display_name: "Factory"
-  short_description: "Hand work to the factory as issues it ships"
-policy:
-  allow_implicit_invocation: false

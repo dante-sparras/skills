@@ -489,7 +489,7 @@ const resumeKey = (config, issue) => `${PREFIX}/resume/${config.repository}/${is
 
 const brief = (config, role, lines, verifySkill) =>
   [
-    `Read ${config.skillsFolder}/factory/rules.md, then ${config.skillsFolder}/factory/${role}.md, before anything else.`,
+    `Read ${config.skillsFolder}/setup-skills/factory/rules.md, then ${config.skillsFolder}/setup-skills/factory/${role}.md, before anything else.`,
     "",
     ...lines,
     `Skills folder: ${config.skillsFolder}`,
@@ -680,7 +680,7 @@ const afterMerge = (config, issue) =>
 const ship = workflow(
   "skills-factory-ship",
   {
-    version: 4,
+    version: 5,
     payload: ShipInput,
     // The issue leaves the queue however the run ends, unless the run parked it to wait on
     // another issue. A run that did not finish moves it to needs-triage, so a person sees it the
@@ -1062,7 +1062,7 @@ const ship = workflow(
 const specCheck = workflow(
   "skills-factory-spec",
   {
-    version: 2,
+    version: 3,
     payload: SpecInput,
     // The dispatcher started this check because the spec carried ready-for-agent. Putting the
     // label back checks it again.

@@ -1,6 +1,6 @@
 ---
 name: plan
-description: "Turn the current conversation, or a written plan, into a spec and its tracer-bullet tickets on the issue tracker, with one approval and no interview. Use when a person has talked a feature through and wants it written up and split into tickets that workers can build."
+description: "Turn the current conversation, or a written plan, into issues workers can build: one issue for work that fits one PR, or a spec and its tracer-bullet tickets, with one approval and no interview. Use when a person describes a change with nothing left to decide, or has talked a feature through, and wants it filed for the factory."
 disable-model-invocation: true
 ---
 
@@ -10,13 +10,16 @@ Write the **spec** from what this conversation and the codebase already hold, sl
 
 Read `docs/agents/issue-tracker.md` for the tracker and `docs/agents/triage-labels.md` for the label strings. If either is missing, stop and say that `/setup-skills` has not run in this repo.
 
+Every ticket this skill publishes is work for the factory, so follow [handoff.md](../setup-skills/factory/handoff.md) too.
+
 ## Steps
 
-1. **Gather.** Work from the conversation, and explore the code the feature touches. Write everything in the glossary's vocabulary. If the user passed a reference to a written spec or plan, fetch its body and comments: that issue is the spec, so you write only its tickets.
+1. **Gather.** Work from the conversation, and explore the code the feature touches. Write everything in the glossary's vocabulary. If the user passed a reference to a written spec or plan, fetch its body and comments: that issue is the spec, so you write only its tickets. A decision the conversation left open is the user's to make: name it, and say that `/interview` settles it.
 
 2. **Seams.** Choose the seams the tests go at. Take an existing seam over a new one, and the highest seam you can: the ideal number is one.
 
 3. **Slice** the work into tracer-bullet tickets.
+   - **Work that fits one PR** is one ticket, with no spec. Write it as an agent brief, per [agent-brief.md](../triage/agent-brief.md), in place of both templates below.
    - Each cuts a narrow, complete path through every layer: schema, API, UI, tests.
    - Each is demoable or verifiable alone, and fits one fresh context window.
    - Prefactoring comes first, in its own tickets: make the change easy, then make the easy change.
@@ -29,6 +32,7 @@ Read `docs/agents/issue-tracker.md` for the tracker and `docs/agents/triage-labe
    - The spec, from its template, with the `spec` label. The label keeps it out of the triage queue and marks it as the parent of tickets, not as work to grab.
    - One issue per ticket, from its template, each a sub-issue of the spec. Publish blockers first, so every ticket references real identifiers, and use the tracker's native blocking relationship where it has one. Apply `ready-for-agent` and the category that fits, `enhancement` or `bug`.
    - A spec that already existed gets the `spec` label and is otherwise left as it is: open and unedited.
+   - A single ticket with no spec is one issue whose body is its agent brief, with `ready-for-agent` and its category.
 
 Keep file paths and code snippets out of both templates, since they go stale. The exception is a snippet that states a decision more exactly than prose can, such as a state machine, a schema, or a type shape. Trim it to the decision.
 

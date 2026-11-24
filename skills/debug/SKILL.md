@@ -5,7 +5,7 @@ description: "Diagnosis loop for hard bugs and performance regressions. Use when
 
 # Debug
 
-Six phases, in order. Skip one only with a stated reason. Read `GLOSSARY.md`, when the repo has one, for the modules involved.
+Six phases, in order. Skip one only with a stated reason. After Phase 2, [who goes on](#who-goes-on-from-here) says whether you run the rest or a factory worker does. Read `GLOSSARY.md`, when the repo has one, for the modules involved.
 
 **Redact every secret** in the commands, output, and captured artifacts you show: write `<REDACTED>` in its place. Build loops against env vars, so the credential stays in the environment. Quote only the lines of an artifact that carry the signal. If the redacted output is too little to diagnose from, say so and ask the user.
 
@@ -56,6 +56,13 @@ Run the loop and watch it go red. Confirm:
 Then shrink the repro to the smallest scenario that still goes red. Cut inputs, callers, config, data, and steps one at a time, rerunning the loop after each cut. A minimal repro leaves fewer parts to suspect, and it becomes the regression test.
 
 Done when every remaining element is load-bearing: removing any one turns the loop green.
+
+## Who goes on from here
+
+A red, minimised loop is enough for another agent to finish the job unattended. What you do next depends on whose bug it is.
+
+- **A person brought you the bug**, in a repo the factory ships for, which step 1 of [handoff.md](../setup-skills/factory/handoff.md) tells you. Hand it off as that file says: file it with the `bug` label, in `ready-for-agent`, with an agent brief as its body. Its **Reproduction** holds the Phase 1 command, the full contents of any file the command needs, and the redacted output, since the worker starts from a fresh checkout. Give it the route `bug`, or `change` when the repro already names the cause. A worker runs the remaining phases and ships the fix in a PR the factory reviews. Then stop, and delete your loop's files.
+- **The bug is yours.** You are a factory worker, the bug blocks the task you are on, the repo has no factory, or the person says to fix it here. Go on to Phase 3.
 
 ## Phase 3: Hypothesise
 

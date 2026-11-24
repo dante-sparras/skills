@@ -1,6 +1,6 @@
 # Agent briefs
 
-An agent brief is the comment posted on an issue or PR when it moves to `ready-for-agent`. It is the contract the agent works from. The issue's body and discussion are context.
+An agent brief is the comment posted on an issue or PR when it moves to `ready-for-agent`, or the body of an issue that is filed there. It is the contract the agent works from. The issue's body and discussion are context.
 
 For an issue, the brief says what to build. For a PR, it says what is left to do to the existing diff: finish it, close gaps, answer review points.
 

@@ -9,7 +9,7 @@ The person a run works for. `triage` calls them the maintainer.
 _Avoid_: Operator, owner
 
 **Factory**:
-The T3 Code workflow in `factory/factory.ts` that ships each issue labelled `ready-for-agent`: it starts a worker, sends a reviewer to the PR, and asks the user before every merge. It also checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
+The T3 Code workflow in `setup-skills/factory/factory.ts` that ships each issue labelled `ready-for-agent`: it starts a worker, sends a reviewer to the PR, and asks the user before every merge. It also checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
 _Avoid_: Pipeline, automation, bot
 
 **Task**:
@@ -25,11 +25,11 @@ One tracer-bullet slice of a spec, published as an issue that names its blockers
 _Avoid_: Story, subtask
 
 **Worker**:
-A fresh agent the factory starts with one task and a brief that opens with `factory/rules.md` and `factory/worker.md`. It builds the task in one PR and argues its reviewer's findings. The user answers it in its own thread.
+A fresh agent the factory starts with one task and a brief that opens with the factory's `rules.md` and `worker.md`. It builds the task in one PR and argues its reviewer's findings. The user answers it in its own thread.
 _Avoid_: Helper, planner
 
 **Reviewer**:
-The agent the factory sends to one PR it did not write, with a brief that opens with `factory/rules.md` and `factory/reviewer.md`. It proves the behavior, runs `review-pr`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
+The agent the factory sends to one PR it did not write, with a brief that opens with the factory's `rules.md` and `reviewer.md`. It proves the behavior, runs `review-pr`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
 _Avoid_: Verifier, checker, QA agent
 
 **Verdict comment**:
@@ -57,7 +57,7 @@ Something worth doing that is outside an agent's task. It goes in the agent's re
 _Avoid_: TODO, nice-to-have
 
 **Brief**:
-The task text the factory starts a worker or a reviewer with. An agent brief is a different thing: the comment `triage` posts on an issue.
+The task text the factory starts a worker or a reviewer with. An agent brief is a different thing: the contract on an issue in `ready-for-agent`, as its body or as a comment `triage` posts.
 _Avoid_: Prompt, instructions
 
 **Friction**:

@@ -51,6 +51,10 @@ When PRs are in scope, include external PRs and tag each line `[PR]` or `[issue]
 
 The factory starts each `ready-for-agent` issue within ten minutes of its last blocker closing, and `t3 workflow list` shows what it runs. List the rest of the queue: the `ready-for-agent` issues with an open blocker, per the tracker doc's count of open blockers, grouped under their spec, each with what blocks it.
 
+## Work that is not on the tracker yet
+
+Triage starts from an issue or a PR. When the maintainer describes something new, send them on: a bug goes to `/debug`, which reproduces and files it, and a change or a feature goes to `/plan`, after `/interview` when a decision is still open.
+
 ## Triage one issue or PR
 
 1. **Gather.** Read all of it: body, comments, labels, author, dates, and the diff for a PR. If earlier triage notes exist, check which questions the reporter has answered, and treat settled questions as settled. Then check the codebase, in the glossary's vocabulary:
@@ -67,7 +71,7 @@ The factory starts each `ready-for-agent` issue within ten minutes of its last b
 
    | State | Do |
    | --- | --- |
-   | `ready-for-agent` | Post an agent brief, per [agent-brief.md](agent-brief.md). Only work that fits one PR gets this state: for anything bigger, run [interview](../interview/SKILL.md) and [plan](../plan/SKILL.md), whose tickets go to `ready-for-agent` |
+   | `ready-for-agent` | Post an agent brief, per [agent-brief.md](agent-brief.md), and follow [handoff.md](../setup-skills/factory/handoff.md). Only work that fits one PR gets this state: for anything bigger, run [interview](../interview/SKILL.md) and [plan](../plan/SKILL.md), whose tickets go to `ready-for-agent`. The factory starts from issues, so a PR gets an issue of its own that carries the brief and names the PR, and a worker continues the PR's branch |
    | `ready-for-human` | Post a brief of the same shape, and say why it cannot be delegated: a judgment call, external access, a design decision, manual testing |
    | `needs-info` | Post triage notes from the template below |
    | `needs-triage` | Apply the role, and comment when there is partial progress to keep |

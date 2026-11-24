@@ -7,7 +7,7 @@ Explore alternative interfaces for one deepening candidate with parallel agents.
    - the dependencies it relies on, and each one's category from [DEEPENING.md](DEEPENING.md)
    - a rough code sketch that makes the constraints concrete. It is an illustration, not a proposal
 
-2. **Start the agents.** Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) for the `implementer`. Start at least three in parallel, each with a fresh context and its own technical brief: file paths, coupling details, the dependency categories, what sits behind the seam, and the vocabulary from [SKILL.md](SKILL.md) and `GLOSSARY.md`. Give each a different constraint:
+2. **Start the agents.** Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) for the `worker`. Start at least three in parallel, each with a fresh context and its own technical brief: file paths, coupling details, the dependency categories, what sits behind the seam, and the vocabulary from [SKILL.md](SKILL.md) and `GLOSSARY.md`. Give each a different constraint:
    - "Minimise the interface: one to three entry points, with the most leverage per entry point."
    - "Maximise flexibility: support many use cases and extension."
    - "Optimise for the most common caller: make the default case trivial."

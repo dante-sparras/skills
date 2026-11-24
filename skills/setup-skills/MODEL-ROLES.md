@@ -4,15 +4,15 @@
 
 1. Call T3's `orchestrator_capabilities` for the live catalog.
 2. Use `~/.config/skills/roles.json` by default, which is `%USERPROFILE%\.config\skills\roles.json` on Windows. In a repository, offer `.skills/roles.json` at its root for a project override, kept out of git since its ids belong to one machine. Show any active project overrides. For a user write, start from the user file. For a project write, start from the effective roles after applying overrides.
-3. Propose all three default and backup pairs. For unset roles, pick models from the live catalog by the table below, at high effort for `implementer` and `reviewer` and at low effort for `explorer`. Prefer native providers. Flag unavailable targets and offer runnable replacements. Ask the user to confirm or edit all three pairs, including effort.
+3. Propose all three default and backup pairs. For unset roles, pick models from the live catalog by the table below, at high effort for `worker` and `reviewer` and at low effort for `explorer`. Prefer native providers. Flag unavailable targets and offer runnable replacements. Ask the user to confirm or edit all three pairs, including effort.
 4. Validate the confirmed targets using the catalog checks below. Write all three pairs to the chosen file. Reread the JSON and report the saved path and choices.
 
-The coordinator is the thread the user talks to, so it runs on that thread's model and has no role here. A `coordinate` worker runs on `implementer`, and the reviewer of a PR on `reviewer`.
+The coordinator is the thread the user talks to, so it runs on that thread's model and has no role here. A `coordinate` worker runs on `worker`, and the reviewer of a PR on `reviewer`.
 
 | Role | Default | Backup |
 | --- | --- | --- |
-| `implementer` | The strongest coding model in the catalog | The strongest coding model from another model family |
-| `reviewer` | The strongest coding model from another family than `implementer`, so a review is independent of the worker | The `implementer` model, so a `interrogate` panel still gets two families |
+| `worker` | The strongest coding model in the catalog | The strongest coding model from another model family |
+| `reviewer` | The strongest coding model from another family than `worker`, so a review is independent of the worker | The `worker` model, so a `interrogate` panel still gets two families |
 | `explorer` | A fast, low-cost model | A fast model from another model family |
 
 Both files use a `roles` object keyed by role name. Each role holds a default and backup with `providerInstanceId`, `model`, and `effort`. Store the catalog's exact provider and model IDs and the chosen effort value.

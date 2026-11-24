@@ -1,17 +1,17 @@
 ---
 name: guardrail
-description: "Turn each mistake agents repeat in this repo into a check that fails, trying architecture, then types, then a lint, then a test, and docs last. Use when the operator corrects an agent for something already corrected once, two agents make the same mistake, a review finds a mechanical mistake a check could catch, a check could have caught a bug just fixed, or the operator asks for a look back at a session."
+description: "Turn each mistake agents repeat in this repo into a check that fails, trying architecture, then types, then a lint, then a test, and docs last. Use when the user corrects an agent for something already corrected once, two agents make the same mistake, a review finds a mechanical mistake a check could catch, a check could have caught a bug just fixed, or the user asks for a look back at a session."
 ---
 
 # Guardrail
 
-The operator keeps correcting agents in this repo for the same mistakes. Change the repo so the next agent can't make them.
+The user keeps correcting agents in this repo for the same mistakes. Change the repo so the next agent can't make them.
 
 Assume every contributor is an agent that sees only the files it opened, copies the nearest example, and takes the shortest path that compiles. Design the repo so a change that looks right from one file is right for the whole repo.
 
 ## 1. Read the evidence
 
-1. Read the sessions the operator or your brief names, with `t3_thread_read` for a T3 thread. With none named, read the current one.
+1. Read the sessions the user or your brief names, with `t3_thread_read` for a T3 thread. With none named, read the current one.
 2. Read recent commits, reverts, `AGENTS.md`, and `CODING_STANDARDS.md`.
 3. Read recent PRs, starting with any your brief names: their review comments, the findings reviewers posted, and the friction in each body's agent notes.
 4. Read the repo's own check command: its `package.json` or build-tool `lint` and `check` scripts, its pre-commit hooks, and its CI workflow. A check that already exists but sits unwired or silently broken is the finding, so repair it before you build a new one. A repo with no **guardrail** (no pre-commit hook and no CI job running its lint, typecheck, or test command) is itself a finding.
@@ -20,12 +20,12 @@ Done when every correction, revert, failed attempt, and friction line in the evi
 
 ## 2. Group the mistakes into classes
 
-Group the notes into **mistake classes**. A class counts once it has happened twice. A mistake the operator names when asking for this skill counts at once. Wrong code is one kind of class. The session also shows these:
+Group the notes into **mistake classes**. A class counts once it has happened twice. A mistake the user names when asking for this skill counts at once. Wrong code is one kind of class. The session also shows these:
 
 - **Navigation**: the agent took a long time to find a file or a fact, or missed a hidden dependency between files.
 - **Tool economy**: the agent made an expensive tool call, or a CLI or MCP tool spent many tokens for little output.
 - **Information access**: a crucial piece of information was out of the agent's reach, such as dev server output or the state of a third-party service.
-- **Steering**: a line in `AGENTS.md` (in the repo or the operator's global scope) changes nothing the agent does, or steers behavior that a check or `CODING_STANDARDS.md` should own. Report a finding in the operator's global file, since a PR cannot change it.
+- **Steering**: a line in `AGENTS.md` (in the repo or the user's global scope) changes nothing the agent does, or steers behavior that a check or `CODING_STANDARDS.md` should own. Report a finding in the user's global file, since a PR cannot change it.
 
 Rank the classes by how often they happened and how much each one cost.
 
@@ -48,7 +48,7 @@ All work passes through two agents. The **worker** carries the most **context pr
 | `AGENTS.md` | every agent, every turn | navigation pointers only |
 | `CODING_STANDARDS.md` | the reviewer, via `/interrogate` | judgment-call rules and the rule table |
 | `GLOSSARY.md` | any agent naming a domain concept | domain terms, per the `glossary` skill |
-| a skill | the agent its description triggers, or the operator | a repeatable procedure |
+| a skill | the agent its description triggers, or the user | a repeatable procedure |
 | other docs | an agent following a pointer | reference too long for the files above |
 
 Search for an existing doc before you write a new one. Add navigation pointers to docs folders once `CODING_STANDARDS.md` passes 1,000 lines.
@@ -72,7 +72,7 @@ Keep a table in `CODING_STANDARDS.md`, created when the repo has none, that pair
 | Import the database client only from `src/db/index.ts` | `no-restricted-imports` in `eslint.config.js` |
 | Name handlers after the domain event they handle | review |
 
-When the operator corrects an agent, fix the mistake and add the rule. A rule already in the table that only review enforces is a repeat, so move it up a level in the same change. Drop a rule once its mistake can't happen, and delete `AGENTS.md` lines that change nothing.
+When the user corrects an agent, fix the mistake and add the rule. A rule already in the table that only review enforces is a repeat, so move it up a level in the same change. Drop a rule once its mistake can't happen, and delete `AGENTS.md` lines that change nothing.
 
 ## Reply
 

@@ -75,6 +75,12 @@ const IssueRef = Schema.Struct({
 
 const ShipInput = Schema.Struct({ config: Config, issue: IssueRef });
 
+/** What the user answered, when a thread asked them with its question tool. */
+const Answer = Schema.Struct({
+  choice: described(Schema.String, "The choice the user picked, word for word as the question offered it. Empty when you have no tool that asks the user."),
+  reason: described(Schema.NullOr(Schema.String), "What the user added in their own words. Null when they added nothing."),
+});
+
 /**
  * What one pass of the dispatcher is given. The timer gives `scheduledAt` alone. A pass started for
  * new issues names them, since GitHub's label lists trail a new issue by some seconds. A pass that
@@ -262,6 +268,35 @@ const pairOf = (role, userFile, projectFile) => {
   const backup = choice(entry?.backup);
   return backup ? { default: first, backup } : { default: first };
 };
+
+/**
+ * What a thread's answer comes to. `asked` is what `agent.try` gave for the asking turn. The answer
+ * counts when it is one of the choices. A turn that ran out of time means nobody answered. Anything
+ * else means the thread could not ask, so the question goes to the Workflows page.
+ */
+const answerOf = (asked, choices) => {
+  if (asked.outcome === "done" && choices.includes(asked.value?.choice)) {
+    const reason = asked.value.reason?.trim();
+    return { answered: reason ? { choice: asked.value.choice, reason } : { choice: asked.value.choice } };
+  }
+  if (asked.outcome === "failed" && /was not done after/.test(asked.reason ?? "")) return { timedOut: true };
+  return { fallBack: true };
+};
+
+/** The turn that asks the user one question in a thread they can see wait on them. */
+const askBrief = (question) =>
+  [
+    "The skills factory has a question for the user. It asks through you, so that T3 shows this thread as waiting on them.",
+    "",
+    `Question: ${question.title}`,
+    `Choices, in this order: ${question.choices.map((choice) => `"${choice}"`).join(", ")}`,
+    ...(question.data === undefined ? [] : ["", "What it is about:", JSON.stringify(question.data, null, 2)]),
+    "",
+    "Tell the user what it is about in a few plain lines, with each link. Then ask them this one question with your question tool, the one that shows choices and waits for an answer, such as AskUserQuestion. Wait for their answer.",
+    "Return their choice as data, word for word as it is written above, and what they added as `reason`. When they answer in their own words, return the choice that says the same, with their words as `reason`, and ask again when none does.",
+    "Change no files, post nothing, and never choose for them. With no tool that asks the user, return an empty `choice`, and the factory asks them another way.",
+    "Settle this thread with `t3_thread_organize` before you return.",
+  ].join("\n");
 
 /** Whether a run may merge without asking: the repo allows it, and the reviewer passed a two-way door. */
 const mayMergeUnasked = (config, verdict) => config.autoMerge === "two-way" && verdict.door === "two-way";
@@ -572,6 +607,7 @@ const brief = (config, role, lines, verifySkill) =>
     `Verify skill: ${verifySkill ?? "none"}`,
     "",
     "You may start the subagents your skills call for.",
+    "Settle your thread with `t3_thread_organize` before you return, as rules.md says.",
   ].join("\n");
 
 const workerBrief = (input, verifySkill, resumed, openPrs) =>
@@ -606,7 +642,7 @@ const specBrief = (input, verifySkill) =>
   brief(input.config, "reviewer", [`Check spec ${input.spec.url}. Every ticket of it has landed.`], verifySkill);
 
 const wokeBrief = (what) =>
-  `The T3 workflow that runs your task woke you: ${what} Settle it as worker.md says, push, and return your result as data with the new head SHA.`;
+  `The T3 workflow that runs your task woke you: ${what} Settle it as worker.md says, push, and return your result as data with the new head SHA. Settle your thread with \`t3_thread_organize\` before you return.`;
 
 const worktreeOf = (config) => ({
   type: "worktree",
@@ -756,7 +792,7 @@ const afterMerge = (config, issue) =>
 const ship = workflow(
   "skills-factory-ship",
   {
-    version: 9,
+    version: 10,
     payload: ShipInput,
     // The issue leaves the queue however the run ends, unless the run parked it to wait on
     // another issue. A run that did not finish moves it to needs-triage, so a person sees it the
@@ -824,6 +860,18 @@ const ship = workflow(
      * waits, and wake the worker on its own thread with the answer. Gives the first other result.
      */
     let asked = 0;
+    /**
+     * Ask the user in the worker's thread, with its question tool, so T3 shows that thread as
+     * waiting on them. A thread that cannot ask leaves the question to the Workflows page.
+     */
+    const askUser = Effect.fn(function* (name, question) {
+      const asked = yield* agent.try(`${name}-thread`, { thread: workerThread, brief: askBrief(question), returns: Answer, timeout: question.timeout });
+      const came = answerOf(asked, question.choices);
+      if (came.answered) return Option.some(came.answered);
+      if (came.timedOut) return Option.none();
+      return yield* ask(name, question);
+    });
+
     const answered = Effect.fn(function* (value) {
       let current = value;
       while (current.status === "QUESTION") {
@@ -831,7 +879,7 @@ const ship = workflow(
         if (asked > MAX_QUESTIONS) return yield* halt(`the worker asked more than ${MAX_QUESTIONS} questions.`);
         const text = current.question?.text ?? current.summary;
         const offered = [...new Set(current.question?.choices ?? [])].slice(0, 4);
-        const answer = yield* ask(`question-${asked}`, {
+        const answer = yield* askUser(`question-${asked}`, {
           title: `${issue.displayKey}: ${cut(text, 200)}`,
           choices: offered.length > 0 ? offered : ["answered in my note"],
           data: { issue: issue.url, question: text, thread: workerThread.threadId },
@@ -841,7 +889,7 @@ const ship = workflow(
         const note = answer.value.reason?.trim();
         const woken = yield* agent.try(`answer-${asked}`, {
           thread: workerThread,
-          brief: `The user answered your question: ${answer.value.choice}${note ? `. Their note: ${note}` : ""}. Go on with your task, and return your result as data.`,
+          brief: `The user answered your question: ${answer.value.choice}${note ? `. Their note: ${note}` : ""}. Go on with your task, and return your result as data. Settle your thread with \`t3_thread_organize\` before you return.`,
           returns: WorkerResult,
           quiet: "2 hours",
           timeout: "24 hours",
@@ -1022,7 +1070,7 @@ const ship = workflow(
       if (said.outside.length > 0) {
         handled.push(...said.outside.map((item) => item.id));
         const list = said.outside.map((item) => `- ${item.author} (${item.url}): ${item.text}`).join("\n");
-        const heard = yield* ask(`outside-${pass}`, {
+        const heard = yield* askUser(`outside-${pass}`, {
           title: `${issue.displayKey}: ${said.outside.length} comment(s) on ${pr.url} from people outside the repo`,
           choices: ["ignore them", "send them to the worker"],
           data: { pr: pr.url, comments: said.outside },
@@ -1065,7 +1113,7 @@ const ship = workflow(
           verdict = { headSha: v.headSha, comment: v.comment, approved: false, door: v.door };
           continue; // Back to the checks, now at the head the verdict names.
         }
-        const ruling = yield* ask(`ruling-${pass}`, {
+        const ruling = yield* askUser(`ruling-${pass}`, {
           title: `${issue.displayKey}: the reviewer and the worker disagree on ${pr.url}`,
           choices: ["land it as it is", "send my rulings to the worker", "stop"],
           data: { pr: pr.url, head: v.headSha, verdict: v.comment, open: v.open },
@@ -1086,7 +1134,7 @@ const ship = workflow(
       // A collaborator's request for changes holds the PR until they approve or the user says go.
       if (said.held.length > 0 && !goAhead) {
         if (holding === 0) {
-          const hold = yield* ask(`hold-${pass}`, {
+          const hold = yield* askUser(`hold-${pass}`, {
             title: `${issue.displayKey}: ${said.held.join(", ")} asked for changes on ${pr.url}`,
             choices: ["wait for their approval", "merge without it", "stop"],
             data: { pr: pr.url, head, held: said.held, verdict: verdict.comment },
@@ -1108,7 +1156,7 @@ const ship = workflow(
       const unasked = !verdict.approved && !goAhead && mayMergeUnasked(config, verdict);
       let go = verdict.approved || goAhead || unasked;
       if (!go) {
-        const answer = yield* ask(`merge-${pass}`, {
+        const answer = yield* askUser(`merge-${pass}`, {
           title: `${issue.displayKey}: merge ${pr.url}?`,
           choices: ["merge", "I will merge it", "stop"],
           data: { pr: pr.url, head, verdict: verdict.comment, summary: result.summary },

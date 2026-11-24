@@ -168,6 +168,17 @@ SLOTS = [
     ("another issue's run still does", [{"status": "running", "key": "ship/o/r/50/1"}, {"ending": "ship/o/r/5/"}], True),
 ]
 
+CHOICES = ["merge", "I will merge it", "stop"]
+ANSWERS = [
+    ("the user picked a choice", [{"outcome": "done", "value": {"choice": "merge", "reason": None}}, CHOICES], {"answered": {"choice": "merge"}}),
+    ("the user added a note", [{"outcome": "done", "value": {"choice": "stop", "reason": " not yet "}}, CHOICES], {"answered": {"choice": "stop", "reason": "not yet"}}),
+    ("the thread has no question tool", [{"outcome": "done", "value": {"choice": "", "reason": None}}, CHOICES], {"fallBack": True}),
+    ("the thread made a choice up", [{"outcome": "done", "value": {"choice": "ship it", "reason": None}}, CHOICES], {"fallBack": True}),
+    ("nobody answered in time", [{"outcome": "failed", "reason": "the agent's turn was stopped: it was not done after 7 days"}, CHOICES], {"timedOut": True}),
+    ("the thread could not be woken", [{"outcome": "failed", "reason": "the agent could not be started: no such thread"}, CHOICES], {"fallBack": True}),
+]
+QUESTION = {"title": "#7: merge https://x/pull/11?", "choices": CHOICES, "data": {"pr": "https://x/pull/11"}, "timeout": "7 days"}
+
 CASES = (
     [["blockersInBody", body] for body, _ in BLOCKERS]
     + [["issueNumber", {"displayKey": key}] for key in ["#526", "526"]]
@@ -182,6 +193,8 @@ CASES = (
     + [["mayMergeUnasked", config, verdict] for config, verdict, _ in UNASKED]
     + [["namedButUnlisted", *args] for _, args, _ in NAMED]
     + [["holdsSlot", *args] for _, args, _ in SLOTS]
+    + [["answerOf", *args] for _, args, _ in ANSWERS]
+    + [["askBrief", QUESTION]]
 )
 
 
@@ -210,6 +223,8 @@ class Factory(unittest.TestCase):
         cls.unasked = [next(results) for _ in UNASKED]
         cls.named = [next(results) for _ in NAMED]
         cls.slots = [next(results) for _ in SLOTS]
+        cls.answers = [next(results) for _ in ANSWERS]
+        cls.ask_brief = next(results)
 
     def test_registers_every_workflow(self):
         # The factory skill, factory.md and the factory's own `start` calls name these. Rename them together.
@@ -279,6 +294,16 @@ class Factory(unittest.TestCase):
             with self.subTest(workflow=name):
                 self.assertTrue(names, "found no step names, so the pattern no longer fits the file")
                 self.assertEqual(sorted(set(names)), sorted(names))
+
+    def test_only_a_choice_that_was_offered_counts_as_the_users_answer(self):
+        for (name, _, want), got in zip(ANSWERS, self.answers):
+            with self.subTest(name):
+                self.assertEqual(got, want)
+
+    def test_the_asking_turn_is_told_the_question_and_never_to_choose(self):
+        for line in ["#7: merge https://x/pull/11?", '"merge", "I will merge it", "stop"', "https://x/pull/11", "never choose for them", "t3_thread_organize"]:
+            with self.subTest(line=line):
+                self.assertIn(line, self.ask_brief)
 
     def test_main_is_red_only_on_a_finished_failure(self):
         for (name, _, _, want), got in zip(FAILING, self.failing):

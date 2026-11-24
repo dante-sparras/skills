@@ -8,7 +8,7 @@ You need T3 Code with **Settings → Labs → Workflows** on, a GitHub repo, and
 1. Install every skill: `npx skills add dante-sparras/skills`.
 2. Type `/factory` once in each repo you work in. It creates the labels, sets the model roles, and installs the factory.
 3. Type the skill that fits what you have: `/debug` for a bug, `/ticket` for a small change, `/spec` then `/ticket` for a feature, `/triage` for the tracker.
-4. Answer what the factory asks in T3 Code's **Workflows** page. Type `/factory` again at any time to see everything that waits on you.
+4. Answer what the factory asks. Each question waits in its ticket's thread in T3 Code, and a thread that is done settles itself, so a thread you still see is one that needs you. Type `/factory` again at any time to see everything that waits on you.
 
 ## How the skills fit together
 
@@ -20,7 +20,7 @@ flowchart TD
     you(["<b>You</b>"]):::you
     intake["<b>/debug · /triage</b><br/><b>/spec · /ticket</b><br/>Your agent files the issues"]:::you
     ready[("<b>ready-for-agent</b><br/>Issues an agent can build")]
-    ask["<b>Workflows page</b><br/>Where the factory asks you"]:::you
+    ask["<b>The ticket's thread</b><br/>Where the factory asks you"]:::you
     triage[("<b>needs-triage</b><br/>Issues that wait on you")]:::you
 
     subgraph factory["The factory runs on its own"]
@@ -75,7 +75,7 @@ The factory never rules or decides for you, and it asks before every merge unles
 
 | Where | What waits there |
 | --- | --- |
-| T3 Code's **Workflows** page | Each merge. Your ruling when the reviewer and the worker disagree. A worker's question, with the answers it suggests. A collaborator's request for changes that holds a PR. Comments from people outside the repo, which reach the worker only if you send them |
+| The ticket's worker thread, in T3 Code | Each merge. Your ruling when the reviewer and the worker disagree. A worker's question, with the answers it suggests. A collaborator's request for changes that holds a PR. Comments from people outside the repo, which reach the worker only if you send them. The worker asks with its question tool, so T3 shows the thread as waiting on you. A question no thread could ask waits in T3 Code's **Workflows** page |
 | `needs-triage` on the tracker | Follow-ups agents returned. Issues the factory stopped on, each with a comment that says why. Put `ready-for-agent` back on one to retry it |
 
 [factory.md](./skills/factory/factory.md) says what the factory runs, what it does when main is red, how to install it, and which of its files holds what. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
@@ -107,7 +107,9 @@ Every skill lives at `skills/<name>/`, the same layout it installs to. The skill
 
 ## Install
 
-`npx skills add dante-sparras/skills` puts every skill in your agent's skills folder, side by side: `<skills folder>/<name>/`. Linking each `skills/<name>/` folder by hand does the same.
+`npx skills add dante-sparras/skills` puts every skill in your agent's skills folder, side by side: `<skills folder>/<name>/`.
+
+To work from a clone instead, run `python scripts/link-skills.py`. It links every skill into `~/.claude/skills` and `~/.agents/skills`, or into the folders you name, and removes the links to skills that are gone. Run it again after a pull that adds, renames, or removes a skill.
 
 Claude Code can also install the repo as one plugin that holds every skill:
 

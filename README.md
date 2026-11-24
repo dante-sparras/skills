@@ -2,14 +2,23 @@
 
 Agent skills that shape work into issues, and a **factory** that builds, reviews, and merges each issue on its own.
 
+## Installation
+
+```
+npx skills add dante-sparras/skills
+```
+
+Install all of them: the skills link to each other by relative path.
+
+To work from a clone, run `python scripts/link-skills.py`. It links every skill into `~/.claude/skills` and `~/.agents/skills`. Run it again after a pull that adds, renames, or removes a skill.
+
 ## Quick start
 
 You need T3 Code with **Settings → Labs → Workflows** on, a GitHub repo, and `gh` signed in.
 
-1. Install every skill: `npx skills add dante-sparras/skills`.
-2. Type `/factory` once in each repo. It creates the labels, sets the model roles, and installs the factory.
-3. Type the skill that fits what you have. Each one files issues the factory can build.
-4. Review each PR, and add the `approved` label. The factory merges it.
+1. Type `/factory` once in each repo. It creates the labels, sets the model roles, and installs the factory.
+2. Type the skill that fits what you have. Each one files issues the factory can build.
+3. Review each PR, and add the `approved` label. The factory merges it.
 
 Type `/factory` again at any time to see everything that waits on you.
 
@@ -118,16 +127,6 @@ You type the skills under **Shape**, and `/factory`. Agents pick up the rest whe
 | [review-pr](./skills/review-pr/SKILL.md) | Adversarial review of a PR, by models from different families |
 | [correct](./skills/correct/SKILL.md) | Turns a mistake agents repeat into a check that fails |
 | [writing-for-agents](./skills/writing-for-agents/SKILL.md) | Reference for writing docs that agents read |
-
-## Install
-
-```
-npx skills add dante-sparras/skills
-```
-
-Install all of them: the skills link to each other by relative path.
-
-To work from a clone, run `python scripts/link-skills.py`. It links every skill into `~/.claude/skills` and `~/.agents/skills`. Run it again after a pull that adds, renames, or removes a skill.
 
 ## Checks
 

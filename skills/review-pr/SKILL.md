@@ -1,15 +1,15 @@
 ---
 name: review-pr
-description: "Adversarial review of the changes since a fixed point: a commit, branch, tag, or merge-base. Use when asked to review a branch, a PR, or work-in-progress changes, or when a finished change needs a review before it lands."
+description: "Adversarial review of one PR against its ticket and the spec above it: what it breaks, whether it delivers the ticket, and whether it keeps the repo's standards. Use when asked to review a PR, or when a PR needs a review before it lands."
 disable-model-invocation: true
 ---
 
 # Review PR
 
-Adversaries try to break the diff between `HEAD` and a fixed point. Each reports on three axes:
+Adversaries try to break one PR: the diff between its head and its base. Each reports on three axes:
 
 - **Breakage**: the change does something wrong that the spec never mentions. Edge cases, error paths, callers outside the diff.
-- **Spec**: the change implements the originating issue or spec faithfully.
+- **Spec**: the PR delivers the ticket it closes, and keeps the spec that ticket belongs to.
 - **Standards**: the change follows this repo's documented coding standards.
 
 The axes stay apart from the first step to the report, so one never masks another: code can follow every standard and build the wrong thing, or meet the spec and corrupt state on a retry the spec never mentioned.
@@ -18,18 +18,18 @@ A Breakage or Spec finding survives when you rerun its command and the output sh
 
 ## Steps
 
-1. **Pin the fixed point.** Use what the user gave: a SHA, branch, tag, `main`, `HEAD~5`. Ask when they gave none. Done when `git rev-parse <fixed-point>` resolves and the diff is non-empty.
+1. **Pin the PR.** Take the PR the user or your caller named, by number or link, and ask when they named none. Read it with `pull_request_read`, with `include: ["body"]`. Fetch, and check out its head, detached, unless your caller already has. The fixed point is its base, `origin/<base branch>`. Done when the diff is non-empty.
    - The diff is `git diff <fixed-point>...HEAD`, with three dots, so it compares against the merge-base.
    - The commits are `git log <fixed-point>..HEAD --oneline`.
-   - For uncommitted changes the user wants reviewed, save `git diff HEAD` to a patch file outside the repo. That leaves out new files, so append each path from `git ls-files --others --exclude-standard` with `git diff --no-index -- /dev/null <path>`, in a POSIX shell. That command exits 1 for a non-empty file, which is not an error.
+   - **A re-review.** When your caller names a head an earlier review covered, and that head is an ancestor of the PR's head, make it the fixed point, so the seats review only what changed since.
 
-2. **State the intent** in two or three sentences, from the user's message, the commit messages, and the PR description. Ask the user when it is unclear. Every seat gets it, and a finding counts only when it breaks it.
+2. **Find the ticket and the spec.** The ticket is the contract, and the spec says what the ticket is for. Fetch both, with their comments, per `docs/agents/issue-tracker.md`. If that file is missing, say that `/setup-skills` has not run in this repo.
+   - **The ticket** is each issue the PR's body closes: a `Closes`, `Fixes`, or `Resolves` line. Its agent brief or its acceptance criteria is what the PR must deliver.
+   - **The spec** is the ticket's parent: its parent issue, or the issue its `## Parent` section names. Its user stories and decisions are what the ticket serves. A ticket with no parent has no spec, and the ticket alone is the bar.
+   - **A ticket your caller passed** joins these, such as the task in a factory reviewer's brief.
+   - **No ticket at all.** Ask the user which issue the PR is for. With none, the seats skip the Spec axis, and the report says "no ticket".
 
-3. **Find the spec.** Take the first that exists:
-   1. The spec your caller or the user passed: a path, an issue, or text.
-   2. An issue the commit messages reference (`#123`, `Closes #45`), fetched per `docs/agents/issue-tracker.md`. If that file is missing, say that `/setup-skills` has not run in this repo and carry on down this list.
-   3. A file under `docs/` or `specs/` that matches the branch name or the feature.
-   4. The user's answer when you ask where the spec is. If there is none, the seats skip the Spec axis and the report says "no spec available".
+3. **State the intent** in two or three sentences, from the ticket, the PR's title and description, and its commit messages. Ask the user when it is unclear. Every seat gets it, and a finding counts only when it breaks it.
 
 4. **Find the standards.**
    - List every file that documents how code should be written, with `CODING_STANDARDS.md` and `CONTRIBUTING.md` when they exist. Note `GLOSSARY.md`, or each context's glossary under `GLOSSARY-MAP.md`.
@@ -44,8 +44,8 @@ A Breakage or Spec finding survives when you rerun its command and the output sh
    - **No panel.** When your caller asks for a review without a panel, review the diff yourself against the same brief and say so under **Panel**.
 
 6. **Launch** the seats in parallel, each with a fresh context and an isolated worktree at `HEAD`. Use `delegate_task` with `mode: "async"` and `isolation: "worktree"`. Every seat gets the same prompt:
-   - the diff command, the commit list, and the patch path with an instruction to apply it first, when step 1 saved one
-   - the intent, and the spec's path or contents
+   - the PR's link, the diff command, and the commit list
+   - the intent, and the ticket's and the spec's contents
    - the standards files, the tooling list, the glossary path, and the smell baseline pasted in full, since the seat cannot reach it any other way
    - the [seat brief](#seat-brief)
 
@@ -59,7 +59,8 @@ A Breakage or Spec finding survives when you rerun its command and the output sh
 
 ## Report
 
-- **Intent**: the restatement from step 2.
+- **PR, ticket, and spec**: their links, or "no ticket".
+- **Intent**: the restatement from step 3.
 - **Panel**: each seat's model and family, any seat that fell back and why, and whether the families differed.
 - `## Breakage`, `## Spec`, `## Standards`: each verified finding with its command and output, or its rule or smell, and the seats that found it. Agreement across families is stronger evidence than agreement within one, so say which kind a shared finding has. Write "no verified findings" for an empty axis.
 - **Dropped**: per seat, how many findings were dropped and why.
@@ -71,7 +72,7 @@ A Breakage or Spec finding survives when you rerun its command and the output sh
 >
 > Then test the tests. A test, assertion, or check that the diff weakens, skips, or deletes is a Breakage finding, unless the intent asks for it: cite the hunk. Invert one condition the change adds to the production code, run the tests that cover it, and restore the file. A mutation that stays green is a Breakage finding: report the mutation as a patch, and name the case no test covers.
 >
-> Prove each Breakage and Spec finding with a run against the real code, such as a failing test, a repro script, or command output that shows the wrong behavior. Keep repros in your own worktree and do not edit the reviewed checkout. Report each one with a title, the absolute path of your worktree, the full contents of any repro file you wrote, the exact command, the output it printed, and the output the intent or spec requires. A Spec finding also quotes the spec line. Leave out any Breakage or Spec finding you did not run, unless nothing can run it: then cite the exact hunk, what it breaks, and why it cannot be run.
+> Prove each Breakage and Spec finding with a run against the real code, such as a failing test, a repro script, or command output that shows the wrong behavior. Keep repros in your own worktree and do not edit the reviewed checkout. Report each one with a title, the absolute path of your worktree, the full contents of any repro file you wrote, the exact command, the output it printed, and the output the intent or spec requires. A Spec finding also quotes the line of the ticket or spec it breaks. Leave out any Breakage or Spec finding you did not run, unless nothing can run it: then cite the exact hunk, what it breaks, and why it cannot be run.
 >
 > For Standards, cite the documented rule (file and rule) for each breach, and name each baseline smell with the hunk it applies to. Smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything the tooling list already enforces. Use the glossary's terms for domain concepts, and flag a new name for a concept the glossary already names.
 >

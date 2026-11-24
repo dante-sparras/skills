@@ -12,9 +12,9 @@ You and the worker argue each finding until you agree, and you return one verdic
 
 1. **Check out** the PR's head, detached, after a fetch.
 2. **Prove** the task's behavior on the real surface. Drive the running app with the repo's verify skill when the proof needs it. CI already ran the repo's checks, so rerun them only when the PR has no CI.
-3. **Run `review-pr`** on the diff, with main as the fixed point, the PR's ticket or task as the spec, and the PR's purpose as the intent. You are its first seat, so remove your repro files before you move to another head.
+3. **Run `review-pr`** on the PR, and pass it the task from your brief. It finds the ticket and spec itself. You are its first seat, so remove your repro files before you move to another head.
    - **A panel.** Ask for one when the change is a one-way door, judged by you and not by the PR's own Door line. Otherwise ask for a review without one.
-   - **An earlier verdict.** When your brief links one, review only what changed since the head it names. If that head is an ancestor of the new one, give it to `review-pr` as the fixed point. After a rebase, keep main as the fixed point and tell it what `git range-diff` shows changed.
+   - **An earlier verdict.** When your brief links one, review only what changed since the head it names. Give that head to `review-pr` as the one an earlier review covered. After a rebase, it is no longer an ancestor, so `review-pr` reviews the whole PR: tell it what `git range-diff` shows changed.
    - **Rulings.** A ruling in your brief is the user's decision on a finding, and it settles that finding.
 4. **Argue each finding with the worker**, when you have findings.
    - Post the findings as a comment on the PR, numbered.

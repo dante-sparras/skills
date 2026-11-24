@@ -59,16 +59,28 @@ The whole flow is four files: one per role, and the rules they share. [GLOSSARY.
 
 Every other skill is a tool a worker picks up when its task calls for it. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo.
 
-## Layout
+## Skills
 
-Every skill lives at `skills/<name>/`, the same layout it installs to. The [skills CLI](https://skills.sh) shows them in four groups, declared in `.claude-plugin/marketplace.json`. The entry point, `coordinate`, is in no group.
+Every skill lives at `skills/<name>/`, the same layout it installs to.
 
-| Group | Skills |
+| Skill | What it does |
 | --- | --- |
-| `plan` | interview, map, plan, triage, research |
-| `build` | tdd, debug, interrogate, pr-body, new-verify-skill |
-| `codebase` | deepen, glossary, guardrail |
-| `setup` | setup-skills, writing-for-agents |
+| [coordinate](./skills/coordinate/SKILL.md) | The entry point. Makes each request a task, starts a worker for it, and ships it |
+| [debug](./skills/debug/SKILL.md) | Finds the cause of a hard bug or a slowdown, then fixes it with a regression test |
+| [deepen](./skills/deepen/SKILL.md) | The deep-module vocabulary, and a survey that finds modules worth deepening |
+| [glossary](./skills/glossary/SKILL.md) | Keeps the project's domain terms in `GLOSSARY.md` |
+| [guardrail](./skills/guardrail/SKILL.md) | Turns a mistake agents repeat into a check that fails |
+| [interrogate](./skills/interrogate/SKILL.md) | Adversarial review of a diff by models from different families |
+| [interview](./skills/interview/SKILL.md) | Questions you in rounds until a plan or decision is settled |
+| [map](./skills/map/SKILL.md) | Charts work too big for one session as decision tickets |
+| [new-verify-skill](./skills/new-verify-skill/SKILL.md) | Generates a `verify-<app>` skill that drives the real app |
+| [plan](./skills/plan/SKILL.md) | Turns a conversation into a spec and its tickets |
+| [pr-body](./skills/pr-body/SKILL.md) | Writes a PR description: a summary diagram, evidence, and merge danger |
+| [research](./skills/research/SKILL.md) | Investigates a question against primary sources in the background |
+| [setup-skills](./skills/setup-skills/SKILL.md) | Sets up a repo's tracker, labels, and model roles for these skills |
+| [tdd](./skills/tdd/SKILL.md) | Test-first for bug fixes and core logic, and proof for everything else |
+| [triage](./skills/triage/SKILL.md) | Moves issues and outside PRs through triage states |
+| [writing-for-agents](./skills/writing-for-agents/SKILL.md) | Reference for writing skills and other docs that agents read |
 
 ## Install
 
@@ -76,58 +88,15 @@ Install every skill into your agent's skills folder, side by side: `<skills fold
 
 The skills reach each other by relative paths such as `../tdd/SKILL.md` and `../setup-skills/MODEL-ROLES.md`, so a skill installed alone loses them.
 
-The manifest lists only the four groups, so a Claude plugin install leaves out `coordinate`. Add it with `npx skills add` or a link.
+The plugin manifest does not list `coordinate`, so a Claude plugin install leaves it out. Add it with `npx skills add` or a link.
 
 Run `python3 scripts/check.py` before you push, or `python scripts/check.py` on Windows. CI runs the same command.
 
-## Upstream
+## Credits
 
-The skills below started as copies of [mattpocock/skills](https://github.com/mattpocock/skills) at commit [`5863806dd4e15c63174bee4e7515a4256792ecfa`](https://github.com/mattpocock/skills/tree/5863806dd4e15c63174bee4e7515a4256792ecfa) and have been edited since. Each one lives in `skills/<name>/`.
-
-### Engineering
-
-- [interrogate](./skills/interrogate/SKILL.md)
-- [deepen](./skills/deepen/SKILL.md)
-- [debug](./skills/debug/SKILL.md)
-- [glossary](./skills/glossary/SKILL.md)
-- [pr-body](./skills/pr-body/SKILL.md)
-- [research](./skills/research/SKILL.md)
-- [setup-skills](./skills/setup-skills/SKILL.md)
-- [tdd](./skills/tdd/SKILL.md)
-- [plan](./skills/plan/SKILL.md)
-- [triage](./skills/triage/SKILL.md)
-- [map](./skills/map/SKILL.md)
-
-### Productivity
-
-- [interview](./skills/interview/SKILL.md)
-- [writing-for-agents](./skills/writing-for-agents/SKILL.md)
-
-### pstack
-
-These skills started from pstack, or are new here and built on its ideas:
-
-- [coordinate](./skills/coordinate/SKILL.md)
-- [guardrail](./skills/guardrail/SKILL.md)
-- [new-verify-skill](./skills/new-verify-skill/SKILL.md)
-
-[guardrail](./skills/guardrail/SKILL.md) started as a copy of the `correct` skill in Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/pstack) at commit [`e5136d82418d2db3165ea1050d17577cd618cc05`](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/pstack/skills/correct). It also absorbs the upstream `retro` skill from mattpocock/skills.
-
-[interrogate](./skills/interrogate/SKILL.md) takes its adversarial reviewer panel from the `interrogate` skill in pstack at commit [`ab1f702ce8e8b6557edb56b09f52cde8bfb83f17`](https://github.com/cursor/plugins/tree/ab1f702ce8e8b6557edb56b09f52cde8bfb83f17/pstack/skills/interrogate): the adversary brief, picking reviewers from different model families, and rerunning each finding before it is reported.
-
-[tdd](./skills/tdd/SKILL.md) takes its test-first rules from pstack at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/tdd): the bug-fix loop that sees red before the fix, when to skip a test, the closest checks that prove skipped work, the guardrails, and the evidence report. It also takes the two imagined edits that judge a test from [`principle-test-behavior-not-implementation`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-test-behavior-not-implementation), real-artifact proof from [`principle-prove-it-works`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-prove-it-works), and the red-then-green commit order and same-surface verification from the [Bug fix playbook](https://github.com/cursor/plugins/blob/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks/bug-fix.md). Seams, vertical slices, and the mocking and test examples stay from mattpocock/skills.
-
-[new-verify-skill](./skills/new-verify-skill/SKILL.md) started as a copy of the `create-verification-skill` skill in pstack at commit [`e58dd043600587dbaf58ba315e7f2b38373eeb43`](https://github.com/cursor/plugins/tree/e58dd043600587dbaf58ba315e7f2b38373eeb43/pstack/skills/create-verification-skill), including its feature map example.
-
-[coordinate](./skills/coordinate/SKILL.md) takes its entry point from the `poteto-mode` skill in pstack at commit [`7a583913eb1b8d1a0ee76753d1a2cf072e7b54f9`](https://github.com/cursor/plugins/tree/7a583913eb1b8d1a0ee76753d1a2cf072e7b54f9/pstack/skills/poteto-mode): one user-invoked skill a person starts every task with, and a `worker.md` that opens every subagent's brief, since the rules reach a subagent no other way. Its build flow follows the poteto-mode playbooks at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks): one worker and one PR per task off trunk, an independent verdict before a PR lands, the forge-approval guardrail, and the hand-off mode. The coordinator loop and the worker's sizing table are new here.
-
-[setup-skills](./skills/setup-skills/SKILL.md) takes its model role configuration from Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack).
-
-### Other credits
-
-[pr-body](./skills/pr-body/SKILL.md) adapts its visual examples and placement guidance from Dex Horthy's [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md).
-
-[deepen](./skills/deepen/DESIGN-IT-TWICE.md) uses John Ousterhout's Design It Twice method.
+- [mattpocock/skills](https://github.com/mattpocock/skills) by Matt Pocock
+- [pstack](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan
+- [humanlayer/skills](https://github.com/humanlayer/skills) by Dex Horthy
 
 ## License
 

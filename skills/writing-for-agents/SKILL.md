@@ -1,11 +1,13 @@
 ---
 name: writing-for-agents
-description: "Writing documents agents consume: context pointers, information hierarchy, completion criteria, leading words, and pruning. Use when creating or editing a skill or its description, or editing AGENTS.md, CLAUDE.md, or any doc an agent reaches through a pointer."
+description: "Reference for writing documents agents consume. Use when creating or editing a skill or its description, or editing AGENTS.md, CLAUDE.md, or any doc an agent reaches through a pointer."
 ---
+
+# Writing for Agents
 
 Reference for writing any document an agent consumes: a skill, an `AGENTS.md`, a doc reached by a pointer. The goal is a predictable agent: one that takes the same _process_ every run.
 
-When the document is a skill, also read [`SKILL-MECHANICS.md`](SKILL-MECHANICS.md) for frontmatter, the invocation choice, and router skills.
+When the document is a skill, also read [`skill-mechanics.md`](skill-mechanics.md) for frontmatter, the invocation choice, and router skills.
 
 ## Context pointers
 
@@ -16,6 +18,7 @@ A pointer says what the material is, and lists the **branches** that should trig
 - **Front-load the leading word.** The pointer is where it does its triggering.
 - **One trigger per branch.** Synonyms for one branch are that branch written twice.
 - **Cut identity the body already carries.**
+- **Leave the steps to the body.** An agent follows a pointer that summarises the process in place of the document it names.
 
 ## The two loads
 
@@ -54,7 +57,7 @@ The strongest criteria are both checkable and exhaustive.
 A split spends one of the two loads, so make it only when the cut earns that.
 
 - **By sequence**: split a run of steps where the later steps tempt the agent to rush the one in front of it. Merging sequences has the reverse effect.
-- **By invocation**: see [`SKILL-MECHANICS.md`](SKILL-MECHANICS.md).
+- **By invocation**: see [`skill-mechanics.md`](skill-mechanics.md).
 
 ## Leading words
 

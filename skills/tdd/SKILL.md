@@ -1,9 +1,9 @@
 ---
 name: tdd
-description: "Test-driven development: write the failing test first for bug fixes and core logic, and prove the work the loop skips another way. Use when fixing a bug, building domain rules, calculations, parsers, or state transitions, writing a regression or integration test, or when the user mentions TDD or red-green."
+description: "Test-driven development, and proof for the work a test cannot cover. Use when fixing a bug, building domain rules, calculations, parsers, or state transitions, writing a regression or integration test, or when the user mentions TDD or red-green."
 ---
 
-# Test-driven development
+# TDD
 
 TDD is the red → green loop. This skill says when the loop runs, how to run it so the tests are worth keeping, and how to prove the work the loop skips.
 

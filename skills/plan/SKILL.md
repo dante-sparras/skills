@@ -4,6 +4,8 @@ description: "Turn the current conversation, or a written plan, into a spec and 
 disable-model-invocation: true
 ---
 
+# Plan
+
 Write the **spec** from what this conversation and the codebase already hold, slice it into **tickets**, and publish both after one approval. Synthesize: the interview already happened.
 
 Read `docs/agents/issue-tracker.md` for the tracker and `docs/agents/triage-labels.md` for the label strings. If either is missing, stop and say that `/setup-skills` has not run in this repo.

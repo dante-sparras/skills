@@ -1,8 +1,14 @@
+"""Check each skill's description: it has a "Use when" sentence, and it is short.
+
+A description stays in context on every turn, and an agent follows one that summarises the
+skill's steps in place of the skill. So the steps stay in the body.
+"""
 import re
 import sys
 from pathlib import Path
 
 USE_WHEN = re.compile(r"(?:^|[.!?]\s+)Use when\s+\S")
+LIMIT = 350
 FIX = (
     'Add a sentence after what the skill does that names its concrete triggers, such as '
     'description: "<What it does>. Use when <trigger>, <trigger>, or <trigger>." '
@@ -39,15 +45,20 @@ def problems(path):
     lines = path.read_text(encoding="utf-8").splitlines()
     header = frontmatter(lines)
     if header is None:
-        yield 1, "has no YAML frontmatter with a description."
+        yield 1, f"has no YAML frontmatter with a description. {FIX}"
         return
     found = description(header)
     if found is None:
-        yield 2, "has no description in its frontmatter."
+        yield 2, f"has no description in its frontmatter. {FIX}"
         return
     line, value = found
     if not USE_WHEN.search(value):
-        yield line, 'description has no "Use when" sentence.'
+        yield line, f'description has no "Use when" sentence. {FIX}'
+    if len(value) > LIMIT:
+        yield line, (
+            f"description is {len(value)} characters, and the limit is {LIMIT}. Cut its summary of the "
+            "skill's steps, which the body carries. Keep what the skill is, and one trigger per case."
+        )
 
 
 def main():
@@ -57,11 +68,14 @@ def main():
     for path in skills:
         for line, problem in problems(path):
             found += 1
-            print(f"{path.as_posix()}:{line}: {problem} {FIX}")
+            print(f"{path.as_posix()}:{line}: {problem}")
     if found:
-        print(f"\n{found} of {len(skills)} skill(s) under {root.as_posix()}/ lack a \"Use when\" description.")
+        print(f"\n{found} description problem(s) across {len(skills)} skill(s) under {root.as_posix()}/.")
         return 1
-    print(f"All {len(skills)} skill descriptions under {root.as_posix()}/ have a \"Use when\" sentence.")
+    print(
+        f"All {len(skills)} skill descriptions under {root.as_posix()}/ have a \"Use when\" sentence "
+        f"and stay within {LIMIT} characters."
+    )
     return 0
 
 

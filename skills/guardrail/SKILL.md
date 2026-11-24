@@ -1,6 +1,6 @@
 ---
 name: guardrail
-description: "Turn each mistake agents repeat in this repo into a check that fails, trying architecture, then types, then a lint, then a test, and docs last. Use when the user corrects an agent for something already corrected once, two agents make the same mistake, a review finds a mechanical mistake a check could catch, a check could have caught a bug just fixed, or the user asks for a look back at a session."
+description: "Turn each mistake agents repeat in this repo into a check that fails. Use when the user corrects an agent for something already corrected once, two agents make the same mistake, a review or a fixed bug shows a mistake a check could have caught, or the user asks for a look back at a session."
 ---
 
 # Guardrail
@@ -74,6 +74,6 @@ Keep a table in `CODING_STANDARDS.md`, created when the repo has none, that pair
 
 When the user corrects an agent, fix the mistake and add the rule. A rule already in the table that only review enforces is a repeat, so move it up a level in the same change. Drop a rule once its mistake can't happen, and delete `AGENTS.md` lines that change nothing. Leave the `## Agent skills` block alone: `setup-skills` owns it.
 
-## Reply
+## Report
 
 List the classes in order of severity. For each, give its evidence, the level you picked, why a higher level didn't work, and the output of the check failing on the past mistake. List the classes you left unfixed as candidates for the next run.

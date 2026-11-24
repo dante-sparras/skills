@@ -1,12 +1,12 @@
 ---
 name: setup-skills
-description: "Configure the settings the engineering skills read. Per repo, in `docs/agents/` and an `AGENTS.md` block: the issue tracker, triage labels, domain docs, and who merges. Globally, in `~/.config/skills/roles.json`: the model roles, which a repo can override in `.skills/roles.json`. Use when a person sets these skills up in a new repo, a skill reports that the tracker or roles are not configured, or a person wants to change the model roles."
+description: "Configure what these skills read: per repo, the issue tracker, triage labels, domain docs, and who merges, and globally, the model roles. Use when a person sets these skills up in a new repo, a skill reports that the tracker or roles are not configured, or a person wants to change the model roles."
 disable-model-invocation: true
 ---
 
-# Setup skills
+# Setup Skills
 
-For model setup alone, go straight to [Configure model roles](MODEL-ROLES.md#configure-model-roles).
+For model setup alone, go straight to [Configure model roles](model-roles.md#configure-model-roles).
 
 Otherwise write the per-repo settings the engineering skills read: the issue tracker, the labels, the domain docs, and who merges. Explore, show what you found, confirm, then write.
 
@@ -86,8 +86,8 @@ Read `GLOSSARY.md` at the repo root before exploring, or each glossary that `GLO
 
 ## 5. Set model roles
 
-Follow [Configure model roles](MODEL-ROLES.md#configure-model-roles).
+Follow [Configure model roles](model-roles.md#configure-model-roles).
 
-## 6. Report
+## Report
 
 Tell the user which files you wrote. They can edit `docs/agents/*.md` directly, and rerun model setup alone to change the roles.

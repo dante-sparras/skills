@@ -1,9 +1,9 @@
 ---
 name: new-verify-skill
-description: "Generate a project-local `verify-<app>` skill that launches the real app, drives it the way a user does, and captures evidence, in any language or platform. Use when proving a change needs the running app (a UI, CLI, TUI, or service flow) and the repo has no `verify-<app>` skill yet, or when asked to make one."
+description: "Generate a project-local `verify-<app>` skill that launches the real app, drives it the way a user does, and captures evidence. Use when proving a change needs the running app (a UI, CLI, TUI, or service flow) and the repo has no `verify-<app>` skill yet, or when asked to make one."
 ---
 
-# Create a verification skill
+# New Verify Skill
 
 Generate a project-local **verification skill** that drives the real app and proves behavior: launch it, exercise a feature the way a user would, and capture evidence. Write it for the next agent, who reads it cold, mid-task, and has never seen the app.
 
@@ -41,7 +41,7 @@ Write `verify-<app>/SKILL.md` with YAML frontmatter: `name: verify-<app>` and a 
 
 ## 3. Seed the feature map
 
-Create `verify-<app>/features/README.md` plus one file per user-facing feature. Start with the top 3 to 5, found from routes, commands, menus, or docs. Follow the shape in [`references/feature-map-example/`](references/feature-map-example/): a README index and one file per feature.
+Create `verify-<app>/features/README.md` plus one file per user-facing feature. Start with the top 3 to 5, found from routes, commands, menus, or docs. Follow the shape in [`feature-map-example/`](feature-map-example/): a README index and one file per feature.
 
 Each feature file answers, from the user's point of view, what the feature is, how to reach it, how to drive it with the harness, and what observable end state proves it works. Its four H2s are `Sub-features`, `How to get to it (user POV)`, `Driving it with <harness>`, and `Gotchas`.
 
@@ -51,7 +51,7 @@ Each feature file answers, from the user's point of view, what the feature is, h
 
 ## 4. Prove it cold
 
-Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role). Start a fresh `reviewer` in this same checkout, with `isolation: "shared"`, so it sees the skill before it is committed. Use `mode: "async"`, since a cold run takes far longer than a waited call allows. Give it only the path to the generated skill and one mapped feature, and tell it to change no files. One feature is enough. The map exists so later runs cover the rest. It follows the skill's own instructions end to end (launch, doctor, drive the feature, capture evidence, clean up), then confirms the evidence still exists at the named location and reports each step that failed or that it had to guess.
+Read [Resolve a role](../setup-skills/model-roles.md#resolve-a-role). Start a fresh `reviewer` in this same checkout, with `isolation: "shared"`, so it sees the skill before it is committed. Use `mode: "async"`, since a cold run takes far longer than a waited call allows. Give it only the path to the generated skill and one mapped feature, and tell it to change no files. One feature is enough. The map exists so later runs cover the rest. It follows the skill's own instructions end to end (launch, doctor, drive the feature, capture evidence, clean up), then confirms the evidence still exists at the named location and reports each step that failed or that it had to guess.
 
 Fix what it reports and start a fresh `reviewer` again until a run passes with no guesses. After every failed run, run the generated cleanup yourself so broken attempts don't strand processes and ports. A cleanup that deletes the evidence fails the run.
 
@@ -59,6 +59,6 @@ If you proved it in a stand-in for the real target (a container in place of a fr
 
 Done when a fresh `reviewer` run passed and its evidence path exists after cleanup.
 
-## 5. Report
+## Report
 
 Report the skill's path, the surface it drives, the mapped features, the passing run's evidence path, and any steps still unverified on the real target.

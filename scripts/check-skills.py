@@ -1,8 +1,8 @@
-"""Check the wiring between skills: layout, names, invocation flags, groups, links, and skill calls.
+"""Check the wiring between skills: layout, names, shape, invocation flags, the manifest, links, and skill calls.
 
 Every skill lives at skills/<name>/, the same layout it installs to, so a link between two
-skills is written as ../<name>/... The groups the skills CLI shows are declared in
-.claude-plugin/marketplace.json. The entry point, coordinate, belongs to no group.
+skills is written as ../<name>/... The plugin that .claude-plugin/marketplace.json declares
+lists every skill.
 
 Each problem prints as path:line: what is wrong, then how to fix it.
 """
@@ -20,7 +20,9 @@ SKILL_CALL = re.compile(r"Skill tool(?: twice,)? (?:with|for) ((?:[`\"][a-z][a-z
 SKILL_TOKEN = re.compile(r"[`\"]([a-z][a-z0-9-]*)[`\"]")
 EXTERNAL = ("http://", "https://", "mailto:")
 MANIFEST = ".claude-plugin/marketplace.json"
-ENTRY_POINTS = {"coordinate"}
+DISPLAY_NAME = re.compile(r"^\s*display_name:\s*[\"']?(.*?)[\"']?\s*$", re.M)
+REFERENCE_NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*\.md$")
+REPORT_HEADING = re.compile(r"^#{1,6}\s+(?:\d+\.\s+)?(?:Reply|Report|Reporting|Output)\s*$", re.I)
 
 
 def find_skill_dirs(skills_root):
@@ -141,6 +143,38 @@ def skill_problems(skill_dir, user_invoked):
         )
 
 
+def shape_problems(skill_dir):
+    """Yield (path, line, problem) where a skill departs from the shape every skill shares."""
+    skill_md = skill_dir / "SKILL.md"
+    text = skill_md.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    yaml_path = skill_dir / "agents" / "openai.yaml"
+    display = DISPLAY_NAME.search(yaml_path.read_text(encoding="utf-8")) if yaml_path.is_file() else None
+    if display:
+        title = f"# {display.group(1)}"
+        body = lines.index("---", 1) + 1 if lines[:1] == ["---"] and "---" in lines[1:] else 0
+        first = next((n for n in range(body, len(lines)) if lines[n].strip()), None)
+        if first is None or lines[first].strip() != title:
+            yield skill_md, (body if first is None else first) + 1, (
+                f"body must open with the heading {title!r}. "
+                "Every skill is titled with the display_name in its agents/openai.yaml."
+            )
+    for number, line in prose_lines(text):
+        if REPORT_HEADING.match(line) and line.strip() != "## Report":
+            yield skill_md, number, (
+                f"names its closing section {line.strip()!r}. Name it '## Report', unnumbered, "
+                "as every skill that hands back a result does."
+            )
+    for path in sorted(skill_dir.iterdir()):
+        if path.is_dir() and path.name == "references":
+            yield path, 1, "is a references folder. Put reference files beside SKILL.md, where the other skills keep them."
+        elif path.suffix == ".md" and path.name != "SKILL.md" and not REFERENCE_NAME.match(path.name):
+            yield path, 1, (
+                "is not named in lower-case kebab-case. Rename it, such as model-roles.md, "
+                "so only SKILL.md stands out in a skill's folder."
+            )
+
+
 def skill_call_problems(path, skills, user_invoked):
     for number, line in prose_lines(path.read_text(encoding="utf-8")):
         for call in SKILL_CALL.finditer(line):
@@ -170,7 +204,7 @@ def manifest_problems(repo, skill_dirs):
     """Yield problems where .claude-plugin/marketplace.json and the skill folders disagree."""
     manifest = repo / MANIFEST
     if not manifest.is_file():
-        yield "is missing. Add it with one plugin per group the skills CLI should show, each listing its skills."
+        yield "is missing. Add it with one plugin that lists every skill."
         return
     try:
         plugins = json.loads(manifest.read_text(encoding="utf-8")).get("plugins", [])
@@ -186,22 +220,16 @@ def manifest_problems(repo, skill_dirs):
                 yield f"lists {entry!r} under {group!r}. Write each skill as ./skills/<name>."
                 continue
             name = parts[2]
-            if name in ENTRY_POINTS:
-                yield (
-                    f"lists the entry point {entry!r} under {group!r}. It belongs to no group, "
-                    "so remove the entry. The skills CLI still finds the skill by its folder."
-                )
-                continue
             if not (repo / "skills" / name / "SKILL.md").is_file():
                 yield f"lists {entry!r}, which has no SKILL.md. Fix the path or remove the entry."
             if name in listed:
                 yield f"lists the skill {name!r} under both {listed[name]!r} and {group!r}. Keep it in one plugin."
             listed[name] = group
     for skill_dir in skill_dirs:
-        if skill_dir.name not in listed and skill_dir.name not in ENTRY_POINTS:
+        if skill_dir.name not in listed:
             yield (
                 f"does not list ./skills/{skill_dir.name}. "
-                "Add it to one plugin so the skills CLI shows it in a group."
+                "Add it to the plugin's skills, so a plugin install includes it."
             )
 
 
@@ -231,6 +259,8 @@ def main():
     for skill_dir in skill_dirs:
         for path, line, problem in skill_problems(skill_dir, user_invoked):
             report(path, line, problem)
+        for path, line, problem in shape_problems(skill_dir):
+            report(path, line, problem)
 
     docs = sorted(skills_root.rglob("*.md")) + [p for p in (repo / "README.md", repo / "GLOSSARY.md") if p.is_file()]
     for path in docs:
@@ -250,7 +280,7 @@ def main():
     if found:
         print(f"\n{found} wiring problem(s) across {len(skill_dirs)} skills.")
         return 1
-    print(f"Layout, names, invocation flags, groups, links, and skill calls agree across {len(skill_dirs)} skills.")
+    print(f"Layout, names, shape, invocation flags, the manifest, links, and skill calls agree across {len(skill_dirs)} skills.")
     return 0
 
 

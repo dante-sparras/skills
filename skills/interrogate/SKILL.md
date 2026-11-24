@@ -1,7 +1,9 @@
 ---
 name: interrogate
-description: "Adversarial review of the changes since a fixed point (commit, branch, tag, or merge-base). Reviewers from different model families try to break the change on three axes, Breakage, Spec, and Standards, and a behavior finding survives only when a rerun proves it. Use when asked to review a branch, a PR, or work-in-progress changes, to review everything since a commit or tag, or when a finished change needs a verdict before it lands."
+description: "Adversarial review of the changes since a fixed point: a commit, branch, tag, or merge-base. Use when asked to review a branch, a PR, or work-in-progress changes, or when a finished change needs a review before it lands."
 ---
+
+# Interrogate
 
 Adversaries try to break the diff between `HEAD` and a fixed point. Each reports on three axes:
 
@@ -33,7 +35,7 @@ A Breakage or Spec finding survives when you rerun its command and the output sh
    - List what the repo's tooling already enforces: its `lint`, `typecheck`, and `test` scripts, its pre-commit hooks, and its CI workflows. Seats skip everything on this list, because a check already fails on it.
    - Add the [smell baseline](#smell-baseline), which applies even when the repo documents nothing.
 
-5. **Pick the panel.** Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) for the `reviewer`.
+5. **Pick the panel.** Read [Resolve a role](../setup-skills/model-roles.md#resolve-a-role) for the `reviewer`.
    - Run one seat per model family among the runnable default and backup. The same model offered by two providers is one family, and so are one vendor's other models.
    - Start the default and the backup together when the backup adds a family. If the default is unavailable or hits a usage limit, the backup's review stands in for it.
    - A caller that is itself reviewing, in a clean checkout of the head, is the first seat: start only the other family, and remove your own repro files when you are done.
@@ -49,21 +51,24 @@ A Breakage or Spec finding survives when you rerun its command and the output sh
    If a seat returns nothing, continue with the rest and note the dropout.
 
 7. **Verify.**
-   - Rerun each Breakage and Spec finding's command yourself, in the seat's worktree when it still exists, or after writing the reported repro file into a checkout of `HEAD`. Keep a finding when the output shows the failure, and the failure breaks the intent or the spec, or is a regression: the same command passes at the fixed point. Keep a finding no command can show, such as a wrong line of config, a migration, or a doc, when it cites the exact hunk, what it breaks, and why it cannot be run.
+   - Rerun each Breakage and Spec finding's command yourself, in the seat's worktree when it still exists, or after writing the reported repro file into a checkout of `HEAD`. Keep a finding when the output shows the failure, and the failure breaks the intent or the spec, or is a regression: the same command passes at the fixed point. Keep a mutation finding when the tests still pass with its patch applied. Keep a finding no command can show, such as a wrong line of config, a migration, or a doc, when it cites the exact hunk, what it breaks, and why it cannot be run.
    - Keep each Standards finding that cites a real rule, or names a smell against a real hunk. These are not rerun.
    - Merge findings that share a root cause, and list every seat that found each.
    - Mark each mechanical finding (a fixed syntax pattern, a banned API, an import shape, a file-location rule) as a candidate for the `guardrail` skill to turn into a check.
 
-8. **Report.**
-   - **Intent**: the restatement from step 2.
-   - **Panel**: each seat's model and family, any seat that fell back and why, and whether the families differed.
-   - `## Breakage`, `## Spec`, `## Standards`: each verified finding with its command and output, or its rule or smell, and the seats that found it. Agreement across families is stronger evidence than agreement within one, so say which kind a shared finding has. Write "no verified findings" for an empty axis.
-   - **Dropped**: per seat, how many findings were dropped and why.
-   - A one-line summary: the verified findings per axis, and the worst issue within each axis. Findings are never ranked across axes.
+## Report
+
+- **Intent**: the restatement from step 2.
+- **Panel**: each seat's model and family, any seat that fell back and why, and whether the families differed.
+- `## Breakage`, `## Spec`, `## Standards`: each verified finding with its command and output, or its rule or smell, and the seats that found it. Agreement across families is stronger evidence than agreement within one, so say which kind a shared finding has. Write "no verified findings" for an empty axis.
+- **Dropped**: per seat, how many findings were dropped and why.
+- A one-line summary: the verified findings per axis, and the worst issue within each axis. Findings are never ranked across axes.
 
 ## Seat brief
 
 > Break this change. Read the diff, then the code around it and the callers it touches. Try each of these: inputs and states the author did not test (empty, huge, concurrent, malformed, repeated), error and retry paths, a spec requirement that is missing, partial, or wrong, and code outside the diff that depends on what changed.
+>
+> Then test the tests. A test, assertion, or check that the diff weakens, skips, or deletes is a Breakage finding, unless the intent asks for it: cite the hunk. Invert one condition the change adds to the production code, run the tests that cover it, and restore the file. A mutation that stays green is a Breakage finding: report the mutation as a patch, and name the case no test covers.
 >
 > Prove each Breakage and Spec finding with a run against the real code, such as a failing test, a repro script, or command output that shows the wrong behavior. Keep repros in your own worktree and do not edit the reviewed checkout. Report each one with a title, the absolute path of your worktree, the full contents of any repro file you wrote, the exact command, the output it printed, and the output the intent or spec requires. A Spec finding also quotes the spec line. Leave out any Breakage or Spec finding you did not run, unless nothing can run it: then cite the exact hunk, what it breaks, and why it cannot be run.
 >

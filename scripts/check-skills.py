@@ -30,7 +30,7 @@ REPORT_HEADING = re.compile(r"^#{1,6}\s+(?:\d+\.\s+)?(?:Reply|Report|Reporting|O
 MODEL_INVOKED = {
     "debug": "A crash or a slowdown comes up in any session, and the skill is what stops an agent from guessing.",
     "pr": "Opening a PR comes up in any session, and the skill only shapes the PR's title and body.",
-    "research": "A person asks for research in plain words, and its only output is a notes file.",
+    "research": "A person asks for research in plain words, and its only output is a write-up in the conversation.",
     "writing-for-agents": "It is reference, wanted whenever a skill or an AGENTS.md is edited.",
 }
 

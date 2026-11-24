@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Spec
 
-Write the **spec** for one feature from what this conversation and the codebase already hold, and publish it after one approval. `/ticket` then slices it into work for the factory.
+Write the **spec** for one feature from what this conversation and the codebase already hold, and publish it after one approval. The `ticket` skill then slices it into work for the factory.
 
 [tracker.md](../factory/tracker.md) has the tracker's commands.
 
@@ -20,7 +20,9 @@ Write the **spec** for one feature from what this conversation and the codebase 
 
 4. **Approve.** Show the user the seams and the user stories. Ask whether the seams match what they expect, and whether a story is missing. Done when the user approves.
 
-5. **Publish** the spec from the template, with the `spec` label and no state label. The label keeps it out of the triage queue and marks it as the parent of tickets, not as work to grab. The factory puts `ready-for-agent` on a spec itself, once its last ticket lands, to check it. Done when you have given the user the spec's reference, and said that `/ticket` slices it into work for the factory.
+5. **Publish** the spec from the template, with the `spec` label and no state label. The label keeps it out of the triage queue and marks it as the parent of tickets, not as work to grab. The factory puts `ready-for-agent` on a spec itself, once its last ticket lands, to check it. Done when you have given the user the spec's reference.
+
+6. **Offer the tickets.** Ask whether to slice the spec into tickets now. On a yes, read [ticket](../ticket/SKILL.md) and follow it on this spec.
 
 Keep file paths and code snippets out of the spec, since they go stale. The exception is a snippet that states a decision more exactly than prose can, such as a state machine, a schema, or a type shape. Trim it to the decision.
 

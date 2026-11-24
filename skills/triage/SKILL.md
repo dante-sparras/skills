@@ -47,7 +47,7 @@ The factory starts each `ready-for-agent` issue within ten minutes of its last b
 
 ## Work that is not on the tracker yet
 
-Triage starts from an issue or a PR. When the user describes something new, send them on: a bug goes to `/debug`, which reproduces and files it, a change that fits one PR goes to `/ticket`, and a feature goes to `/spec`.
+Triage starts from an issue or a PR. When the user describes something new, run the skill that fits, by reading its `SKILL.md` and following it: [debug](../debug/SKILL.md) for a bug, [ticket](../ticket/SKILL.md) for a change that fits one PR, and [spec](../spec/SKILL.md) for a feature.
 
 ## Triage one issue or PR
 

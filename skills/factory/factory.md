@@ -7,6 +7,7 @@ The **factory** is a T3 Code workflow, [factory.ts](factory.ts), that ships the 
 3. **Comments.** A comment or review from a collaborator wakes the worker with it, as a request to weigh. A collaborator's request for changes holds the merge until they approve, or until you say to merge without them. A comment from anyone else comes to you first, and reaches the worker only if you send it. Bots are left out.
 4. **A reviewer** reviews the head, briefed with `rules.md` and `reviewer.md`, and argues each finding with the worker until they agree, for at most three rounds.
 5. **A person's go.** Every merge waits on your answer: merge, merge it yourself, or stop. A `NO AGREEMENT` verdict waits on your ruling.
+   - **Without asking.** A repo whose settings set `autoMerge` to `two-way` skips the merge question when the reviewer passed the PR and judged it a two-way door: cheap to roll back. The factory says so in a comment on the PR. A PR the two disagreed on, and one a collaborator holds, still wait on you.
 6. **The merge** goes through `gh pr merge --match-head-commit`, so GitHub refuses it if the head moved after the review. A moved head goes back through checks and review.
 
 Workers and reviewers return their results as data, which T3 checks against a schema, so a result with a field missing is sent back to the agent to fix. A worker that needs you to decide something returns its question as data too: the factory asks you, and wakes the worker on its own thread with your answer. A run survives a restart of T3 Code. It picks up at the step it was on.
@@ -28,37 +29,7 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
 - A GitHub repo with the labels the `factory` skill creates, and `gh` signed in. The factory reads blockers, comments, and sub-issues, and merges, through `gh`.
 - The skills installed side by side, since workers reach them by relative paths.
 
-## Install
-
-The `factory` skill runs these steps, under [Install the factory](SKILL.md#4-install-the-factory).
-
-1. **Copy** `factory.ts` to `skills-factory.ts` in the `workflows` folder of T3 home: `~/.t3/workflows/` by default. T3 reloads the folder on its own. Copy it again after the skills update, since T3 does not see changes to the original. A run keeps the workflow version it started with, so copy an update when no run is open, or keep the old file's body registered until its runs end.
-2. **Register the repo** in the workflow store, under `skills-factory/projects/<owner>/<repo>`:
-
-   ```sh
-   t3 workflow store set skills-factory/projects/<owner>/<repo> '<settings as JSON>'
-   ```
-
-   | Field | Value |
-   | --- | --- |
-   | `project` | The repo's folder, as an absolute path, or its T3 project id |
-   | `repository` | `<owner>/<repo>` |
-   | `skillsFolder` | The absolute path of the folder that holds the `factory` folder, with every other skill beside it |
-   | `defaultBranch` | The name after `origin/` in `git symbolic-ref --short refs/remotes/origin/HEAD` |
-   | `verifySkill` | The verify skill's path from the repo root, or `null` to use the first `.claude/skills/verify-*` folder on main |
-   | `maxActive` | How many runs may hold an agent at once, spec checks included. `4` is a good start |
-   | `mergeMethod` | `squash`, `merge`, or `rebase`, by the repo's settings |
-   | `enabled` | `true`. Set `false` to pause the repo |
-   | `worker`, `reviewer` | Optional. A model role as `{"default": <model>, "backup": <model>}`, each `<model>` being `{"instanceId", "model", "options": [{"id", "value"}]}` from `orchestrator_capabilities`. Leave a role out to use the project's default model |
-
-3. **Check** that the dispatcher runs: `t3 workflow start skills-factory-dispatch --input '{"scheduledAt":"<now, as ISO 8601>"}' --key check/<now>`, then `t3 workflow show <run>`. With no ready issue it ends as `skipped`.
-
-## Run it
-
-- **Hand it work** by labelling an issue `ready-for-agent`. An issue waits while any of its blockers is open: GitHub's own dependencies, or a `Blocked by` line or section in its body.
-- **Answer it** in T3 Code's Workflows page, or with `t3 workflow questions` and `t3 workflow signal`. Every question of a run waits there, a worker's included.
-- **Retry** an issue by putting `ready-for-agent` back. Every run ends by removing the label, unless it parked the issue behind another one. A run that stopped or was cancelled also moves the issue to `needs-triage`, where `triage` shows it, and says why in a comment on the issue.
-- **Stop** one run with `t3 workflow cancel <run>`. **Pause** a repo by setting `enabled` to `false` in its settings.
+[SKILL.md](SKILL.md) installs it, holds its settings, and says how to retry, stop, or pause a run.
 
 ## Where issues come from
 
@@ -71,8 +42,8 @@ The factory lives in the `factory` skill's folder, so it installs with the skill
 | File | Who reads it | What it holds |
 | --- | --- | --- |
 | [factory.ts](factory.ts) | T3 Code | The factory itself |
-| [SKILL.md](SKILL.md) | The agent you type `/factory` to | How to set a repo up, and where to go to run the factory |
-| This file | You, and that agent | What the factory runs, how to install it, and how to retry or stop a run |
+| [SKILL.md](SKILL.md) | The agent you type `/factory` to | How to set a repo up, its settings, what waits on you, and how to retry, stop, or pause a run |
+| This file | You | What the factory runs, and what happens after a run |
 | [model-roles.md](model-roles.md) | Any skill that starts an agent | Which model each role runs on, and how to set the roles |
 | [handoff.md](handoff.md) | Any agent that files an issue for the factory | The checks before an issue goes to `ready-for-agent` |
 | [agent-brief.md](agent-brief.md) | The same agents, and workers | The one shape of an issue the factory builds |

@@ -25,7 +25,7 @@ You and the worker argue each finding until you agree, and you return one verdic
    - Send back every finding still open, and go round again. A finding is settled when the worker fixed it or you withdrew it. You agree when every finding is settled.
 5. **Stop after three rounds.** With findings still open, or a point only the user can decide, the verdict is `NO AGREEMENT`.
 6. **Post the verdict** as a comment on the PR. Under the AI marker, its first line is `PASS` or `NO AGREEMENT`, the head SHA, and the model you ran on. Then, in a collapsed `<details>` block: each finding and whether it was fixed or withdrawn, or both positions on each one still open.
-7. **Return** the verdict, the head SHA, and the comment's link.
+7. **Return** the verdict, the head SHA, the comment's link, and the door: your own judgement of whether the change is cheap to roll back. In a repo that allows it, the factory merges a `PASS` on a two-way door without asking the user, so call it one-way whenever you are unsure.
 
 ## What is worth a finding
 

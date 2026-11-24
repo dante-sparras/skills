@@ -1,14 +1,18 @@
 // The skills factory: a T3 Code workflow that ships each issue labelled ready-for-agent through a
-// worker, a reviewer, and the user's go to merge, with no person to start it.
+// worker, a reviewer, and the user's go to merge, with no person to start it. The model roles
+// come from the roles files, which model-roles.md describes.
 //
 // Install by copying this file to the `workflows` folder of T3 home as `skills-factory.ts`, and
 // register each repo under `skills-factory/projects/<owner>/<repo>` in the workflow store.
-// factory.md, beside this file, says how. Workflow files import nothing from T3 or Effect: the
+// SKILL.md, beside this file, says how. Workflow files import nothing from T3 or Effect: the
 // server hands them `T3`, `Effect`, `Schema`, `Option`, `Duration` and `Schedule` as globals.
 //
 // A run keeps the workflow version it started with. Raise a workflow's `version` whenever its
 // steps change, and keep the old body registered while runs of it are still open.
 import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 const { workflow, step, agent, ask, stop, skip, title, every, start, runs, store, issues, pullRequests, sleep, Tick } = T3;
 
@@ -52,9 +56,12 @@ const Config = Schema.Struct({
   maxActive: Schema.Number,
   mergeMethod: Schema.Literals(["merge", "squash", "rebase"]),
   enabled: Schema.Boolean,
-  worker: Schema.optional(RolePair),
-  reviewer: Schema.optional(RolePair),
+  // "two-way" lets a run merge without asking when its reviewer passed the PR as a two-way door.
+  autoMerge: Schema.optional(Schema.Literals(["never", "two-way"])),
 });
+
+/** The model roles a run hires on, read from the roles files as each run starts. */
+const Roles = Schema.Struct({ worker: Schema.optional(RolePair), reviewer: Schema.optional(RolePair) });
 
 /** The labels the factory reads and writes. The `factory` skill creates them, and tracker.md names them. */
 const LABELS = { ready: "ready-for-agent", triage: "needs-triage", spec: "spec", bug: "bug", enhancement: "enhancement" };
@@ -130,6 +137,10 @@ const Verdict = Schema.Struct({
   headSha: described(Schema.NullOr(Schema.String), "The head SHA your verdict covers. Null for FAILED."),
   comment: described(Schema.NullOr(Schema.String), "The URL of your verdict comment. Null when you posted none."),
   summary: described(Schema.String, "What you proved, and for FAILED, what stopped you."),
+  door: described(
+    Schema.Literals(["one-way", "two-way"]),
+    "Your own judgement of the change, not the PR's Door line. two-way when it is cheap to roll back. one-way when it involves a destructive action or a decision that is hard to reverse, when you are unsure, and for FAILED.",
+  ),
   open: described(
     Schema.Array(Schema.Struct({ finding: Schema.String, reviewer: Schema.String, worker: Schema.String })),
     "Each finding still open, with your position and the worker's. Empty for PASS.",
@@ -223,6 +234,25 @@ const parentInBody = (body) => {
   }
   return null;
 };
+
+/**
+ * One role's pair from the roles files, in the shape `agent` takes, or undefined when neither file
+ * sets it. The project's file replaces the user's for the whole role, as model-roles.md says.
+ */
+const pairOf = (role, userFile, projectFile) => {
+  const entry = projectFile?.roles?.[role] ?? userFile?.roles?.[role];
+  const choice = (target) =>
+    target?.providerInstanceId && target?.model
+      ? { instanceId: target.providerInstanceId, model: target.model, ...(Array.isArray(target.options) ? { options: target.options } : {}) }
+      : undefined;
+  const first = choice(entry?.default);
+  if (!first) return undefined;
+  const backup = choice(entry?.backup);
+  return backup ? { default: first, backup } : { default: first };
+};
+
+/** Whether a run may merge without asking: the repo allows it, and the reviewer passed a two-way door. */
+const mayMergeUnasked = (config, verdict) => config.autoMerge === "two-way" && verdict.door === "two-way";
 
 /** The store key of one friction: its kind and its target, written one way. */
 const repeatKey = (repository, kind, target) => {
@@ -346,6 +376,29 @@ const gh = (args, cwd) =>
       ),
     catch: (error) => (error instanceof Error ? error : new Error(String(error))),
   });
+
+/** A roles file as JSON, or null when there is none. A file that does not parse fails, with its path. */
+const readRoles = (path) =>
+  Effect.tryPromise({
+    try: () =>
+      readFile(path, "utf8").then(
+        (text) => JSON.parse(text),
+        (error) => (error?.code === "ENOENT" ? null : Promise.reject(error)),
+      ),
+    catch: (error) => new Error(`${path}: ${error instanceof Error ? error.message : String(error)}`),
+  });
+
+/** The worker and reviewer roles: the user's file, with the project's file over it. */
+const rolesOf = Effect.fn(function* (config) {
+  const user = yield* readRoles(join(homedir(), ".config", "skills", "roles.json"));
+  const project = yield* readRoles(join(config.project, ".skills", "roles.json"));
+  const found = {};
+  for (const role of ["worker", "reviewer"]) {
+    const pair = pairOf(role, user, project);
+    if (pair) found[role] = pair;
+  }
+  return found;
+});
 
 /** Each item of a paged GitHub list, with the fields `feedbackOf` reads. */
 const ghItems = (path, cwd) =>
@@ -670,7 +723,7 @@ const afterMerge = (config, issue) =>
 const ship = workflow(
   "skills-factory-ship",
   {
-    version: 6,
+    version: 7,
     payload: ShipInput,
     // The issue leaves the queue however the run ends, unless the run parked it to wait on
     // another issue. A run that did not finish moves it to needs-triage, so a person sees it the
@@ -709,6 +762,7 @@ const ship = workflow(
       }),
     );
     const verifySkill = yield* step("verify-skill", { returns: Schema.NullOr(Schema.String) }, findVerifySkill(config));
+    const roles = yield* step("roles", { returns: Roles }, rolesOf(config));
 
     // ---- The worker builds the issue.
     const worker = yield* hire(
@@ -723,7 +777,7 @@ const ship = workflow(
         quiet: "2 hours",
         timeout: "24 hours",
       },
-      config.worker,
+      roles.worker,
     );
     if (worker.outcome === "failed") return yield* halt(`the worker failed twice: ${worker.reason}`);
     const workerThread = worker.thread;
@@ -871,7 +925,7 @@ const ship = workflow(
     // ---- The PR's path: green checks, collaborators heard, a review of the current head, then
     // a person's go to merge.
     const pr = issueAddress(config, result.pr);
-    let verdict = null; // { headSha, comment, approved }
+    let verdict = null; // { headSha, comment, approved, door }
     let rulings = "none";
     let rounds = 0;
     const handled = []; // Ids of collaborator comments the worker has been given.
@@ -957,14 +1011,14 @@ const ship = workflow(
             returns: Verdict,
             timeout: "8 hours",
           },
-          config.reviewer,
+          roles.reviewer,
         );
         if (review.outcome === "failed") return yield* halt(`the reviewer failed twice: ${review.reason}`);
         ledger.keep(review.value, { thread: review.thread?.threadId, pr: pr.url });
         const v = review.value;
         if (v.status === "FAILED" || v.headSha === null) return yield* halt(`the reviewer could not reach a verdict: ${v.summary}`);
         if (v.status === "PASS") {
-          verdict = { headSha: v.headSha, comment: v.comment, approved: false };
+          verdict = { headSha: v.headSha, comment: v.comment, approved: false, door: v.door };
           continue; // Back to the checks, now at the head the verdict names.
         }
         const ruling = yield* ask(`ruling-${pass}`, {
@@ -976,11 +1030,11 @@ const ship = workflow(
         if (Option.isNone(ruling)) return yield* halt("nobody ruled on the open findings within 7 days.");
         if (ruling.value.choice === "stop") return yield* halt("the user stopped it at the ruling.");
         if (ruling.value.choice === "land it as it is") {
-          verdict = { headSha: v.headSha, comment: v.comment, approved: true };
+          verdict = { headSha: v.headSha, comment: v.comment, approved: true, door: "one-way" };
           continue;
         }
         rulings = ruling.value.reason?.trim() || "The user sided with the reviewer on every open finding.";
-        verdict = { headSha: v.headSha, comment: v.comment, approved: false };
+        verdict = { headSha: v.headSha, comment: v.comment, approved: false, door: "one-way" };
         result = yield* wake(`rulings-${pass}`, `the user ruled on the reviewer's open findings on ${pr.url}: ${rulings}`);
         continue;
       }
@@ -1007,7 +1061,8 @@ const ship = workflow(
       }
 
       // Checks are green at the head the verdict covers, and no collaborator holds it.
-      let go = verdict.approved || goAhead;
+      const unasked = !verdict.approved && !goAhead && mayMergeUnasked(config, verdict);
+      let go = verdict.approved || goAhead || unasked;
       if (!go) {
         const answer = yield* ask(`merge-${pass}`, {
           title: `${issue.displayKey}: merge ${pr.url}?`,
@@ -1043,6 +1098,10 @@ const ship = workflow(
         return yield* halt(`the merge of ${pr.url} failed: ${merge.reason}`);
       }
       yield* step.try(`delete-branch-${pass}`, { returns: Schema.Void }, pullRequests.act(pr, "delete-branch"));
+      if (unasked) {
+        const why = "The skills factory merged this without asking: its reviewer passed it as a two-way door, and this repo's settings allow that. Set `autoMerge` to `never` in the factory's settings to be asked every time.";
+        yield* step.try(`unasked-${pass}`, { returns: Schema.Void }, gh(["pr", "comment", pr.url, "--body", `${AI_MARKER}\n\n${why}`], config.project).pipe(Effect.asVoid));
+      }
       return yield* landed(head);
     }
   }),
@@ -1052,7 +1111,7 @@ const ship = workflow(
 const specCheck = workflow(
   "skills-factory-spec",
   {
-    version: 4,
+    version: 5,
     payload: SpecInput,
     // The dispatcher started this check because the spec carried ready-for-agent. Putting the
     // label back checks it again.
@@ -1066,6 +1125,7 @@ const specCheck = workflow(
     const labels = LABELS;
     const again = `Put \`${LABELS.ready}\` on this spec to check it again.`;
     const verifySkill = yield* step("verify-skill", { returns: Schema.NullOr(Schema.String) }, findVerifySkill(config));
+    const roles = yield* step("roles", { returns: Roles }, rolesOf(config));
 
     const check = yield* hire(
       "reviewer",
@@ -1077,7 +1137,7 @@ const specCheck = workflow(
         returns: SpecResult,
         timeout: "8 hours",
       },
-      config.reviewer,
+      roles.reviewer,
     );
     if (check.outcome === "failed") {
       yield* ledger.wrapUp(`The skills factory could not check this spec: the reviewer failed twice: ${check.reason}\n\n${again}`);

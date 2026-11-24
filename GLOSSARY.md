@@ -9,7 +9,7 @@ The person a run works for.
 _Avoid_: Operator, owner
 
 **Factory**:
-The T3 Code workflow in `factory/factory.ts` that ships each issue labelled `ready-for-agent`: it starts a worker, sends a reviewer to the PR, and asks the user before every merge. It also checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
+The T3 Code workflow in `factory/factory.ts` that ships each issue labelled `ready-for-agent`: it starts a worker, sends a reviewer to the PR, and asks the user before a merge. It also checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
 _Avoid_: Pipeline, automation, bot
 
 **Task**:

@@ -8,7 +8,7 @@ You need T3 Code with **Settings → Labs → Workflows** on, a GitHub repo, and
 1. Install every skill: `npx skills add dante-sparras/skills`.
 2. Type `/factory` once in each repo you work in. It creates the labels, sets the model roles, and installs the factory.
 3. Type the skill that fits what you have: `/debug` for a bug, `/ticket` for a small change, `/spec` then `/ticket` for a feature, `/triage` for the tracker.
-4. Answer what the factory asks. Each question waits in its ticket's thread in T3 Code, and a thread that is done settles itself, so a thread you still see is one that needs you. Type `/factory` again at any time to see everything that waits on you.
+4. Review each PR, and add the `approved` label when you are happy with it. The factory merges it. A PR that waits for you keeps its ticket's thread in your list in T3 Code, and every thread that is done settles itself. Type `/factory` again at any time to see everything that waits on you.
 
 ## How the skills fit together
 
@@ -20,7 +20,7 @@ flowchart TD
     you(["<b>You</b>"]):::you
     intake["<b>/debug · /triage</b><br/><b>/spec · /ticket</b><br/>Your agent files the issues"]:::you
     ready[("<b>ready-for-agent</b><br/>Issues an agent can build")]
-    ask["<b>The ticket's thread</b><br/>Where the factory asks you"]:::you
+    ask["<b>Your review</b><br/>Add the approved label"]:::you
     triage[("<b>needs-triage</b><br/>Issues that wait on you")]:::you
 
     subgraph factory["The factory runs on its own"]
@@ -41,7 +41,7 @@ flowchart TD
     checks -- "Green" --> review
     review -- "PASS, or no agreement" --> ask
     worker <-. "A question, your answer" .-> ask
-    ask -- "Your go" --> merge
+    ask -- "approved" --> merge
     merge --> learn
     start -. "A red main, as a bug" .-> ready
     learn -. "Spec gaps and guardrails" .-> ready
@@ -66,16 +66,17 @@ Blue is where you come in. A solid arrow follows one issue, from what you ask fo
    | A question the code cannot answer | [`/research`](./skills/research/SKILL.md), or ask in plain words |
    | A codebase that is hard to change | [`/deepen-modules`](./skills/deepen-modules/SKILL.md), then `/spec` |
 
-2. **Ship.** The [factory](./skills/factory/factory.md) is a T3 Code workflow. It starts a **worker** for each ready issue whose blockers are closed, up to a limit per repo: at once when you file the issue or its blocker merges, and on a pass every ten minutes besides. The worker opens a PR, and wakes again for a red check, a conflict, or a collaborator's comment. Once the checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges.
+2. **Ship.** The [factory](./skills/factory/factory.md) is a T3 Code workflow. It starts a **worker** for each ready issue whose blockers are closed, up to a limit per repo: at once when you file the issue or its blocker merges, and on a pass every ten minutes besides. The worker opens a PR, and wakes again for a red check, a conflict, or a collaborator's comment. Once the checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the PR waits for your review: add the `approved` label, and the factory merges it. It never asks whether to open or merge a PR.
 3. **Learn.** When a spec's last ticket lands, a reviewer proves the spec's user stories on main, and each gap becomes a ticket. Friction that repeats across runs becomes an issue the factory fixes with the `correct` skill. Follow-ups land in `needs-triage`, ready for step 1.
 
 ### What waits on you
 
-The factory never rules or decides for you, and it asks before every merge unless you turn on `autoMerge` for a repo. Everything it needs from you waits in one of two places, and `/factory` lists both.
+The factory never rules or decides for you, and it merges only what you approved, unless you turn on `autoMerge` for a repo. Everything it needs from you waits in one of three places, and `/factory` lists them.
 
 | Where | What waits there |
 | --- | --- |
-| The ticket's worker thread, in T3 Code | Each merge. Your ruling when the reviewer and the worker disagree. A worker's question, with the answers it suggests. A collaborator's request for changes that holds a PR. Comments from people outside the repo, which reach the worker only if you send them. The worker asks with its question tool, so T3 shows the thread as waiting on you. A question no thread could ask waits in T3 Code's **Workflows** page |
+| The PR, on GitHub | Your review. Add the `approved` label, and the factory merges the PR. Comment or ask for changes, and the worker picks it up. Merging or closing it yourself works too. GitHub does not let you approve a PR your own account opened, so the label is your approval. On a PR from another account, an approving review counts as well |
+| The ticket's worker thread, in T3 Code | Notice that a PR is ready for your review: the thread stays in your list until the PR merges. Your ruling when the reviewer and the worker disagree. A worker's question, with the answers it suggests. Comments from people outside the repo, which reach the worker only if you send them. The worker asks with its question tool, so T3 shows the thread as waiting on you. A question no thread could ask waits in T3 Code's **Workflows** page |
 | `needs-triage` on the tracker | Follow-ups agents returned. Issues the factory stopped on, each with a comment that says why. Put `ready-for-agent` back on one to retry it |
 
 [factory.md](./skills/factory/factory.md) says what the factory runs, what it does when main is red, how to install it, and which of its files holds what. [GLOSSARY.md](./GLOSSARY.md) defines the terms.

@@ -21,7 +21,7 @@ globalThis.Effect = new Proxy({ fn: (body) => body, gen: (body) => body }, { get
 for (const name of ["Schema", "Option", "Duration", "Schedule"]) globalThis[name] = anything();
 
 // Expose the helpers under test without changing the file: rename their `const` to a global.
-const HELPERS = ["blockersInBody", "issueNumber", "parentInBody", "repeatKey", "feedbackOf", "guardrailBrief", "failingChecks", "titleKey", "searchWords", "pairOf", "mayMergeUnasked", "namedButUnlisted", "holdsSlot", "answerOf", "askBrief"];
+const HELPERS = ["blockersInBody", "issueNumber", "parentInBody", "repeatKey", "feedbackOf", "guardrailBrief", "failingChecks", "titleKey", "searchWords", "pairOf", "mayMergeUnasked", "namedButUnlisted", "holdsSlot", "answerOf", "askBrief", "approvalOf", "reviewWait", "readyNote", "readyBrief"];
 let text = readFileSync(source, "utf8");
 for (const helper of HELPERS) {
   if (!text.includes(`const ${helper} = `)) throw new Error(`factory.ts has no helper named ${helper}`);

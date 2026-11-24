@@ -56,8 +56,9 @@ def sync(skills, target, dry_run=False):
     """Make `target` hold one link per skill in `skills`. Returns (action, name) pairs."""
     wanted = {p.parent.name: p.parent for p in sorted(skills.glob("*/SKILL.md"))}
     done = []
-    target.mkdir(parents=True, exist_ok=True)
-    for entry in sorted(target.iterdir()):
+    if not dry_run:
+        target.mkdir(parents=True, exist_ok=True)
+    for entry in sorted(target.iterdir()) if target.is_dir() else []:
         points_at = link_target(entry)
         if points_at is None or not inside(points_at, skills):
             continue

@@ -28,7 +28,7 @@ Every ticket is work for the factory, so follow [handoff.md](../factory/handoff.
 
 4. **Publish.** One issue per ticket, with `ready-for-agent` and the category that fits, `enhancement` or `bug`. Its body is an agent brief, per [agent-brief.md](../factory/agent-brief.md). Done when every ticket is on the tracker and you have given the user each reference.
    - A ticket of a spec is its sub-issue, names it under `## Parent`, and takes its seams from the spec's testing decisions. With no spec, choose the seams yourself: an existing seam over a new one, and the highest seam you can.
-   - Publish blockers first, so every ticket references real identifiers, and link each blocker with the tracker's native dependencies.
+   - Publish blockers first, so every ticket references real identifiers. Create each ticket with its links in the same call: `--parent` for its spec, and `--blocked-by` for its blockers. A ticket that gets its label first can be started before its blocker is linked.
    - Leave the spec open and unedited. Give it the `spec` label when it has none.
 
 ## Wide refactors

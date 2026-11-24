@@ -28,7 +28,7 @@ Open every message to another agent with a status word.
 | `FAILED` | What stopped you |
 
 - **Send** with `t3_thread_send` and `mode: "queue"`, so a message never interrupts a turn.
-- **Your turn's final text reaches whoever started the turn.** Send the coordinator a note, to its thread id in your brief, for a status you reach mid-turn, and for a result when someone other than the coordinator started your turn. A `REPLY` goes only to the agent that asked.
+- **Your turn's final text is your result.** T3 delivers it to the coordinator when the coordinator or the user started the turn. Send the coordinator a note, to its thread id in your brief, only for a status you reach mid-turn. A `REPLY` is read by the agent that asked, and wakes nobody else.
 - **Send `WAITING ON USER` once per wait**, not once per question.
 - **Give the user a thread by its `link`**, never by a bare id or title.
 - **Show the user text mid-turn** with `send_to_user`. Text written before a tool call may never reach them.

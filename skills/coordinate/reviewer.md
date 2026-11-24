@@ -16,8 +16,9 @@ You and the worker argue each finding until you agree, and you return one verdic
    - **Rulings.** A ruling in your brief is the user's decision on a finding, and it settles that finding.
 4. **Argue each finding with the worker**, when you have findings.
    - Post the findings as a comment on the PR, numbered.
-   - Send them to the worker's thread, and keep the task id and run id the send returns.
-   - Wait for that run with `t3_thread_wait` and `untilDelegatedWorkSettled: true`, following what the wait returns. Then read the `REPLY` with `t3_thread_read`. If the worker's task fails or stops answering, return `FAILED`.
+   - Send them to the worker's thread, and keep the run id the send returns.
+   - Wait for that run with `t3_thread_wait`, giving the run id and `untilDelegatedWorkSettled: true`. One call waits at most 45 seconds, and nothing else will wake you, so call it again until the run has finished. Stay in this turn until you have a verdict.
+   - Read the `REPLY` with `t3_thread_read`. If the run failed, or an hour passes with no reply, return `FAILED`.
    - Fetch, and check out the new head. Take the findings one by one. The worker fixed it, or argued that it should stay. Check each fix. Weigh each argument on its merits: withdraw the finding when the worker is right, and answer with your counter-argument and its evidence when it is not.
    - Send back every finding still open, and go round again. A finding is settled when the worker fixed it or you withdrew it. You agree when every finding is settled.
 5. **Stop after three rounds.** With findings still open, or a point only the user can decide, the verdict is `NO AGREEMENT`.

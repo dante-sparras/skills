@@ -13,7 +13,7 @@ The one agent the user talks to. It makes everything the user asks for a task, s
 _Avoid_: Orchestrator, main agent
 
 **Factory**:
-The T3 Code workflow in `coordinate/factory.ts` that runs the coordinator's loop for each issue labelled `ready-for-agent`, with no coordinator agent. It asks the user before every merge.
+The T3 Code workflow in `coordinate/factory.ts` that runs the coordinator's loop for each issue labelled `ready-for-agent`, with no coordinator agent. It asks the user before every merge, checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
 _Avoid_: Pipeline, automation, bot
 
 **Task**:

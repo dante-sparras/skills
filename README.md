@@ -65,7 +65,7 @@ The whole flow is four files: one per role, and the rules they share. The factor
 | [`coordinate/rules.md`](./skills/coordinate/rules.md) | All three | Trust, the AI marker, messages, git, PR tools, and how to run a skill |
 | [`coordinate/factory.md`](./skills/coordinate/factory.md) | You, and `setup-skills` | The factory: what it runs, how to install it, and how to retry or stop a run |
 
-The **factory** runs the same loop with no coordinator: a T3 Code workflow that starts a worker for each issue you label `ready-for-agent`, and asks you before every merge. [factory.md](./skills/coordinate/factory.md) says how it works, and `/setup-skills` installs it.
+The **factory** runs the same loop with no coordinator: a T3 Code workflow that starts a worker for each issue you label `ready-for-agent`, and asks you before every merge. It also checks each spec once its last ticket lands, and turns friction that repeats across runs into a guardrail issue it then builds. [factory.md](./skills/coordinate/factory.md) says how it works, and `/setup-skills` installs it.
 
 Every other skill is a tool a worker picks up when its task calls for it. None of them triggers on its own: an agent reads a skill only when the flow sends it there, and you can still type any of them. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo.
 

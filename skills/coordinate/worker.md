@@ -45,7 +45,7 @@ Your job is to open one PR, and to argue each of its reviewer's findings until t
    | When | Skill |
    | --- | --- |
    | Something is broken or slower, and the cause is unknown | `debug` |
-   | The coordinator named a repeat | `add-guardrail`, on the threads and PRs in your brief |
+   | Your task names a mistake that repeats | `add-guardrail`, on the threads and PRs your task names |
    | The task is to create the repo's verify skill | `create-verify-skill` |
    | Anything else | `tdd` |
 

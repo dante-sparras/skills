@@ -62,6 +62,8 @@ Your brief says `Coordinator: a T3 workflow` when the [factory](factory.md) runs
 
 - **Your result is data.** Return it with `t3_submit_output`, in the shape your turn asks for, in place of a final text. Its fields say what goes where. Your evidence goes in `summary`.
 - **Skip the notes to the coordinator.** Show the user your `SIZED` line with `send_to_user`. Where this file or your role's file says to send `BLOCKED` and wait, submit `BLOCKED` as your result instead. The factory parks the task for a person.
+- **A missing verify skill** is the one block the factory clears itself. Submit `BLOCKED` with `blockedOn: "verify-skill"`, after you push. The factory files the issue that creates the skill, and a later run continues your PR.
+- **Friction is data too.** Give each item a `kind` and a `target`, the repo path or command it is about, so the factory can count the same friction across runs.
 - **A wait on the user ends your turn, not your task.** End the turn without a result, and submit it from the turn where the user answers. When your thread has been quiet for two hours, T3 asks you for the result.
 
 A worker's turn that the reviewer starts is not asked for data. End it with `REPLY`, as `worker.md` says.

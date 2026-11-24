@@ -77,7 +77,7 @@ The flow lives in six files in `factory/`. [GLOSSARY.md](./GLOSSARY.md) defines 
 | [`factory/reviewer.md`](./skills/factory/reviewer.md) | The reviewer of a PR, or of a finished spec | How to review a PR and argue each finding with its worker, and how to check a spec |
 | [`factory/rules.md`](./skills/factory/rules.md) | Workers and reviewers | Trust, the AI marker, results, messages, git, PR tools, and how to run a skill |
 
-Every other skill is a tool an agent picks up when its work calls for it. None of them triggers on its own: an agent reads a skill only when the flow sends it there, and you can still type any of them. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo, which also installs the factory.
+Every other skill is a tool an agent picks up when its work calls for it. Four load on their own in any session, when what you ask for matches: `research`, `debug`, `pr`, and `writing-for-agents`. The rest wait until the flow sends an agent there, or you type their name. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo, which also installs the factory.
 
 ## Skills
 

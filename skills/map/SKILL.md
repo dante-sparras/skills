@@ -1,8 +1,10 @@
 ---
 name: map
-description: "Plan work too big for one agent session as a shared map of decision tickets on the issue tracker, then resolve them one per session until the way is clear. Use when a person brings a loose idea whose route is still unclear, or hands over an existing map to work through its next decision."
+description: "Chart work too big for one agent session as a map of decision tickets on the issue tracker. Use when a person brings a loose idea whose route is still unclear, or hands over an existing map to work through its next decision."
 disable-model-invocation: true
 ---
+
+# Map
 
 A loose idea has arrived, too big for one session and wrapped in fog: the way to the **destination** is not visible yet. Chart the way as a **map** on the issue tracker, then work its **decision tickets** one per session until the route is clear.
 
@@ -59,7 +61,7 @@ A ticket is a child issue of the map. Its body is the question, sized to one ses
 
 | Type | Driven by | Use when | Resolve by |
 | --- | --- | --- | --- |
-| `research` | Agent | A decision waits on a fact from outside the working directory: docs, a third-party API, a knowledge base | Starting a fresh `explorer` per [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role), as the `research` skill says. When it returns, record the ticket like any other |
+| `research` | Agent | A decision waits on a fact from outside the working directory: docs, a third-party API, a knowledge base | Starting a fresh `explorer` per [Resolve a role](../setup-skills/model-roles.md#resolve-a-role), as the `research` skill says. When it returns, record the ticket like any other |
 | `prototype` | Human and agent | The question is how it should look or behave | Making a cheap, rough thing to react to: an outline, a stub, UI or logic code. Keep it throwaway, on a branch outside main, linked from the ticket |
 | `interview` | Human and agent | The default: the decision needs a conversation | Calling the Skill tool with "interview" |
 | `task` | Either | Manual work blocks a decision: signing up for a service to judge its API, provisioning access, moving data to see its shape | Doing it alone where you can, and handing the user a precise checklist where you cannot. The answer records what was done and the facts later tickets depend on |

@@ -8,49 +8,26 @@
   },
   "plugins": [
     {
-      "name": "plan",
-      "description": "Settle what to build: interviews, maps, specs, tickets, triage, and research.",
+      "name": "dante-skills",
+      "description": "Hand the coordinator your tasks, and it plans, builds, tests, reviews, and lands each one.",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/interview",
-        "./skills/map",
-        "./skills/research",
-        "./skills/plan",
-        "./skills/triage"
-      ]
-    },
-    {
-      "name": "build",
-      "description": "Tools a worker builds with: tdd, debug, interrogate, pr-body, and new-verify-skill.",
-      "source": "./",
-      "strict": false,
-      "skills": [
+        "./skills/coordinate",
         "./skills/debug",
-        "./skills/interrogate",
-        "./skills/new-verify-skill",
-        "./skills/pr-body",
-        "./skills/tdd"
-      ]
-    },
-    {
-      "name": "codebase",
-      "description": "Keep the codebase good for agents to work in: deep modules, the domain glossary, and turning repeated mistakes into checks.",
-      "source": "./",
-      "strict": false,
-      "skills": [
         "./skills/deepen",
         "./skills/glossary",
-        "./skills/guardrail"
-      ]
-    },
-    {
-      "name": "setup",
-      "description": "Set the skills up in a repo, and write documents agents read.",
-      "source": "./",
-      "strict": false,
-      "skills": [
+        "./skills/guardrail",
+        "./skills/interrogate",
+        "./skills/interview",
+        "./skills/map",
+        "./skills/new-verify-skill",
+        "./skills/plan",
+        "./skills/pr-body",
+        "./skills/research",
         "./skills/setup-skills",
+        "./skills/tdd",
+        "./skills/triage",
         "./skills/writing-for-agents"
       ]
     }

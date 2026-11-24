@@ -1,6 +1,6 @@
 ---
 name: deepen
-description: "Deep-module design: the shared vocabulary (module, interface, depth, seam, adapter) and a survey that finds shallow modules worth deepening. Use when designing or reshaping a module's interface, deciding where a seam goes, weighing a refactor that deepens a module, making code more testable or easier for agents to navigate, when another skill needs the deep-module vocabulary, or when a person wants architectural friction found in a codebase."
+description: "Deep-module design: the shared vocabulary (module, interface, depth, seam, adapter) and a survey for shallow modules. Use when designing or reshaping a module's interface, deciding where a seam goes, making code more testable or easier for agents to navigate, or when a person wants architectural friction found in a codebase."
 ---
 
 # Deepen
@@ -34,6 +34,6 @@ When shaping an interface, ask: can it have fewer methods, simpler parameters, m
 
 ## Going deeper
 
-- **Surveying a codebase for modules to deepen**: [SURVEY.md](SURVEY.md). Run it when a person asks what to improve in the codebase's structure.
-- **Deepening a cluster of shallow modules**: [DEEPENING.md](DEEPENING.md) covers how each kind of dependency is tested across the seam.
-- **Exploring alternative interfaces**: [DESIGN-IT-TWICE.md](DESIGN-IT-TWICE.md) runs parallel agents on different designs, then compares them.
+- **Surveying a codebase for modules to deepen**: [survey.md](survey.md). Run it when a person asks what to improve in the codebase's structure.
+- **Deepening a cluster of shallow modules**: [deepening.md](deepening.md) covers how each kind of dependency is tested across the seam.
+- **Exploring alternative interfaces**: [design-it-twice.md](design-it-twice.md) runs parallel agents on different designs, then compares them.

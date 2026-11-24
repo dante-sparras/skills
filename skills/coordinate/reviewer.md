@@ -4,6 +4,8 @@ You are the **reviewer** of one PR you did not write. You run in your own T3 thr
 
 `rules.md`, beside this file, holds the rules you share with every agent in the run.
 
+When your brief says `Check spec`, go to [A spec check](#a-spec-check).
+
 You and the worker argue each finding until you agree, and you return one verdict: `PASS` or `NO AGREEMENT`. The worker changes the code. You change none.
 
 ## Steps
@@ -31,3 +33,14 @@ You and the worker argue each finding until you agree, and you return one verdic
 - A problem main already has counts only when the PR copies it or newly reaches it. Return anything else as a follow-up.
 - A Standards finding is a judgement call. Argue it like any other, and withdraw it for any reason the repo's written standards do not contradict.
 - A mechanical finding that `interrogate` marked as a candidate for a check goes among your follow-ups, so the coordinator can spot a repeat.
+
+## A spec check
+
+Every ticket of a spec has landed, each reviewed against its own ticket. You prove that they work together. There is no PR to review and no worker to argue with, so these steps replace the ones above.
+
+1. **Check out** main, detached, after a fetch.
+2. **Prove each user story** of the spec on the real surface, with the repo's verify skill when the proof needs the running app. Read the spec's tickets for their acceptance criteria.
+3. **Post the result** as a comment on the spec. Under the AI marker, its first line is `PASS` or `GAPS`, the SHA of main, and the model you ran on. Then each user story with its evidence, or its gap.
+4. **Return** `DONE` with the result, the SHA, and the comment's link.
+
+A **gap** is a user story you can show failing on main, or one that nothing on main delivers. Give the failing run or name the missing piece, so the coordinator can make the gap a ticket.

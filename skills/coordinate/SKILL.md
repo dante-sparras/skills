@@ -1,6 +1,6 @@
 ---
 name: coordinate
-description: "The one agent you talk to, for every task. Hand it bugs, features, issues, questions, and PRs to merge, one or several at once: it makes each one a task, starts a worker for each, sends a reviewer to every PR, and merges what passes. Use when a person wants work done in a repo and wants one agent to see all of it through until it ships, or hands over an issue, PR, spec, or map to pick up where it stands."
+description: "The entry point: the one agent you talk to, which sees every task through until it ships. Use when a person wants work done in a repo, one task or several at once, or hands over an issue, PR, spec, or map to pick up where it stands."
 disable-model-invocation: true
 ---
 
@@ -21,6 +21,7 @@ Read [rules.md](rules.md) before anything else. Every agent in a run follows it,
    | What you found | Tasks |
    | --- | --- |
    | A spec with tickets | One task per open ticket, on its open PR when it has one. A ticket waits while any of its blockers is open |
+   | A spec whose tickets have all landed | None. Start its [spec check](#a-spec-check) |
    | A map with a decision left | One task: its next decision |
    | A map with nothing left to decide | One task: write its spec |
    | An open PR | One task for that PR |
@@ -29,7 +30,7 @@ Read [rules.md](rules.md) before anything else. Every agent in a run follows it,
 
 3. **Start a worker** for every task that is not waiting, with a [brief](#briefs). Each worker gets its own checkout, and a thread the user can open and answer in. Keep at most four workers running at once, not counting those that wait on the user.
 
-You are done when every task has shipped, or the user dropped it. Shipped means landed, answered, handed to the user to merge, or parked on the tracker for a person: `needs-info`, `ready-for-human`, or `wontfix`.
+You are done when every task has shipped, or the user dropped it, and no spec check is still running. Shipped means landed, answered, handed to the user to merge, or parked on the tracker for a person: `needs-info`, `ready-for-human`, or `wontfix`.
 
 ## React
 
@@ -41,7 +42,7 @@ After that you act when something wakes you: a worker's note, a completion, a PR
 | `WAITING ON USER` | Tell the user which thread waits, and for what. Its questions are the user's to answer, not yours |
 | `QUESTION FOR COORDINATOR` | Answer from the request or the tracker. Ask the user when those do not settle it |
 | `BLOCKED` | Clear what it names. Then tell the agent, with the verify skill's path when that was the block |
-| `DONE` | Act on each thing it returned. A PR goes down [a PR's path](#a-prs-path). A spec, its tickets, or a map becomes tasks, as under **Start**. An issue triaged to `ready-for-agent` becomes a task, unless the user asked only for triage. An answer, or any other triage outcome, goes to the user |
+| `DONE` | Act on each thing it returned. A PR goes down [a PR's path](#a-prs-path). A spec, its tickets, or a map becomes tasks, as under **Start**. An issue triaged to `ready-for-agent` becomes a task, unless the user asked only for triage. An answer, or any other triage outcome, goes to the user. A spec check's result goes down [A spec check](#a-spec-check) |
 | `FAILED`, or a usage limit | Start a fresh agent once, with the same brief, the failed thread's link, and its branch and PR. Use the role's backup target after a usage limit. A second failure goes to the user |
 | A PR is reviewable | Review it |
 | A PR is landable | Land it |
@@ -77,8 +78,19 @@ A head that moves after a verdict gets a new reviewer, briefed with the earlier 
 
 - **You merge**, at the head the verdict names, by the method the repo's settings or contributing guide name, and by squash when they name none.
 - **A person merges** when the `### Landing` line under `## Agent skills` in the repo's `AGENTS.md` says so, or when `AGENTS.md`, the contributing guide, or branch protection reserves merging for a person. With no `### Landing` line, ask the user once, and say that `/setup-skills` records the answer. Give the user each PR as it becomes landable, in the order to merge, with its verdict and the tasks waiting behind it. Your watch wakes you at each merge.
-- **After a merge**, whoever made it: close the PR's ticket if merging did not, delete its branch if the forge did not, and start the tasks this landing unblocked. Close a spec when its last ticket lands.
+- **After a merge**, whoever made it: close the PR's ticket if merging did not, delete its branch if the forge did not, and start the tasks this landing unblocked. When a spec's last ticket lands, start its [spec check](#a-spec-check).
 - The user telling you to merge a named PR is their go for that PR, in either mode. Never give or bypass an approval the forge enforces.
+
+## A spec check
+
+Each ticket's PR was reviewed against its own ticket. A **spec check** proves the tickets work together: a reviewer proves every user story of the spec on main.
+
+Start one when a spec's last ticket lands, with a [brief](#briefs). It returns one of two results.
+
+| Result | Do |
+| --- | --- |
+| `PASS` | Close the spec |
+| `GAPS` | File each gap as a ticket of the spec, in `ready-for-agent` with the `bug` category, by the labels `docs/agents/triage-labels.md` gives. Each one is a task. Close the spec when they land: their PRs are reviewed like any other, so the spec gets no second check |
 
 ## Briefs
 
@@ -119,12 +131,13 @@ You may start the subagents your skills call for.
 - **Default branch** is the name after `origin/` in the output of `git symbolic-ref --short refs/remotes/origin/HEAD`. If that fails, run `git remote set-head origin --auto` first.
 - **Verify skill** lives at `.claude/skills/verify-<app>/`.
 - **A panel**: add the line `Use a panel.` to a reviewer's brief when the user asked for one.
+- **A spec check** takes the reviewer's brief, with `Check spec <link>. Every ticket of it has landed.` in place of the `Review PR` line, and without the Task, Worker thread, Earlier verdict, and Rulings lines.
 
 ## T3 calls
 
 | To | Call |
 | --- | --- |
-| Start a worker | `delegate_task` with `isolation: "worktree"`, `role: "implementation"`, a `title` that names the task, the `worker` target from [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role), and the brief as `task` |
+| Start a worker | `delegate_task` with `isolation: "worktree"`, `role: "implementation"`, a `title` that names the task, the `worker` target from [Resolve a role](../setup-skills/model-roles.md#resolve-a-role), and the brief as `task` |
 | Start a reviewer | The same, with `role: "review"` and the `reviewer` target |
 | Read a completion | `task_status` |
 | Message a worker or a reviewer | `t3_thread_send`, as [rules.md](rules.md) says |

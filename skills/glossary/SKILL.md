@@ -13,7 +13,7 @@ Build and sharpen the project's domain model as you design: challenge terms, inv
 - **Several contexts**: `GLOSSARY-MAP.md` at the root points to each context's own `GLOSSARY.md`. Infer which context the topic belongs to, and ask when it is unclear.
 - **Neither file exists**: create a root `GLOSSARY.md` when the first term settles.
 
-[GLOSSARY-FORMAT.md](./GLOSSARY-FORMAT.md) has the format for both files.
+[glossary-format.md](./glossary-format.md) has the format for both files.
 
 ## During the session
 

@@ -1,6 +1,6 @@
 ---
 name: triage
-description: "Move issues and external PRs through a state machine of triage roles: categorise, verify, interview when needed, and write agent-ready briefs. Use when a person asks what on the tracker needs attention, wants a specific issue or PR triaged, or wants one moved to a state such as ready-for-agent."
+description: "Move issues and external PRs through a state machine of triage roles. Use when a person asks what on the tracker needs attention, wants a specific issue or PR triaged, or wants one moved to a state such as ready-for-agent."
 disable-model-invocation: true
 ---
 
@@ -72,7 +72,7 @@ List the `ready-for-agent` issues an agent can start now:
 
    | State | Do |
    | --- | --- |
-   | `ready-for-agent` | Post an agent brief, per [AGENT-BRIEF.md](AGENT-BRIEF.md) |
+   | `ready-for-agent` | Post an agent brief, per [agent-brief.md](agent-brief.md) |
    | `ready-for-human` | Post a brief of the same shape, and say why it cannot be delegated: a judgment call, external access, a design decision, manual testing |
    | `needs-info` | Post triage notes from the template below |
    | `needs-triage` | Apply the role, and comment when there is partial progress to keep |

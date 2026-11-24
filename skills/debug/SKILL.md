@@ -1,6 +1,6 @@
 ---
 name: debug
-description: "Diagnosis loop for hard bugs and performance regressions: build a feedback loop that goes red, reproduce, minimise, hypothesise, instrument, then fix with a regression test. Use when asked to diagnose or debug something, when something throws, fails, or gives wrong results and the cause is unknown, or when something got slower."
+description: "Diagnosis loop for hard bugs and performance regressions. Use when asked to diagnose or debug something, when something throws, fails, or gives wrong results and the cause is unknown, or when something got slower."
 ---
 
 # Debug

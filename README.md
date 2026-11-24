@@ -1,6 +1,12 @@
 # skills
 Dante's agent skills
 
+## Quick start
+
+1. Install every skill: `npx skills add dante-sparras/skills`.
+2. Type `/setup-skills` once in each repo you work in.
+3. Type `/coordinate` and hand it your tasks.
+
 ## How the skills fit together
 
 Start with [`/coordinate`](./skills/coordinate/SKILL.md) and hand it your tasks, one or several at once: bugs, features, issues, questions, PRs to merge. The agent you typed it to becomes the **coordinator**: the one agent you talk to, whose job is that every task ships.
@@ -10,7 +16,7 @@ One rule runs it all: **one task, one worker, one PR.** The skills are written f
 1. **The coordinator makes each thing a task** and starts a worker for it.
 2. **The worker sizes its own task**, and the coordinator tells you how. If it fits in one PR, the worker builds it. It asks you about a single open decision in its own thread. A question gets an answer, and work that needs talking through first, such as triage or a map, happens with you there too. If the task is more than one PR, the worker interviews you there, writes a spec and its tickets, and hands the tickets back. Each ticket becomes a new task.
 3. **The coordinator sends a reviewer to each PR**, once its checks are green. The reviewer and the worker argue each finding until they agree: the worker fixes it, or the reviewer withdraws it. After three rounds without agreement, the coordinator brings both positions to you.
-4. **The coordinator merges** once the checks are green again, or hands you a merge list when merging is yours.
+4. **The coordinator merges** once the checks are green again, or hands you a merge list when merging is yours. When a spec's last ticket lands, a reviewer proves the spec's user stories on main, and each gap it finds becomes a ticket.
 5. **Anything that comes up becomes a new task**: a bug nobody owns, a teammate's review, a mistake that repeats.
 
 ```mermaid
@@ -43,6 +49,7 @@ sequenceDiagram
         You->>W: Answers, and approval of the tickets
         W->>C: A spec and its tickets
         Note over C: Each ticket becomes a new task, from step 2
+        Note over C,R: When the last ticket lands,<br/>a reviewer proves the spec on main
     end
 ```
 
@@ -54,7 +61,7 @@ The whole flow is four files: one per role, and the rules they share. [GLOSSARY.
 | --- | --- | --- |
 | [`coordinate/SKILL.md`](./skills/coordinate/SKILL.md) | The coordinator | How to take in tasks, start workers, react to what comes back, and review and land PRs |
 | [`coordinate/worker.md`](./skills/coordinate/worker.md) | Every worker | The four paths for a task: answer, talk it through, build, or split |
-| [`coordinate/reviewer.md`](./skills/coordinate/reviewer.md) | The reviewer of a PR | How to review it, and argue each finding with its worker |
+| [`coordinate/reviewer.md`](./skills/coordinate/reviewer.md) | The reviewer of a PR, or of a finished spec | How to review a PR and argue each finding with its worker, and how to check a spec once its tickets have landed |
 | [`coordinate/rules.md`](./skills/coordinate/rules.md) | All three | Trust, the AI marker, messages, git, PR tools, and how to run a skill |
 
 Every other skill is a tool a worker picks up when its task calls for it. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo.
@@ -84,11 +91,17 @@ Every skill lives at `skills/<name>/`, the same layout it installs to.
 
 ## Install
 
-Install every skill into your agent's skills folder, side by side: `<skills folder>/<name>/`. `npx skills add` does this, and so does linking each `skills/<name>/` folder by hand.
+`npx skills add dante-sparras/skills` puts every skill in your agent's skills folder, side by side: `<skills folder>/<name>/`. Linking each `skills/<name>/` folder by hand does the same.
 
-The skills reach each other by relative paths such as `../tdd/SKILL.md` and `../setup-skills/MODEL-ROLES.md`, so a skill installed alone loses them.
+Claude Code can also install the repo as one plugin that holds every skill:
 
-The plugin manifest does not list `coordinate`, so a Claude plugin install leaves it out. Add it with `npx skills add` or a link.
+```
+/plugin install dante-skills --marketplace dante-sparras/skills
+```
+
+Install all of them. The skills reach each other by relative paths such as `../tdd/SKILL.md` and `../setup-skills/model-roles.md`, so a skill installed alone loses them.
+
+## Checks
 
 Run `python3 scripts/check.py` before you push, or `python scripts/check.py` on Windows. CI runs the same command.
 

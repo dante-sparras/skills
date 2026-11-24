@@ -217,6 +217,7 @@ CASES = (
     + [["approvalOf", pr, HEAD] for _, pr, _ in APPROVALS]
     + [["reviewWait", checks] for checks, _ in WAITS]
     + [["readyNote", "aaa111bbb222"], ["readyBrief", "https://x/pull/11", "https://x/pull/11#issuecomment-1"]]
+    + [["releaseBrief", "https://x/pull/11", "merged"]]
 )
 
 
@@ -251,6 +252,7 @@ class Factory(unittest.TestCase):
         cls.waits = [next(results) for _ in WAITS]
         cls.ready_note = next(results)
         cls.ready_brief = next(results)
+        cls.release_brief = next(results)
 
     def test_registers_every_workflow(self):
         # The factory skill, factory.md and the factory's own `start` calls name these. Rename them together.
@@ -352,6 +354,11 @@ class Factory(unittest.TestCase):
         for line in ["https://x/pull/11", "issuecomment-1", "`approved` label", "Never add that label yourself", "unsettle"]:
             with self.subTest(line=line):
                 self.assertIn(line, self.ready_brief)
+
+    def test_a_thread_leaves_the_users_list_once_its_pr_needs_them_no_more(self):
+        for line in ["https://x/pull/11, merged", '`action: "settle"`', "Do nothing else"]:
+            with self.subTest(line=line):
+                self.assertIn(line, self.release_brief)
 
     def test_no_question_asks_whether_to_merge(self):
         text = FACTORY.read_text(encoding="utf-8")

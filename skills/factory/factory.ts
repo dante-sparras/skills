@@ -332,7 +332,14 @@ const readyBrief = (pr, verdict) =>
     `The reviewer passed your PR, ${pr}, and its checks are green. It now waits for the user's review.`,
     `Tell the user so in this thread, in three lines at most: the PR's link, the verdict's link (${verdict ?? "on the PR"}), and that the factory merges the PR once they add the \`${LABELS.approved}\` label to it. A comment or a request for changes on the PR comes back to you.`,
     "Change no files, and post nothing on GitHub. Never add that label yourself: it is the user's review.",
-    'This once, leave the thread in the user\'s list: call `t3_thread_organize` with `action: "unsettle"`. T3 settles it when the PR merges.',
+    'This once, leave the thread in the user\'s list: call `t3_thread_organize` with `action: "unsettle"`. The factory has you settle it once the PR merges.',
+  ].join("\n");
+
+/** The turn that takes a worker's thread out of the user's list, once its PR needs them no more. */
+const releaseBrief = (pr, why) =>
+  [
+    `Your PR, ${pr}, ${why}. Nothing is left for the user to do on it.`,
+    'Say so in one line, then settle this thread with `t3_thread_organize` and `action: "settle"`. Do nothing else.',
   ].join("\n");
 
 /** Whether a run may merge without asking: the repo allows it, and the reviewer passed a two-way door. */
@@ -836,7 +843,7 @@ const afterMerge = (config, issue) =>
 const ship = workflow(
   "skills-factory-ship",
   {
-    version: 11,
+    version: 12,
     payload: ShipInput,
     // The issue leaves the queue however the run ends, unless the run parked it to wait on
     // another issue. A run that did not finish moves it to needs-triage, so a person sees it the
@@ -1085,6 +1092,8 @@ const ship = workflow(
           yield* start(dispatch, { scheduledAt: new Date().toISOString(), ending: `${shipOwn(config)}${issue.number}/` }, { key: `pass/${run.id}` });
         }),
       );
+      // The worker's thread stayed in the user's list while its PR waited for them. It leaves now.
+      yield* agent.try("release", { thread: workerThread, brief: releaseBrief(pr.url, "merged"), timeout: "15 minutes" });
       return { pr: pr.url, merged: how, asked };
     });
 
@@ -1194,12 +1203,16 @@ const ship = workflow(
           }
           waited++;
           if (waited > MAX_REVIEW_CHECKS) {
+            yield* agent.try(`release-${pass}`, { thread: workerThread, brief: releaseBrief(pr.url, "waited seven days for a review, and the factory stopped waiting"), timeout: "15 minutes" });
             return yield* halt(`nobody reviewed ${pr.url} within 7 days. It stays open: put \`${LABELS.ready}\` back on the issue to pick it up again.`);
           }
           // A merge or a close by hand ends the wait early. Otherwise the next pass looks again.
           const moved = yield* pullRequests.wait(`await-review-${pass}`, pr, { until: "merged", timeout: reviewWait(waited) });
           if (Option.isSome(moved) && moved.value.state === "merged") return yield* landed("by the user");
-          if (Option.isSome(moved) && moved.value.state === "closed") return yield* halt(`${pr.url} was closed outside the factory.`);
+          if (Option.isSome(moved) && moved.value.state === "closed") {
+            yield* agent.try(`closed-${pass}`, { thread: workerThread, brief: releaseBrief(pr.url, "was closed"), timeout: "15 minutes" });
+            return yield* halt(`${pr.url} was closed outside the factory.`);
+          }
           continue;
         }
       }

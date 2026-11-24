@@ -1,6 +1,6 @@
 ---
 name: factory
-description: "Hand work to the factory: turn a change, a bug, or a feature the user describes into issues the factory builds, reviews, and lands. Use when a person wants something done in a repo, one thing or several, or names an issue, PR, spec, or map to pick up where it stands."
+description: "Hand work to the factory: turn a change, a bug, or a feature the user describes into issues the factory builds, reviews, and lands. Use when a person wants something done in a repo, one thing or several, or names an issue, PR, or spec to pick up where it stands."
 disable-model-invocation: true
 ---
 
@@ -12,15 +12,15 @@ The factory gives each open issue in `ready-for-agent` to a worker who sees the 
 
 1. **Check the setup.** Stop and say so when `/setup-skills` has not landed in this repo: main lacks `docs/agents/issue-tracker.md` or `docs/agents/triage-labels.md`, which `git cat-file -e origin/<default branch>:<path>` tells you. Stop too when the factory has no settings for the repo: `t3 workflow store get skills-factory/projects/<owner>/<repo>` prints them. Follow **Trust** and **The AI marker** in [rules.md](rules.md).
 
-2. **Take in the work.** Make one item for each outcome the user asked for, and say the items back, one line each. Read a reference before you act on it: the issue, PR, spec, or map, with its comments, labels, sub-issues, blockers, and linked PRs.
+2. **Take in the work.** Make one item for each outcome the user asked for, and say the items back, one line each. Read a reference before you act on it: the issue, PR, or spec, with its comments, labels, sub-issues, blockers, and linked PRs.
 
    | What the user brings | Do |
    | --- | --- |
    | A question about the code | Answer it, each claim tied to a `path:line`, a commit, or a link, with what you inferred marked. File nothing |
    | A bug or change that fits one PR, with every decision settled | File it in `ready-for-agent`, with an agent brief as `triage` writes one. Reproduce a bug first, so the brief carries the steps |
    | An issue nobody has triaged, or a question about what needs attention | Run `triage` with the user |
-   | Work with a decision still open, or work bigger than one PR | Run `interview`, then `plan`, which files the tickets in `ready-for-agent` |
-   | A loose idea whose route is unclear, or a map | Run `map` with the user. A map with nothing left to decide gets its spec, as above |
+   | Work with a decision still open, a loose idea, or work bigger than one PR | Run `interview`, then `plan`, which files the tickets in `ready-for-agent`. Work that turns out to fit one PR gets a single issue, as above |
+   | A question the code cannot answer, which needs docs, a third-party API, or a standard | Run `research`, and give the user its findings |
    | A written spec or plan without tickets | Run `plan` on it |
    | An open PR with no issue | File an issue in `ready-for-agent` whose agent brief says what is left to do on that PR |
    | What to improve in the codebase's structure | Run the survey in `deepen-modules` |

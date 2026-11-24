@@ -56,10 +56,6 @@ _Avoid_: Reviewers, jury
 Something worth doing that is outside an agent's task. It goes in the agent's result, and the factory files it as an issue in `needs-triage`.
 _Avoid_: TODO, nice-to-have
 
-**Map**:
-The issue the `map` skill keeps for work too big for one session. Its children are decision tickets, each a question to settle, not work to build.
-_Avoid_: Roadmap, epic
-
 **Brief**:
 The task text the factory starts a worker or a reviewer with. An agent brief is a different thing: the comment `triage` posts on an issue.
 _Avoid_: Prompt, instructions

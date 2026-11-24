@@ -70,7 +70,7 @@ Read `GLOSSARY.md` at the repo root before exploring, or each glossary that `GLO
 | `issue-tracker.md` | [issue-tracker-github.md](./issue-tracker-github.md), or the user's description for another tracker | Always |
 | `triage-labels.md` | [triage-labels.md](./triage-labels.md) | Always |
 
-**Labels**, on GitHub: create each one the tracker lacks with `gh label create`. That is the configured labels, and `map`, `map:research`, `map:prototype`, `map:interview`, and `map:task`.
+**Labels**, on GitHub: create each one the tracker lacks with `gh label create`. That is the configured labels.
 
 **Land the files**: commit them on a `chore/setup-skills` branch, open a PR, and merge it or hand it to the user. Workers start from the default branch, so until this lands they see none of it.
 

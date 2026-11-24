@@ -65,4 +65,4 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
 
 ## Where issues come from
 
-The factory builds only what an issue already settles, one PR per issue. Type `/factory` to hand over work in conversation: it answers questions itself, and turns the rest into issues the factory can build, through `triage`, `interview`, `plan`, or `map`.
+The factory builds only what an issue already settles, one PR per issue. Type `/factory` to hand over work in conversation: it answers questions itself, and turns the rest into issues the factory can build, through `triage`, `interview`, or `plan`.

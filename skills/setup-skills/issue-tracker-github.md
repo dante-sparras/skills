@@ -34,14 +34,3 @@ GitHub shares one number space across issues and PRs, so a bare `#42` may be eit
 
 - **"Publish to the issue tracker"**: create a GitHub issue.
 - **"Fetch the ticket"**: read it as in **Read an issue** above.
-
-## Map operations
-
-Used by `/map`. The **map** is a single issue with **child** issues as tickets.
-
-- **Map**: a single issue labelled `map`, holding the Notes / Decisions-so-far / Fog body. `gh issue create --label map`.
-- **Child ticket**: an issue linked to the map as a GitHub sub-issue (see **Make an issue a sub-issue of a parent**). Where sub-issues aren't enabled, add the child to a task list in the map body and put `Part of #<map>` at the top of the child body. Labels: `map:<type>` (`research`/`prototype`/`interview`/`task`). Once claimed, the ticket is assigned to the driving dev.
-- **Blocking**: see **Blocking** under Conventions.
-- **Frontier query**: list the map's open children (`gh api --paginate repos/<owner>/<repo>/issues/<map>/sub_issues --jq '.[] | select(.state == "open")'`, or the map's task list where sub-issues are off), drop any with an open blocker (see **Count open blockers**, or an open issue in the `Blocked by` line) or an assignee. First in map order wins.
-- **Claim**: `gh issue edit <n> --add-assignee @me`, the session's first write.
-- **Resolve**: `gh issue comment <n> --body "<answer>"`, then `gh issue close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.

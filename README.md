@@ -59,16 +59,28 @@ The whole flow is four files: one per role, and the rules they share. [GLOSSARY.
 
 Every other skill is a tool a worker picks up when its task calls for it. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo.
 
-## Layout
+## Skills
 
-Every skill lives at `skills/<name>/`, the same layout it installs to. The [skills CLI](https://skills.sh) shows them in four groups, declared in `.claude-plugin/marketplace.json`. The entry point, `coordinate`, is in no group.
+Every skill lives at `skills/<name>/`, the same layout it installs to.
 
-| Group | Skills |
+| Skill | What it does |
 | --- | --- |
-| `plan` | interview, map, plan, triage, research |
-| `build` | tdd, debug, interrogate, pr-body, new-verify-skill |
-| `codebase` | deepen, glossary, guardrail |
-| `setup` | setup-skills, writing-for-agents |
+| [coordinate](./skills/coordinate/SKILL.md) | The entry point. Makes each request a task, starts a worker for it, and ships it |
+| [debug](./skills/debug/SKILL.md) | Finds the cause of a hard bug or a slowdown, then fixes it with a regression test |
+| [deepen](./skills/deepen/SKILL.md) | The deep-module vocabulary, and a survey that finds modules worth deepening |
+| [glossary](./skills/glossary/SKILL.md) | Keeps the project's domain terms in `GLOSSARY.md` |
+| [guardrail](./skills/guardrail/SKILL.md) | Turns a mistake agents repeat into a check that fails |
+| [interrogate](./skills/interrogate/SKILL.md) | Adversarial review of a diff by models from different families |
+| [interview](./skills/interview/SKILL.md) | Questions you in rounds until a plan or decision is settled |
+| [map](./skills/map/SKILL.md) | Charts work too big for one session as decision tickets |
+| [new-verify-skill](./skills/new-verify-skill/SKILL.md) | Generates a `verify-<app>` skill that drives the real app |
+| [plan](./skills/plan/SKILL.md) | Turns a conversation into a spec and its tickets |
+| [pr-body](./skills/pr-body/SKILL.md) | Writes a PR description: a summary diagram, evidence, and merge danger |
+| [research](./skills/research/SKILL.md) | Investigates a question against primary sources in the background |
+| [setup-skills](./skills/setup-skills/SKILL.md) | Sets up a repo's tracker, labels, and model roles for these skills |
+| [tdd](./skills/tdd/SKILL.md) | Test-first for bug fixes and core logic, and proof for everything else |
+| [triage](./skills/triage/SKILL.md) | Moves issues and outside PRs through triage states |
+| [writing-for-agents](./skills/writing-for-agents/SKILL.md) | Reference for writing skills and other docs that agents read |
 
 ## Install
 
@@ -76,7 +88,7 @@ Install every skill into your agent's skills folder, side by side: `<skills fold
 
 The skills reach each other by relative paths such as `../tdd/SKILL.md` and `../setup-skills/MODEL-ROLES.md`, so a skill installed alone loses them.
 
-The manifest lists only the four groups, so a Claude plugin install leaves out `coordinate`. Add it with `npx skills add` or a link.
+The plugin manifest does not list `coordinate`, so a Claude plugin install leaves it out. Add it with `npx skills add` or a link.
 
 Run `python3 scripts/check.py` before you push, or `python scripts/check.py` on Windows. CI runs the same command.
 
@@ -84,23 +96,18 @@ Run `python3 scripts/check.py` before you push, or `python scripts/check.py` on 
 
 The skills below started as copies of [mattpocock/skills](https://github.com/mattpocock/skills) at commit [`5863806dd4e15c63174bee4e7515a4256792ecfa`](https://github.com/mattpocock/skills/tree/5863806dd4e15c63174bee4e7515a4256792ecfa) and have been edited since. Each one lives in `skills/<name>/`.
 
-### Engineering
-
-- [interrogate](./skills/interrogate/SKILL.md)
-- [deepen](./skills/deepen/SKILL.md)
 - [debug](./skills/debug/SKILL.md)
+- [deepen](./skills/deepen/SKILL.md)
 - [glossary](./skills/glossary/SKILL.md)
+- [interrogate](./skills/interrogate/SKILL.md)
+- [interview](./skills/interview/SKILL.md)
+- [map](./skills/map/SKILL.md)
+- [plan](./skills/plan/SKILL.md)
 - [pr-body](./skills/pr-body/SKILL.md)
 - [research](./skills/research/SKILL.md)
 - [setup-skills](./skills/setup-skills/SKILL.md)
 - [tdd](./skills/tdd/SKILL.md)
-- [plan](./skills/plan/SKILL.md)
 - [triage](./skills/triage/SKILL.md)
-- [map](./skills/map/SKILL.md)
-
-### Productivity
-
-- [interview](./skills/interview/SKILL.md)
 - [writing-for-agents](./skills/writing-for-agents/SKILL.md)
 
 ### pstack

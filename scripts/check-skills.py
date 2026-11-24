@@ -24,6 +24,16 @@ DISPLAY_NAME = re.compile(r"^\s*display_name:\s*[\"']?(.*?)[\"']?\s*$", re.M)
 REFERENCE_NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*\.md$")
 REPORT_HEADING = re.compile(r"^#{1,6}\s+(?:\d+\.\s+)?(?:Reply|Report|Reporting|Output)\s*$", re.I)
 
+# The skills an agent may load on its own, each with why. Every other skill is user-invoked.
+# A skill belongs here when a person asks for it in plain words outside the factory, and it
+# does no harm when it loads unasked: it files nothing, labels nothing, and starts no long job.
+MODEL_INVOKED = {
+    "debug": "A crash or a slowdown comes up in any session, and the skill is what stops an agent from guessing.",
+    "pr": "Opening a PR comes up in any session, and the skill only shapes the PR's title and body.",
+    "research": "A person asks for research in plain words, and its only output is a notes file.",
+    "writing-for-agents": "It is reference, wanted whenever a skill or an AGENTS.md is edited.",
+}
+
 
 def find_skill_dirs(skills_root):
     """Every skill folder: skills/<name>/."""
@@ -143,14 +153,26 @@ def skill_problems(skill_dir, user_invoked):
         )
 
 
-def invocation_problems(skill_dir, user_invoked):
-    """Yield (path, line, problem) for a skill an agent could trigger on its own."""
-    if skill_dir.name not in user_invoked:
+def invocation_problems(skill_dir, user_invoked, model_invoked=MODEL_INVOKED):
+    """Yield (path, line, problem) where a skill's invocation and MODEL_INVOKED disagree."""
+    name = skill_dir.name
+    if name not in user_invoked and name not in model_invoked:
         yield skill_dir / "SKILL.md", 2, (
             "can be triggered by an agent on its own, at the wrong moment. Add "
-            "disable-model-invocation: true to its frontmatter. The flow sends agents to each "
-            "skill's file, and a person can still type its name."
+            "disable-model-invocation: true to its frontmatter: the flow sends agents to each "
+            "skill's file, and a person can still type its name. If an agent must reach it "
+            "unasked, list it in MODEL_INVOKED in scripts/check-skills.py with the reason."
         )
+    if name in user_invoked and name in model_invoked:
+        yield skill_dir / "SKILL.md", 2, (
+            "sets disable-model-invocation: true, but MODEL_INVOKED in scripts/check-skills.py "
+            "lists it. Remove the line from its frontmatter, or remove the skill from MODEL_INVOKED."
+        )
+
+
+def stale_model_invoked(skills, model_invoked=MODEL_INVOKED):
+    """Yield each name in MODEL_INVOKED that no skill folder has."""
+    return sorted(name for name in model_invoked if name not in skills)
 
 
 def shape_problems(skill_dir):
@@ -262,6 +284,12 @@ def main():
 
     for path, problem in layout_problems(skills_root):
         report(path, 1, problem)
+
+    for name in stale_model_invoked(skills):
+        report(skills_root / name / "SKILL.md", 1, (
+            "does not exist, but MODEL_INVOKED in scripts/check-skills.py lists the skill. "
+            "Remove it there, or fix the name."
+        ))
 
     for problem in manifest_problems(repo, skill_dirs):
         report(repo / MANIFEST, 1, problem)

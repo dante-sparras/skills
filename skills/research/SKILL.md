@@ -1,7 +1,6 @@
 ---
 name: research
-description: "Research a question against primary sources, in the background. Use when the user wants a topic researched, docs or API facts gathered before a decision, or reading legwork run while work continues."
-disable-model-invocation: true
+description: "Research a question against primary sources, in the background. Use when the user asks to research a topic, or when a decision waits on facts the repo's code cannot give: a library's docs, a third-party API, or a standard."
 ---
 
 # Research

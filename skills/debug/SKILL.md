@@ -1,7 +1,6 @@
 ---
 name: debug
 description: "Diagnosis loop for hard bugs and performance regressions. Use when asked to diagnose or debug something, when something throws, fails, or gives wrong results and the cause is unknown, or when something got slower."
-disable-model-invocation: true
 ---
 
 # Debug

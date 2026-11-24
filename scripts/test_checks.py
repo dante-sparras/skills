@@ -144,12 +144,27 @@ class Wiring(unittest.TestCase):
         self.write("skills/alpha/agents/openai.yaml", "policy:\n  allow_implicit_invocation: false\n")
         self.assertEqual(list(wiring.skill_problems(skill, {"alpha"})), [])
 
-    def test_every_skill_is_user_invoked(self):
+    def test_skill_is_user_invoked_unless_listed(self):
         skill = self.skill("alpha")
-        self.assertEqual(list(wiring.invocation_problems(skill, {"alpha"})), [])
-        problems = list(wiring.invocation_problems(skill, set()))
+        self.assertEqual(list(wiring.invocation_problems(skill, {"alpha"}, {})), [])
+        self.assertEqual(list(wiring.invocation_problems(skill, set(), {"alpha": "why"})), [])
+        problems = list(wiring.invocation_problems(skill, set(), {}))
         self.assertEqual(len(problems), 1)
-        self.assertIn("disable-model-invocation: true", problems[0][2])
+        self.assertIn("MODEL_INVOKED", problems[0][2])
+
+    def test_listed_skill_must_drop_the_flag(self):
+        skill = self.skill("alpha")
+        problems = list(wiring.invocation_problems(skill, {"alpha"}, {"alpha": "why"}))
+        self.assertEqual(len(problems), 1)
+        self.assertIn("Remove the line", problems[0][2])
+
+    def test_listed_skill_must_exist(self):
+        skills = {"alpha": self.skill("alpha")}
+        self.assertEqual(wiring.stale_model_invoked(skills, {"alpha": "why", "gone": "why"}), ["gone"])
+
+    def test_every_listed_skill_gives_a_reason(self):
+        for name, reason in wiring.MODEL_INVOKED.items():
+            self.assertTrue(reason.strip(), name)
 
     def shaped(self, body, display="Alpha"):
         self.write("skills/alpha/SKILL.md", f'---\nname: alpha\ndescription: "X. Use when y."\n---\n\n{body}')

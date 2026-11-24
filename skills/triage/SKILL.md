@@ -67,7 +67,7 @@ The factory starts each `ready-for-agent` issue within ten minutes of its last b
 
    | State | Do |
    | --- | --- |
-   | `ready-for-agent` | Post an agent brief, per [agent-brief.md](agent-brief.md). Only work that fits one PR gets this state: for anything bigger, run [interview](../interview/SKILL.md) and [to-spec-and-tickets](../to-spec-and-tickets/SKILL.md), whose tickets go to `ready-for-agent` |
+   | `ready-for-agent` | Post an agent brief, per [agent-brief.md](agent-brief.md). Only work that fits one PR gets this state: for anything bigger, run [interview](../interview/SKILL.md) and [plan](../plan/SKILL.md), whose tickets go to `ready-for-agent` |
    | `ready-for-human` | Post a brief of the same shape, and say why it cannot be delegated: a judgment call, external access, a design decision, manual testing |
    | `needs-info` | Post triage notes from the template below |
    | `needs-triage` | Apply the role, and comment when there is partial progress to keep |

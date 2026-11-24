@@ -14,9 +14,9 @@ You need T3 Code with **Settings → Labs → Workflows** on, a GitHub repo, and
 
 Work moves in two halves: you shape it into issues with an agent, and the **factory** ships each issue on its own.
 
-1. **Shape.** Type [`/factory`](./skills/factory/SKILL.md) and say what you want done, one thing or several: bugs, features, issues, questions, PRs. The agent you typed it to answers questions itself. Everything else becomes an issue in `ready-for-agent` that an agent can build in one PR, through `triage`, `interview`, `to-spec-and-tickets`, or `map`, with you in the conversation.
+1. **Shape.** Type [`/factory`](./skills/factory/SKILL.md) and say what you want done, one thing or several: bugs, features, issues, questions, PRs. The agent you typed it to answers questions itself. Everything else becomes an issue in `ready-for-agent` that an agent can build in one PR, through `triage`, `interview`, `plan`, or `map`, with you in the conversation.
 2. **Ship.** The [factory](./skills/factory/factory.md) is a T3 Code workflow. Every ten minutes it starts a **worker** for each ready issue whose blockers are closed, up to a limit per repo. The worker opens a PR, and wakes again for a red check, a conflict, or a collaborator's comment. Once the checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges.
-3. **Learn.** When a spec's last ticket lands, a reviewer proves the spec's user stories on main, and each gap becomes a ticket. Friction that repeats across runs becomes an issue the factory fixes with `add-guardrail`. Follow-ups land in `needs-triage`, ready for step 1.
+3. **Learn.** When a spec's last ticket lands, a reviewer proves the spec's user stories on main, and each gap becomes a ticket. Friction that repeats across runs becomes an issue the factory fixes with the `correct` skill. Follow-ups land in `needs-triage`, ready for step 1.
 
 ### What waits on you
 
@@ -93,13 +93,13 @@ Every skill lives at `skills/<name>/`, the same layout it installs to. The skill
 | | [map](./skills/map/SKILL.md) | Charts work too big for one session as decision tickets |
 | | [research](./skills/research/SKILL.md) | Investigates a question against primary sources in the background |
 | | [glossary](./skills/glossary/SKILL.md) | Keeps the project's domain terms in `GLOSSARY.md` |
-| **Plan**: write it down as a spec and tickets | [to-spec-and-tickets](./skills/to-spec-and-tickets/SKILL.md) | Turns a conversation into a spec and its tickets |
+| **Plan**: write it down as a spec and tickets | [plan](./skills/plan/SKILL.md) | Turns a conversation into a spec and its tickets |
 | **Build**: make the change and prove it works | [tdd](./skills/tdd/SKILL.md) | Test-first for bug fixes and core logic, and proof for everything else |
 | | [debug](./skills/debug/SKILL.md) | Finds the cause of a hard bug or a slowdown, then fixes it with a regression test |
 | | [deepen-modules](./skills/deepen-modules/SKILL.md) | The deep-module vocabulary, and a survey that finds modules worth deepening |
-| **Review**: get the change reviewed | [to-pr](./skills/to-pr/SKILL.md) | Writes a PR description: a summary diagram, evidence, and merge danger |
-| | [review-changes](./skills/review-changes/SKILL.md) | Adversarial review of a diff by models from different families |
-| **Learn**: stop a mistake from repeating | [add-guardrail](./skills/add-guardrail/SKILL.md) | Turns a mistake agents repeat into a check that fails |
+| **Review**: get the change reviewed | [pr](./skills/pr/SKILL.md) | Writes a PR description: a summary diagram, evidence, and merge danger |
+| | [review-pr](./skills/review-pr/SKILL.md) | Adversarial review of a PR against its ticket and spec, by models from different families |
+| **Learn**: stop a mistake from repeating | [correct](./skills/correct/SKILL.md) | Turns a mistake agents repeat into a check that fails |
 | | [writing-for-agents](./skills/writing-for-agents/SKILL.md) | Reference for writing skills and other docs that agents read |
 
 ## Install

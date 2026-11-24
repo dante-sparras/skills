@@ -12,9 +12,9 @@ You and the worker argue each finding until you agree, and you return one verdic
 
 1. **Check out** the PR's head, detached, after a fetch.
 2. **Prove** the task's behavior on the real surface. Drive the running app with the repo's verify skill when the proof needs it. CI already ran the repo's checks, so rerun them only when the PR has no CI.
-3. **Run `review-changes`** on the diff, with main as the fixed point, the PR's ticket or task as the spec, and the PR's purpose as the intent. You are its first seat, so remove your repro files before you move to another head.
+3. **Run `review-pr`** on the PR, and pass it the task from your brief. It finds the ticket and spec itself. You are its first seat, so remove your repro files before you move to another head.
    - **A panel.** Ask for one when the change is a one-way door, judged by you and not by the PR's own Door line. Otherwise ask for a review without one.
-   - **An earlier verdict.** When your brief links one, review only what changed since the head it names. If that head is an ancestor of the new one, give it to `review-changes` as the fixed point. After a rebase, keep main as the fixed point and tell it what `git range-diff` shows changed.
+   - **An earlier verdict.** When your brief links one, review only what changed since the head it names. Give that head to `review-pr` as the one an earlier review covered. After a rebase, it is no longer an ancestor, so `review-pr` reviews the whole PR: tell it what `git range-diff` shows changed.
    - **Rulings.** A ruling in your brief is the user's decision on a finding, and it settles that finding.
 4. **Argue each finding with the worker**, when you have findings.
    - Post the findings as a comment on the PR, numbered.
@@ -29,10 +29,10 @@ You and the worker argue each finding until you agree, and you return one verdic
 
 ## What is worth a finding
 
-- A problem you can show: a failing run at the head, a finding `review-changes` proved, or a wrong line in the diff.
+- A problem you can show: a failing run at the head, a finding `review-pr` proved, or a wrong line in the diff.
 - A problem main already has counts only when the PR copies it or newly reaches it. Return anything else as a follow-up.
 - A Standards finding is a judgement call. Argue it like any other, and withdraw it for any reason the repo's written standards do not contradict.
-- A mechanical finding that `review-changes` marked as a candidate for a check goes in your result's `checkable` field, so the factory can count it across runs.
+- A mechanical finding that `review-pr` marked as a candidate for a check goes in your result's `checkable` field, so the factory can count it across runs.
 
 ## A spec check
 

@@ -13,7 +13,7 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/add-guardrail",
+        "./skills/correct",
         "./skills/create-verify-skill",
         "./skills/debug",
         "./skills/deepen-modules",
@@ -21,12 +21,12 @@
         "./skills/glossary",
         "./skills/interview",
         "./skills/map",
+        "./skills/plan",
+        "./skills/pr",
         "./skills/research",
-        "./skills/review-changes",
+        "./skills/review-pr",
         "./skills/setup-skills",
         "./skills/tdd",
-        "./skills/to-pr",
-        "./skills/to-spec-and-tickets",
         "./skills/triage",
         "./skills/writing-for-agents"
       ]

@@ -19,9 +19,9 @@ The factory gives each open issue in `ready-for-agent` to a worker who sees the 
    | A question about the code | Answer it, each claim tied to a `path:line`, a commit, or a link, with what you inferred marked. File nothing |
    | A bug or change that fits one PR, with every decision settled | File it in `ready-for-agent`, with an agent brief as `triage` writes one. Reproduce a bug first, so the brief carries the steps |
    | An issue nobody has triaged, or a question about what needs attention | Run `triage` with the user |
-   | Work with a decision still open, or work bigger than one PR | Run `interview`, then `to-spec-and-tickets`, which files the tickets in `ready-for-agent` |
+   | Work with a decision still open, or work bigger than one PR | Run `interview`, then `plan`, which files the tickets in `ready-for-agent` |
    | A loose idea whose route is unclear, or a map | Run `map` with the user. A map with nothing left to decide gets its spec, as above |
-   | A written spec or plan without tickets | Run `to-spec-and-tickets` on it |
+   | A written spec or plan without tickets | Run `plan` on it |
    | An open PR with no issue | File an issue in `ready-for-agent` whose agent brief says what is left to do on that PR |
    | What to improve in the codebase's structure | Run the survey in `deepen-modules` |
    | An issue already in `ready-for-agent`, or merged or closed work | Nothing. Say where it stands |

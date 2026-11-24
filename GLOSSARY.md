@@ -17,7 +17,7 @@ One issue in `ready-for-agent`. One worker carries it, and it lands through one 
 _Avoid_: Unit, job
 
 **Spec**:
-The issue that describes one feature: the problem, the solution, the user stories, and the decisions made. `to-spec-and-tickets` writes it, and its tickets are its sub-issues.
+The issue that describes one feature: the problem, the solution, the user stories, and the decisions made. `plan` writes it, and its tickets are its sub-issues.
 _Avoid_: PRD
 
 **Ticket**:
@@ -29,7 +29,7 @@ A fresh agent the factory starts with one task and a brief that opens with `fact
 _Avoid_: Helper, planner
 
 **Reviewer**:
-The agent the factory sends to one PR it did not write, with a brief that opens with `factory/rules.md` and `factory/reviewer.md`. It proves the behavior, runs `review-changes`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
+The agent the factory sends to one PR it did not write, with a brief that opens with `factory/rules.md` and `factory/reviewer.md`. It proves the behavior, runs `review-pr`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
 _Avoid_: Verifier, checker, QA agent
 
 **Verdict comment**:
@@ -49,7 +49,7 @@ A named pair of models, a default and a backup, that `setup-skills` saves: `work
 _Avoid_: Agent type, profile
 
 **Panel**:
-The seats of one `review-changes` run, one per model family. A reviewer is its first seat.
+The seats of one `review-pr` run, one per model family. A reviewer is its first seat.
 _Avoid_: Reviewers, jury
 
 **Follow-up**:
@@ -69,7 +69,7 @@ What cost an agent time during its task, returned in its result as a kind and a 
 _Avoid_: Mistake log, complaints
 
 **Repeat**:
-The same friction, by kind and target, from two runs, or once for a `broken` tool. The factory counts friction as each run ends, and files a repeat as an issue that the `add-guardrail` skill fixes.
+The same friction, by kind and target, from two runs, or once for a `broken` tool. The factory counts friction as each run ends, and files a repeat as an issue that the `correct` skill fixes.
 _Avoid_: Pattern, recurring issue
 
 ## Verification

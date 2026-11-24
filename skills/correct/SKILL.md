@@ -1,10 +1,10 @@
 ---
-name: add-guardrail
+name: correct
 description: "Turn each mistake agents repeat in this repo into a check that fails. Use when the user corrects an agent for something already corrected once, two agents make the same mistake, a review or a fixed bug shows a mistake a check could have caught, or the user asks for a look back at a session."
 disable-model-invocation: true
 ---
 
-# Add Guardrail
+# Correct
 
 The user keeps correcting agents in this repo for the same mistakes. Change the repo so the next agent can't make them.
 
@@ -47,7 +47,7 @@ All work passes through two agents. The **worker** carries the most **context pr
 | File | Read by | Holds |
 | --- | --- | --- |
 | `AGENTS.md` | every agent, every turn | navigation pointers only |
-| `CODING_STANDARDS.md` | the reviewer, via `/review-changes` | judgment-call rules and the rule table |
+| `CODING_STANDARDS.md` | the reviewer, via `/review-pr` | judgment-call rules and the rule table |
 | `GLOSSARY.md` | any agent naming a domain concept | domain terms, per the `glossary` skill |
 | a skill | the agent its description triggers, or the user | a repeatable procedure |
 | other docs | an agent following a pointer | reference too long for the files above |

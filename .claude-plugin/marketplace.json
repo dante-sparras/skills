@@ -13,11 +13,11 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/plan/interview",
-        "./skills/plan/research",
-        "./skills/plan/to-spec",
-        "./skills/plan/triage",
-        "./skills/plan/wayfinder"
+        "./skills/interview",
+        "./skills/research",
+        "./skills/to-spec",
+        "./skills/triage",
+        "./skills/wayfinder"
       ]
     },
     {
@@ -26,11 +26,11 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/build/code-review",
-        "./skills/build/create-verification-skill",
-        "./skills/build/diagnosing-bugs",
-        "./skills/build/pr",
-        "./skills/build/tdd"
+        "./skills/code-review",
+        "./skills/create-verification-skill",
+        "./skills/diagnosing-bugs",
+        "./skills/pr",
+        "./skills/tdd"
       ]
     },
     {
@@ -39,10 +39,10 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/codebase/codebase-design",
-        "./skills/codebase/correct",
-        "./skills/codebase/domain-modeling",
-        "./skills/codebase/improve-codebase-architecture"
+        "./skills/codebase-design",
+        "./skills/correct",
+        "./skills/domain-modeling",
+        "./skills/improve-codebase-architecture"
       ]
     },
     {
@@ -51,8 +51,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/setup/setup-skills",
-        "./skills/setup/writing-for-agents"
+        "./skills/setup-skills",
+        "./skills/writing-for-agents"
       ]
     }
   ]

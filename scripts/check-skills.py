@@ -1,8 +1,8 @@
-"""Check the wiring between skills: layout, names, invocation flags, categories, links, and skill calls.
+"""Check the wiring between skills: layout, names, invocation flags, groups, links, and skill calls.
 
-Skills live at skills/<category>/<name>/. The entry point, auto-mode, belongs to no category
-and lives at skills/auto-mode/. Skills install flat, side by side, so a link between two skills
-is written as ../<name>/... and is checked against that installed layout.
+Every skill lives at skills/<name>/, the same layout it installs to, so a link between two
+skills is written as ../<name>/... The groups the skills CLI shows are declared in
+.claude-plugin/marketplace.json. The entry point, auto-mode, belongs to no group.
 
 Each problem prints as path:line: what is wrong, then how to fix it.
 """
@@ -24,10 +24,8 @@ ENTRY_POINTS = {"auto-mode"}
 
 
 def find_skill_dirs(skills_root):
-    """Every skill folder: skills/<category>/<name>/, plus an entry point at skills/<name>/."""
-    found = [p.parent for p in skills_root.glob("*/*/SKILL.md")]
-    found += [skills_root / name for name in ENTRY_POINTS if (skills_root / name / "SKILL.md").is_file()]
-    return sorted(found)
+    """Every skill folder: skills/<name>/."""
+    return sorted(p.parent for p in skills_root.glob("*/SKILL.md"))
 
 
 def frontmatter(lines):
@@ -160,35 +158,19 @@ def skill_call_problems(path, skills, user_invoked):
 
 
 def layout_problems(skills_root):
-    """Yield (path, problem) for skills in the wrong folder and for duplicate names."""
-    for stray in sorted(skills_root.glob("*/SKILL.md")):
-        if stray.parent.name in ENTRY_POINTS:
-            continue
-        yield stray, (
-            "sits directly under skills/. Move the skill into a category folder, "
-            "as skills/<category>/<name>/SKILL.md. Only an entry point stays outside one."
+    """Yield (path, problem) for skills that sit below skills/<name>/."""
+    for nested in sorted(skills_root.glob("*/*/SKILL.md")):
+        yield nested, (
+            "sits in a subfolder. Move the skill to skills/<name>/SKILL.md: skills install side by side, "
+            "and a link between two of them is written ../<name>/."
         )
-    seen = {}
-    for skill_md in sorted(skills_root.glob("*/*/SKILL.md")):
-        name = skill_md.parent.name
-        if name in ENTRY_POINTS:
-            yield skill_md, (
-                f"puts the entry point {name!r} in a category folder. It belongs to no category, "
-                f"so move it to skills/{name}/SKILL.md."
-            )
-        if name in seen:
-            yield skill_md, (
-                f"shares the name {name!r} with {seen[name].as_posix()}. Skills install side by side "
-                "under their own names, so rename one of them."
-            )
-        seen.setdefault(name, skill_md)
 
 
 def manifest_problems(repo, skill_dirs):
-    """Yield problems where .claude-plugin/marketplace.json and the category folders disagree."""
+    """Yield problems where .claude-plugin/marketplace.json and the skill folders disagree."""
     manifest = repo / MANIFEST
     if not manifest.is_file():
-        yield f"is missing. Add it with one plugin per category folder under skills/, each listing its skills."
+        yield "is missing. Add it with one plugin per group the skills CLI should show, each listing its skills."
         return
     try:
         plugins = json.loads(manifest.read_text(encoding="utf-8")).get("plugins", [])
@@ -200,31 +182,26 @@ def manifest_problems(repo, skill_dirs):
         group = plugin.get("name")
         for entry in plugin.get("skills", []):
             parts = entry.split("/")
-            if parts[-1] in ENTRY_POINTS:
+            if len(parts) != 3 or parts[0] != "." or parts[1] != "skills":
+                yield f"lists {entry!r} under {group!r}. Write each skill as ./skills/<name>."
+                continue
+            name = parts[2]
+            if name in ENTRY_POINTS:
                 yield (
-                    f"lists the entry point {entry!r} under {group!r}. It belongs to no category, "
+                    f"lists the entry point {entry!r} under {group!r}. It belongs to no group, "
                     "so remove the entry. The skills CLI still finds the skill by its folder."
                 )
                 continue
-            if len(parts) != 4 or parts[0] != "." or parts[1] != "skills":
-                yield f"lists {entry!r} under {group!r}. Write each skill as ./skills/<category>/<name>."
-                continue
-            category, name = parts[2], parts[3]
-            if category != group:
-                yield (
-                    f"lists {entry!r} under the plugin {group!r}. A plugin's name is its category folder, "
-                    f"so move the entry to the {category!r} plugin or move the skill's folder."
-                )
-            if not (repo / "skills" / category / name / "SKILL.md").is_file():
+            if not (repo / "skills" / name / "SKILL.md").is_file():
                 yield f"lists {entry!r}, which has no SKILL.md. Fix the path or remove the entry."
             if name in listed:
-                yield f"lists the skill {name!r} twice. Keep it in one plugin."
-            listed[name] = category
+                yield f"lists the skill {name!r} under both {listed[name]!r} and {group!r}. Keep it in one plugin."
+            listed[name] = group
     for skill_dir in skill_dirs:
         if skill_dir.name not in listed and skill_dir.name not in ENTRY_POINTS:
             yield (
-                f"does not list ./skills/{skill_dir.parent.name}/{skill_dir.name}. "
-                f"Add it to the {skill_dir.parent.name!r} plugin so the skills CLI shows it in that group."
+                f"does not list ./skills/{skill_dir.name}. "
+                "Add it to one plugin so the skills CLI shows it in a group."
             )
 
 
@@ -273,7 +250,7 @@ def main():
     if found:
         print(f"\n{found} wiring problem(s) across {len(skill_dirs)} skills.")
         return 1
-    print(f"Layout, names, invocation flags, categories, links, and skill calls agree across {len(skill_dirs)} skills.")
+    print(f"Layout, names, invocation flags, groups, links, and skill calls agree across {len(skill_dirs)} skills.")
     return 0
 
 

@@ -20,7 +20,7 @@ Open every comment and issue you post with a line that starts `> *This was gener
 - **Follow-ups.** Something worth doing outside your task goes in `followUps`, never into your PR. The factory files each one in `needs-triage`.
 - **Friction** is what cost you time: a file or fact you had to search for, a command that failed before it worked, a rule you learned from a failure, a tool that returned far more than you needed. Give each item a `kind` and a `target`, the repo path or command it is about, so the factory can count the same friction across runs. A worker also writes it into its PR's agent notes, where later sessions find it.
 - **Blocked.** When you need something before you can go on, submit `BLOCKED` and say what. The factory parks the task for a person. A missing verify skill is the one block it clears itself: push first, then submit `BLOCKED` with `blockedOn: "verify-skill"`. The factory files the issue that creates the skill, and a later run continues your PR.
-- **A wait on the user ends your turn, not your task.** When you ask the user something, end the turn without a result, and submit it from the turn where they answer. When your thread has been quiet for two hours, T3 asks you for the result.
+- **Ask the user through your result.** Submit `QUESTION` with the question and two to four answers, your recommendation first. The factory asks the user where they answer every question of the run, and wakes you in this thread with their answer. Ask one question at a time, and only one the issue leaves open.
 
 ## Messages
 

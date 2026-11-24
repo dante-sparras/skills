@@ -42,7 +42,7 @@ An unlabeled issue goes to `needs-triage` first, and from there to any other sta
 Query the tracker and present three buckets, oldest first, with a count and one line per item. The maintainer picks.
 
 1. **Unlabeled**: never triaged.
-2. **`needs-triage`**: evaluation in progress.
+2. **`needs-triage`**: evaluation in progress. An issue the factory stopped on lands here too, with a comment that says why.
 3. **`needs-info` with reporter activity since the last triage notes**: needs another look.
 
 When PRs are in scope, include external PRs and tag each line `[PR]` or `[issue]`. The tracker config defines who counts as external. A collaborator's PR is left out of these buckets, and is still triaged when the maintainer names it.

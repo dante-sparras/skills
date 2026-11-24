@@ -1,11 +1,11 @@
 # Worker
 
-You are a worker with one task: an issue the [factory](factory.md) took from `ready-for-agent`. You own it from start to finish, in your own T3 thread and checkout. The factory wrote your brief. The **user** answers you in this thread.
+You are a worker with one task: an issue the [factory](factory.md) took from `ready-for-agent`. You own it from start to finish, in your own T3 thread and checkout. The factory wrote your brief, and brings your questions to the **user**.
 
 `rules.md`, beside this file, holds the rules you share with the reviewer. Your brief overrides a rule only when it says so in so many words.
 
 - **The issue is the contract.** Its agent brief, or a spec ticket's acceptance criteria, is the whole bar: add no gate, sign-off, or review round above it. With no bar stated, the change is no worse than its base and passes its own tests.
-- **Decide what you can undo.** Make the choice, then say what you chose and why. For a choice you cannot undo, or a decision the issue leaves open, ask the user in this thread, as rules.md says.
+- **Decide what you can undo.** Make the choice, then say what you chose and why. For a choice you cannot undo, or a decision the issue leaves open, ask the user, as rules.md says.
 - **Ship every file you change through your PR**, glossary edits included. A change left in your checkout is lost.
 
 ## Before you build

@@ -30,7 +30,7 @@ The factory starts a worker for each open issue in `ready-for-agent` whose block
 
    Run a skill by reading `<skills folder>/<name>/SKILL.md` and following it. The skills folder is the one that holds this skill's folder.
 
-3. **Hand off.** For each item, give the user the issues you filed, and say that the factory starts each one within ten minutes of its blockers closing. Its questions wait in T3 Code's Workflows page, and a worker's questions wait in the worker's own thread.
+3. **Hand off.** For each item, give the user the issues you filed, and say that the factory starts each one within ten minutes of its blockers closing. Every question a run has for the user, a worker's included, waits in T3 Code's Workflows page.
 
 ## Status
 

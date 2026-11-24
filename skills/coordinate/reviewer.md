@@ -32,7 +32,7 @@ You and the worker argue each finding until you agree, and you return one verdic
 - A problem you can show: a failing run at the head, a finding `review-changes` proved, or a wrong line in the diff.
 - A problem main already has counts only when the PR copies it or newly reaches it. Return anything else as a follow-up.
 - A Standards finding is a judgement call. Argue it like any other, and withdraw it for any reason the repo's written standards do not contradict.
-- A mechanical finding that `review-changes` marked as a candidate for a check goes among your follow-ups, so the coordinator can spot a repeat.
+- A mechanical finding that `review-changes` marked as a candidate for a check goes among your follow-ups, so a repeat gets spotted. In a T3 workflow it goes in your result's `checkable` field instead.
 
 ## A spec check
 

@@ -94,7 +94,7 @@ The [factory](../coordinate/factory.md) is a T3 Code workflow that starts a work
 
 > Should the factory pick up issues labelled `ready-for-agent` on its own? It asks you before every merge. (recommended: **yes**)
 
-On a yes, follow [Install](../coordinate/factory.md#install): copy the file, then register this repo with the settings you settled above. Fill `worker` and `reviewer` from the roles you just set, resolved as [Resolve a role](model-roles.md#resolve-a-role) says, and leave them out when no roles are set. Show the user the settings before you write them, and finish with the dispatcher check.
+On a yes, follow [Install](../coordinate/factory.md#install): copy the file, then register this repo with the settings you settled above. Fill the label fields from the labels you settled in Section B, leaving out each one that keeps its default name. Fill `worker` and `reviewer` from the roles you just set, resolved as [Resolve a role](model-roles.md#resolve-a-role) says, and leave them out when no roles are set. Show the user the settings before you write them, and finish with the dispatcher check.
 
 ## Report
 

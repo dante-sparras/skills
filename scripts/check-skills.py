@@ -2,7 +2,7 @@
 
 Every skill lives at skills/<name>/, the same layout it installs to, so a link between two
 skills is written as ../<name>/... The groups the skills CLI shows are declared in
-.claude-plugin/marketplace.json. The entry point, auto-mode, belongs to no group.
+.claude-plugin/marketplace.json. The entry point, coordinate, belongs to no group.
 
 Each problem prints as path:line: what is wrong, then how to fix it.
 """
@@ -20,7 +20,7 @@ SKILL_CALL = re.compile(r"Skill tool(?: twice,)? (?:with|for) ((?:[`\"][a-z][a-z
 SKILL_TOKEN = re.compile(r"[`\"]([a-z][a-z0-9-]*)[`\"]")
 EXTERNAL = ("http://", "https://", "mailto:")
 MANIFEST = ".claude-plugin/marketplace.json"
-ENTRY_POINTS = {"auto-mode"}
+ENTRY_POINTS = {"coordinate"}
 
 
 def find_skill_dirs(skills_root):

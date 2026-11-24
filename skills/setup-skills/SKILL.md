@@ -43,7 +43,7 @@ The defaults are the canonical roles, each label named after its role: the state
 
 > Once a PR has passed review and its checks, should the coordinator merge it, or leave the merge to you? (recommended: **the coordinator**)
 
-The `auto-mode` coordinator reads the answer. It still hands the merge to a person wherever branch protection requires an approval it cannot give.
+The coordinator reads the answer. It still hands the merge to a person wherever branch protection requires an approval it cannot give.
 
 **Section E: Required checks.** Runs on GitHub when the repo has CI and no ruleset or branch protection on the default branch requires a check. Ask one question:
 
@@ -86,7 +86,7 @@ Read `GLOSSARY.md` at the repo root before exploring, or each glossary that `GLO
 | `issue-tracker.md` | [issue-tracker-github.md](./issue-tracker-github.md), or the user's description for another tracker | Always |
 | `triage-labels.md` | [triage-labels.md](./triage-labels.md) | Always |
 
-**Labels**, on GitHub: create each one the tracker lacks with `gh label create`. That is the configured labels, and `wayfinder:map`, `wayfinder:research`, `wayfinder:prototype`, `wayfinder:interview`, and `wayfinder:task`.
+**Labels**, on GitHub: create each one the tracker lacks with `gh label create`. That is the configured labels, and `map`, `map:research`, `map:prototype`, `map:interview`, and `map:task`.
 
 **Required checks**, on a yes to Section E: `gh api --method POST repos/<owner>/<repo>/rulesets --input <file>`, with the body below. A `403` means GitHub does not offer rulesets for this repo on its plan: say so and move on.
 

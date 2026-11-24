@@ -1,0 +1,5 @@
+interface:
+  display_name: "Coordinate"
+  short_description: "Make each request a task, start a worker for it, and ship it"
+policy:
+  allow_implicit_invocation: false

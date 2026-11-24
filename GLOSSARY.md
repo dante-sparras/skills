@@ -17,7 +17,7 @@ One outcome the operator asked for, or one ticket. One worker carries it, and it
 _Avoid_: Unit, job
 
 **Spec**:
-The issue that describes one feature: the problem, the solution, the user stories, and the decisions made. `to-spec` writes it, and its tickets are its sub-issues.
+The issue that describes one feature: the problem, the solution, the user stories, and the decisions made. `plan` writes it, and its tickets are its sub-issues.
 _Avoid_: PRD, plan
 
 **Ticket**:
@@ -25,11 +25,11 @@ One tracer-bullet slice of a spec, published as an issue that names its blockers
 _Avoid_: Story, subtask
 
 **Worker**:
-A fresh agent the coordinator starts with one task and a brief that opens with `auto-mode/rules.md` and `auto-mode/worker.md`. It sizes the task, then opens a PR for it or splits it into tickets, and fixes what review finds. The operator answers it in its own thread.
+A fresh agent the coordinator starts with one task and a brief that opens with `coordinate/rules.md` and `coordinate/worker.md`. It sizes the task, then opens a PR for it or splits it into tickets, and fixes what review finds. The operator answers it in its own thread.
 _Avoid_: Helper, planner
 
 **Reviewer**:
-The agent the coordinator sends to one PR it did not write, with a brief that opens with `auto-mode/rules.md` and `auto-mode/reviewer.md`. It proves the behavior, runs `code-review`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
+The agent the coordinator sends to one PR it did not write, with a brief that opens with `coordinate/rules.md` and `coordinate/reviewer.md`. It proves the behavior, runs `interrogate`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
 _Avoid_: Verifier, checker, QA agent
 
 **Verdict comment**:
@@ -45,7 +45,7 @@ A named pair of models, a default and a backup, that `setup-skills` saves: `impl
 _Avoid_: Agent type, profile
 
 **Panel**:
-The seats of one `code-review` run, one per model family. A reviewer is its first seat.
+The seats of one `interrogate` run, one per model family. A reviewer is its first seat.
 _Avoid_: Reviewers, jury
 
 **Follow-up**:
@@ -53,7 +53,7 @@ Something worth doing that is outside an agent's task. It goes in the agent's re
 _Avoid_: TODO, nice-to-have
 
 **Map**:
-The issue `wayfinder` keeps for work too big for one session. Its children are decision tickets, each a question to settle, not work to build.
+The issue the `map` skill keeps for work too big for one session. Its children are decision tickets, each a question to settle, not work to build.
 _Avoid_: Roadmap, epic
 
 **Friction**:
@@ -61,13 +61,13 @@ What cost a worker time during its task, returned as facts at the end of its res
 _Avoid_: Mistake log, complaints
 
 **Repeat**:
-The same friction from two workers, the same finding from two reviewers, or the same correction from the operator twice. A repeat becomes a task for the `correct` skill.
+The same friction from two workers, the same finding from two reviewers, or the same correction from the operator twice. A repeat becomes a task for the `guardrail` skill.
 _Avoid_: Pattern, recurring issue
 
 ## Verification
 
 **Verification skill**:
-A project-local skill, named `verify-<app>`, that launches the real app, drives it the way a user does, and captures evidence. The `create-verification-skill` skill generates one.
+A project-local skill, named `verify-<app>`, that launches the real app, drives it the way a user does, and captures evidence. The `new-verify-skill` skill generates one.
 _Avoid_: Control skill, verify script, e2e harness
 
 **Feature map**:

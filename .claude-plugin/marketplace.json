@@ -14,35 +14,34 @@
       "strict": false,
       "skills": [
         "./skills/interview",
+        "./skills/map",
         "./skills/research",
-        "./skills/to-spec",
-        "./skills/triage",
-        "./skills/wayfinder"
+        "./skills/plan",
+        "./skills/triage"
       ]
     },
     {
       "name": "build",
-      "description": "Tools a worker builds with: tdd, diagnosing-bugs, code-review, pr, and create-verification-skill.",
+      "description": "Tools a worker builds with: tdd, debug, interrogate, pr-body, and new-verify-skill.",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/code-review",
-        "./skills/create-verification-skill",
-        "./skills/diagnosing-bugs",
-        "./skills/pr",
+        "./skills/debug",
+        "./skills/interrogate",
+        "./skills/new-verify-skill",
+        "./skills/pr-body",
         "./skills/tdd"
       ]
     },
     {
       "name": "codebase",
-      "description": "Keep the codebase good for agents to work in: module design, the domain glossary, architecture surveys, and turning repeated mistakes into checks.",
+      "description": "Keep the codebase good for agents to work in: deep modules, the domain glossary, and turning repeated mistakes into checks.",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/codebase-design",
-        "./skills/correct",
-        "./skills/domain-modeling",
-        "./skills/improve-codebase-architecture"
+        "./skills/deepen",
+        "./skills/glossary",
+        "./skills/guardrail"
       ]
     },
     {

@@ -43,7 +43,7 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
    | --- | --- |
    | `project` | The repo's folder, as an absolute path, or its T3 project id |
    | `repository` | `<owner>/<repo>` |
-   | `skillsFolder` | The absolute path of the folder that holds the `coordinate` folder |
+   | `skillsFolder` | The absolute path of the folder that holds the `factory` folder |
    | `defaultBranch` | The name after `origin/` in `git symbolic-ref --short refs/remotes/origin/HEAD` |
    | `readyLabel` | The `ready-for-agent` label in `docs/agents/triage-labels.md` |
    | `needsTriageLabel` | The `needs-triage` label there, for the follow-ups it files |
@@ -65,4 +65,4 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
 
 ## Where issues come from
 
-The factory builds only what an issue already settles, one PR per issue. Type `/coordinate` to hand over work in conversation: it answers questions itself, and turns the rest into issues the factory can build, through `triage`, `interview`, `to-spec-and-tickets`, or `map`.
+The factory builds only what an issue already settles, one PR per issue. Type `/factory` to hand over work in conversation: it answers questions itself, and turns the rest into issues the factory can build, through `triage`, `interview`, `to-spec-and-tickets`, or `map`.

@@ -1,5 +1,0 @@
-interface:
-  display_name: "Coordinate"
-  short_description: "Turn what you want done into issues the factory ships"
-policy:
-  allow_implicit_invocation: false

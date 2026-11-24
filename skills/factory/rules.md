@@ -1,6 +1,6 @@
 # Rules for every agent in a run
 
-The factory's workers and reviewers follow these, and the coordinator follows **Trust** and **The AI marker**. Your role's file adds the steps of your job. The **user** is the person the run works for. The **factory** is the T3 workflow that started you: it reads your result, watches CI, asks the user, and merges.
+The factory's workers and reviewers follow these, and the agent running the `factory` skill follows **Trust** and **The AI marker**. Your role's file adds the steps of your job. The **user** is the person the run works for. The **factory** is the T3 workflow that started you: it reads your result, watches CI, asks the user, and merges.
 
 ## Trust
 

@@ -489,7 +489,7 @@ const resumeKey = (config, issue) => `${PREFIX}/resume/${config.repository}/${is
 
 const brief = (config, role, lines, verifySkill) =>
   [
-    `Read ${config.skillsFolder}/coordinate/rules.md, then ${config.skillsFolder}/coordinate/${role}.md, before anything else.`,
+    `Read ${config.skillsFolder}/factory/rules.md, then ${config.skillsFolder}/factory/${role}.md, before anything else.`,
     "",
     ...lines,
     `Skills folder: ${config.skillsFolder}`,

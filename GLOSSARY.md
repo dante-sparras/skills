@@ -2,18 +2,14 @@
 
 Agent skills that plan, build, test, review, and land work in a repository.
 
-## Coordination
+## The factory
 
 **User**:
 The person a run works for. `triage` calls them the maintainer.
 _Avoid_: Operator, owner
 
-**Coordinator**:
-The agent the user talks to, started with `/coordinate`. It answers questions itself, and turns everything else into issues in `ready-for-agent` for the factory to ship. It builds nothing.
-_Avoid_: Orchestrator, main agent
-
 **Factory**:
-The T3 Code workflow in `coordinate/factory.ts` that ships each issue labelled `ready-for-agent`: it starts a worker, sends a reviewer to the PR, and asks the user before every merge. It also checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
+The T3 Code workflow in `factory/factory.ts` that ships each issue labelled `ready-for-agent`: it starts a worker, sends a reviewer to the PR, and asks the user before every merge. It also checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
 _Avoid_: Pipeline, automation, bot
 
 **Task**:
@@ -29,11 +25,11 @@ One tracer-bullet slice of a spec, published as an issue that names its blockers
 _Avoid_: Story, subtask
 
 **Worker**:
-A fresh agent the factory starts with one task and a brief that opens with `coordinate/rules.md` and `coordinate/worker.md`. It builds the task in one PR and argues its reviewer's findings. The user answers it in its own thread.
+A fresh agent the factory starts with one task and a brief that opens with `factory/rules.md` and `factory/worker.md`. It builds the task in one PR and argues its reviewer's findings. The user answers it in its own thread.
 _Avoid_: Helper, planner
 
 **Reviewer**:
-The agent the factory sends to one PR it did not write, with a brief that opens with `coordinate/rules.md` and `coordinate/reviewer.md`. It proves the behavior, runs `review-changes`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
+The agent the factory sends to one PR it did not write, with a brief that opens with `factory/rules.md` and `factory/reviewer.md`. It proves the behavior, runs `review-changes`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
 _Avoid_: Verifier, checker, QA agent
 
 **Verdict comment**:

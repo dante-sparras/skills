@@ -136,6 +136,21 @@ class Wiring(unittest.TestCase):
         self.assertEqual(len(problems), 1)
         self.assertIn("skills/<name>/SKILL.md", problems[0][1])
 
+    def test_guide_must_name_every_script_and_folder(self):
+        self.write("scripts/check.py", "")
+        self.write("scripts/link.py", "")
+        self.write("scripts/test_check.py", "")
+        self.write("docs/a.md", "")
+        self.write(".github/workflows/ci.yml", "")
+        self.write("AGENTS.md", "Run scripts/check.py. See docs/ and scripts/.")
+        problems = list(wiring.guide_problems(self.root))
+        self.assertEqual(len(problems), 1)
+        self.assertIn("scripts/link.py", problems[0])
+
+    def test_repo_without_a_guide_passes(self):
+        self.write("scripts/check.py", "")
+        self.assertEqual(list(wiring.guide_problems(self.root)), [])
+
     def test_name_must_match_folder(self):
         skill = self.root / "skills" / "alpha"
         self.write("skills/alpha/SKILL.md", '---\nname: beta\ndescription: "X. Use when y."\n---\n')

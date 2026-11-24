@@ -128,10 +128,6 @@ You type the skills under **Shape**, and `/factory`. Agents pick up the rest whe
 | [correct](./skills/correct/SKILL.md) | Turns a mistake agents repeat into a check that fails |
 | [writing-for-agents](./skills/writing-for-agents/SKILL.md) | Reference for writing docs that agents read |
 
-## Checks
-
-Run `python scripts/check.py` before you push. CI runs the same command.
-
 ## Credits
 
 - [mattpocock/skills](https://github.com/mattpocock/skills) by Matt Pocock, under the MIT License: [LICENSES/mattpocock-skills.md](./LICENSES/mattpocock-skills.md)

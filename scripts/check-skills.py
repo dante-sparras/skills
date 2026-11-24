@@ -212,6 +212,24 @@ def layout_problems(skills_root):
         )
 
 
+def guide_problems(repo):
+    guide = repo / "AGENTS.md"
+    if not guide.is_file():
+        return
+    text = guide.read_text(encoding="utf-8")
+    scripts = repo / "scripts"
+    names = []
+    if scripts.is_dir():
+        names += [f"scripts/{p.name}" for p in sorted(scripts.iterdir()) if p.is_file() and not p.name.startswith("test_")]
+    names += [f"{p.name}/" for p in sorted(repo.iterdir()) if p.is_dir() and not p.name.startswith((".", "_"))]
+    for name in names:
+        if name not in text:
+            yield (
+                f"does not name {name}. Add it under Scripts or Project structure, "
+                "so an agent in this repo finds it."
+            )
+
+
 def main():
     repo = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
     skills_root = repo / "skills"
@@ -247,12 +265,15 @@ def main():
             report(path, line, problem)
 
     docs = sorted(skills_root.rglob("*.md")) + sorted((repo / "docs").glob("*.md"))
-    docs += [p for p in (repo / "README.md", repo / "GLOSSARY.md") if p.is_file()]
+    docs += [p for p in (repo / "README.md", repo / "GLOSSARY.md", repo / "AGENTS.md") if p.is_file()]
     for path in docs:
         for line, problem in link_problems(path, skills):
             report(path, line, problem)
         for line, problem in skill_call_problems(path, skills, user_invoked):
             report(path, line, problem)
+
+    for problem in guide_problems(repo):
+        report(repo / "AGENTS.md", 1, problem)
 
     readme = repo / "README.md"
     if readme.is_file():

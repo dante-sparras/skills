@@ -1,4 +1,4 @@
-// Loads skills/setup-skills/factory/factory.ts the way T3 Code does, with stand-ins for the globals it
+// Loads skills/factory/factory.ts the way T3 Code does, with stand-ins for the globals it
 // hands a workflow file, and prints what the file registers and what its pure helpers return.
 // test_factory.py runs it. The real engine is T3 Code's: this only catches a file that cannot
 // load, a renamed workflow, and pure helpers that return the wrong thing.

@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Slice work into **tickets**, each one PR for one worker, and publish them in `ready-for-agent` after one approval.
 
-Every ticket is work for the factory, so follow [handoff.md](../setup-skills/factory/handoff.md). [tracker.md](../setup-skills/factory/tracker.md) has the tracker's commands.
+Every ticket is work for the factory, so follow [handoff.md](../factory/handoff.md). [tracker.md](../factory/tracker.md) has the tracker's commands.
 
 ## Steps
 
@@ -26,7 +26,7 @@ Every ticket is work for the factory, so follow [handoff.md](../setup-skills/fac
 
 3. **Approve.** Show the user the tickets as a numbered list: title, blockers, and the end-to-end behavior each delivers. Ask whether any ticket should merge or split, and whether every blocker really gates its ticket. Done when the user approves.
 
-4. **Publish.** One issue per ticket, with `ready-for-agent` and the category that fits, `enhancement` or `bug`. Its body is an agent brief, per [agent-brief.md](../setup-skills/factory/agent-brief.md). Done when every ticket is on the tracker and you have given the user each reference.
+4. **Publish.** One issue per ticket, with `ready-for-agent` and the category that fits, `enhancement` or `bug`. Its body is an agent brief, per [agent-brief.md](../factory/agent-brief.md). Done when every ticket is on the tracker and you have given the user each reference.
    - A ticket of a spec is its sub-issue, names it under `## Parent`, and takes its seams from the spec's testing decisions. With no spec, choose the seams yourself: an existing seam over a new one, and the highest seam you can.
    - Publish blockers first, so every ticket references real identifiers, and link each blocker with the tracker's native dependencies.
    - Leave the spec open and unedited. Give it the `spec` label when it has none.

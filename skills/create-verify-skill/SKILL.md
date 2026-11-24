@@ -52,7 +52,7 @@ Each feature file answers, from the user's point of view, what the feature is, h
 
 ## 4. Prove it cold
 
-Read [Resolve a role](../setup-skills/model-roles.md#resolve-a-role). Start a fresh `reviewer` in this same checkout, with `isolation: "shared"`, so it sees the skill before it is committed. Use `mode: "async"`, since a cold run takes far longer than a waited call allows. Give it only the path to the generated skill and one mapped feature, and tell it to change no files. One feature is enough. The map exists so later runs cover the rest. It follows the skill's own instructions end to end (launch, doctor, drive the feature, capture evidence, clean up), then confirms the evidence still exists at the named location and reports each step that failed or that it had to guess.
+Read [Resolve a role](../factory/model-roles.md#resolve-a-role). Start a fresh `reviewer` in this same checkout, with `isolation: "shared"`, so it sees the skill before it is committed. Use `mode: "async"`, since a cold run takes far longer than a waited call allows. Give it only the path to the generated skill and one mapped feature, and tell it to change no files. One feature is enough. The map exists so later runs cover the rest. It follows the skill's own instructions end to end (launch, doctor, drive the feature, capture evidence, clean up), then confirms the evidence still exists at the named location and reports each step that failed or that it had to guess.
 
 Fix what it reports and start a fresh `reviewer` again until a run passes with no guesses. After every failed run, run the generated cleanup yourself so broken attempts don't strand processes and ports. A cleanup that deletes the evidence fails the run.
 

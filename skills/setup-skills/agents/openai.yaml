@@ -1,5 +1,0 @@
-interface:
-  display_name: "Setup Skills"
-  short_description: "Create labels, set roles, install the factory"
-policy:
-  allow_implicit_invocation: false

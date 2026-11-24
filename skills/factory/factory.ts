@@ -42,7 +42,7 @@ const ModelChoice = Schema.Struct({
 });
 const RolePair = Schema.Struct({ default: ModelChoice, backup: Schema.optional(ModelChoice) });
 
-/** One repo's settings, as `setup-skills` writes them to the store. */
+/** One repo's settings, as the `factory` skill writes them to the store. */
 const Config = Schema.Struct({
   project: Schema.String,
   repository: Schema.String,
@@ -56,7 +56,7 @@ const Config = Schema.Struct({
   reviewer: Schema.optional(RolePair),
 });
 
-/** The labels the factory reads and writes. `setup-skills` creates them, and tracker.md names them. */
+/** The labels the factory reads and writes. The `factory` skill creates them, and tracker.md names them. */
 const LABELS = { ready: "ready-for-agent", triage: "needs-triage", spec: "spec", bug: "bug", enhancement: "enhancement" };
 
 const IssueRef = Schema.Struct({
@@ -479,7 +479,7 @@ const resumeKey = (config, issue) => `${PREFIX}/resume/${config.repository}/${is
 
 const brief = (config, role, lines, verifySkill) =>
   [
-    `Read ${config.skillsFolder}/setup-skills/factory/rules.md, then ${config.skillsFolder}/setup-skills/factory/${role}.md, before anything else.`,
+    `Read ${config.skillsFolder}/factory/rules.md, then ${config.skillsFolder}/factory/${role}.md, before anything else.`,
     "",
     ...lines,
     `Skills folder: ${config.skillsFolder}`,

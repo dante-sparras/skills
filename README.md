@@ -6,7 +6,7 @@ Dante's agent skills
 You need T3 Code with **Settings → Labs → Workflows** on, a GitHub repo, and `gh` signed in.
 
 1. Install every skill: `npx skills add dante-sparras/skills`.
-2. Type `/setup-skills` once in each repo you work in. It creates the labels, sets the model roles, and installs the factory.
+2. Type `/factory` once in each repo you work in. It creates the labels, sets the model roles, and installs the factory.
 3. Type the skill that fits what you have: `/debug` for a bug, `/ticket` for a small change, `/spec` then `/ticket` for a feature, `/triage` for the tracker.
 4. Answer what the factory asks in T3 Code's **Workflows** page.
 
@@ -66,7 +66,7 @@ Blue is where you come in. A solid arrow follows one issue, from what you ask fo
    | A question the code cannot answer | [`/research`](./skills/research/SKILL.md), or ask in plain words |
    | A codebase that is hard to change | [`/deepen-modules`](./skills/deepen-modules/SKILL.md), then `/spec` |
 
-2. **Ship.** The [factory](./skills/setup-skills/factory/factory.md) is a T3 Code workflow. Every ten minutes it starts a **worker** for each ready issue whose blockers are closed, up to a limit per repo. The worker opens a PR, and wakes again for a red check, a conflict, or a collaborator's comment. Once the checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges.
+2. **Ship.** The [factory](./skills/factory/factory.md) is a T3 Code workflow. Every ten minutes it starts a **worker** for each ready issue whose blockers are closed, up to a limit per repo. The worker opens a PR, and wakes again for a red check, a conflict, or a collaborator's comment. Once the checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges.
 3. **Learn.** When a spec's last ticket lands, a reviewer proves the spec's user stories on main, and each gap becomes a ticket. Friction that repeats across runs becomes an issue the factory fixes with the `correct` skill. Follow-ups land in `needs-triage`, ready for step 1.
 
 ### What waits on you
@@ -78,9 +78,9 @@ The factory never merges, rules, or decides for you. Everything it needs from yo
 | T3 Code's **Workflows** page | Each merge. Your ruling when the reviewer and the worker disagree. A worker's question, with the answers it suggests. A collaborator's request for changes that holds a PR. Comments from people outside the repo, which reach the worker only if you send them |
 | `needs-triage` on the tracker | Follow-ups agents returned. Issues the factory stopped on, each with a comment that says why. Put `ready-for-agent` back on one to retry it |
 
-[factory.md](./skills/setup-skills/factory/factory.md) says what the factory runs, what it does when main is red, how to install it, and which of its files holds what. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
+[factory.md](./skills/factory/factory.md) says what the factory runs, what it does when main is red, how to install it, and which of its files holds what. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
 
-You type the skills in the table under **Shape**, and [setup-skills](./skills/setup-skills/SKILL.md) once per repo, which also installs the factory. Every other skill is a tool an agent picks up when its work calls for it. Four load on their own in any session, when what you ask for matches: `research`, `debug`, `pr`, and `writing-for-agents`. The rest wait until the flow sends an agent there, or you type their name.
+You type the skills in the table under **Shape**, and [`/factory`](./skills/factory/SKILL.md) once per repo, which sets the factory up. Every other skill is a tool an agent picks up when its work calls for it. Four load on their own in any session, when what you ask for matches: `research`, `debug`, `pr`, and `writing-for-agents`. The rest wait until the flow sends an agent there, or you type their name.
 
 ## Skills
 
@@ -88,7 +88,7 @@ Every skill lives at `skills/<name>/`, the same layout it installs to. The skill
 
 | Category | Skill | What it does |
 | --- | --- | --- |
-| **Setup**: done once per repo | [setup-skills](./skills/setup-skills/SKILL.md) | Creates a repo's labels, sets the model roles, and installs the factory |
+| **Setup**: done once per repo | [factory](./skills/factory/SKILL.md) | Sets up and runs the factory: a repo's labels, the model roles, the workflow, and its runs |
 | | [create-verify-skill](./skills/create-verify-skill/SKILL.md) | Generates a `verify-<app>` skill that drives the real app |
 | **Define**: settle what to build | [interview](./skills/interview/SKILL.md) | Questions you in rounds until a decision or an idea is settled |
 | | [triage](./skills/triage/SKILL.md) | Moves issues and outside PRs through triage states, up to `ready-for-agent` |
@@ -114,7 +114,7 @@ Claude Code can also install the repo as one plugin that holds every skill:
 /plugin install dante-skills --marketplace dante-sparras/skills
 ```
 
-Install all of them. The skills reach each other by relative paths such as `../tdd/SKILL.md` and `../setup-skills/model-roles.md`, so a skill installed alone loses them.
+Install all of them. The skills reach each other by relative paths such as `../tdd/SKILL.md` and `../factory/model-roles.md`, so a skill installed alone loses them.
 
 ## Checks
 

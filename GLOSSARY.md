@@ -9,7 +9,7 @@ The person a run works for.
 _Avoid_: Operator, owner
 
 **Factory**:
-The T3 Code workflow in `setup-skills/factory/factory.ts` that ships each issue labelled `ready-for-agent`: it starts a worker, sends a reviewer to the PR, and asks the user before every merge. It also checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
+The T3 Code workflow in `factory/factory.ts` that ships each issue labelled `ready-for-agent`: it starts a worker, sends a reviewer to the PR, and asks the user before every merge. It also checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
 _Avoid_: Pipeline, automation, bot
 
 **Task**:
@@ -45,7 +45,7 @@ The line that opens every comment and issue an agent posts. It reads `> *This wa
 _Avoid_: Disclaimer, signature
 
 **Model role**:
-A named pair of models, a default and a backup, that `setup-skills` saves: `worker`, `reviewer`, or `explorer`. A worker runs on `worker` and a reviewer on `reviewer`.
+A named pair of models, a default and a backup, that the `factory` skill saves: `worker`, `reviewer`, or `explorer`. A worker runs on `worker` and a reviewer on `reviewer`.
 _Avoid_: Agent type, profile
 
 **Panel**:

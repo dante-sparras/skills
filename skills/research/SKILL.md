@@ -5,7 +5,7 @@ description: "Research a question against primary sources, in the background. Us
 
 # Research
 
-Read [Resolve a role](../setup-skills/model-roles.md#resolve-a-role) for the `worker`, since findings that settle a decision need the stronger model. Start it in the background with a fresh context so you can keep working. Give it `isolation: "worktree"` when its findings go on a branch, so it never switches the branch under you.
+Read [Resolve a role](../factory/model-roles.md#resolve-a-role) for the `worker`, since findings that settle a decision need the stronger model. Start it in the background with a fresh context so you can keep working. Give it `isolation: "worktree"` when its findings go on a branch, so it never switches the branch under you.
 
 Its job:
 

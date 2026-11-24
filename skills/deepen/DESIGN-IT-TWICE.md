@@ -2,12 +2,12 @@
 
 Explore alternative interfaces for one deepening candidate with parallel agents. Uses the vocabulary in [SKILL.md](SKILL.md).
 
-1. **Frame the problem** for the user, with `send_to_user` in T3, then go straight to step 2 so they read while the agents work:
+1. **Frame the problem** for the user, with `send_to_user`, then go straight to step 2 so they read while the agents work:
    - the constraints any new interface must satisfy
    - the dependencies it relies on, and each one's category from [DEEPENING.md](DEEPENING.md)
    - a rough code sketch that makes the constraints concrete. It is an illustration, not a proposal
 
-2. **Start the agents.** Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) for the `worker`. Start at least three in parallel, each with a fresh context and its own technical brief: file paths, coupling details, the dependency categories, what sits behind the seam, and the vocabulary from [SKILL.md](SKILL.md) and `GLOSSARY.md`. Give each a different constraint:
+2. **Start the agents.** Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) for the `worker`. Start at least three in parallel, each with a fresh context, told to change no files, and given its own technical brief: file paths, coupling details, the dependency categories, what sits behind the seam, and the vocabulary from [SKILL.md](SKILL.md) and `GLOSSARY.md`. Give each a different constraint:
    - "Minimise the interface: one to three entry points, with the most leverage per entry point."
    - "Maximise flexibility: support many use cases and extension."
    - "Optimise for the most common caller: make the default case trivial."

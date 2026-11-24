@@ -45,9 +45,9 @@ The defaults are the canonical roles, each label named after its role: the state
 
 The coordinator reads the answer. It still hands the merge to a person wherever branch protection requires an approval it cannot give.
 
-**Section E: Required checks.** Runs on GitHub when the repo has CI and no ruleset or branch protection on the default branch requires a check. Ask one question:
+**Section E: Required checks.** Runs on GitHub when the repo has CI and no ruleset or branch protection on the default branch requires a check. Read the exact check names with `gh api repos/<owner>/<repo>/commits/<default branch>/check-runs --jq '[.check_runs[].name] | unique'`. A workflow's file name or title is not a check name, and a wrong name blocks every merge. Leave out a check that runs only for some paths. Ask one question:
 
-> Make `<check>` a required check on `<default branch>`? (recommended: **yes**)
+> Make `<checks>` required on `<default branch>`? (recommended: **yes**)
 
 T3 wakes the coordinator when a required check passes and stays silent for any other, so without this a green PR waits until something else wakes the coordinator. Tell the user that pushes straight to the default branch stop working once the ruleset is active.
 
@@ -57,7 +57,7 @@ Show the user a draft of the `## Agent skills` block and of each `docs/agents/` 
 
 ## 4. Write
 
-**`AGENTS.md`** at the repo root, created if missing. Update an existing `## Agent skills` block in place, and leave the sections around it as the user wrote them.
+**`AGENTS.md`** at the repo root, created if missing. Update an existing `## Agent skills` block in place, and leave the sections around it as the user wrote them. Claude reads `CLAUDE.md`, so make sure that file holds the line `@AGENTS.md`, creating it when the repo has none.
 
 ```markdown
 ## Agent skills
@@ -88,7 +88,9 @@ Read `GLOSSARY.md` at the repo root before exploring, or each glossary that `GLO
 
 **Labels**, on GitHub: create each one the tracker lacks with `gh label create`. That is the configured labels, and `map`, `map:research`, `map:prototype`, `map:interview`, and `map:task`.
 
-**Required checks**, on a yes to Section E: `gh api --method POST repos/<owner>/<repo>/rulesets --input <file>`, with the body below. A `403` means GitHub does not offer rulesets for this repo on its plan: say so and move on.
+**Land the files** before anything else changes the repo's rules: commit them on a `chore/setup-skills` branch, open a PR, and merge it or hand it to the user. Workers start from the default branch, so until this lands they see none of it.
+
+**Required checks**, on a yes to Section E, once the files have landed: `gh api --method POST repos/<owner>/<repo>/rulesets --input <file>`, with the body below. A `403` means GitHub does not offer rulesets for this repo on its plan: say so and move on.
 
 ```json
 {
@@ -101,7 +103,7 @@ Read `GLOSSARY.md` at the repo root before exploring, or each glossary that `GLO
       "type": "required_status_checks",
       "parameters": {
         "strict_required_status_checks_policy": false,
-        "required_status_checks": [{ "context": "<check>" }]
+        "required_status_checks": [{ "context": "<check>" }, { "context": "<another check>" }]
       }
     }
   ]

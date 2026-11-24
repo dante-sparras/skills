@@ -65,7 +65,7 @@ Write **three to five ranked hypotheses** before you test any, so the first plau
 
 A hypothesis with no prediction is a vibe: sharpen it or drop it.
 
-Show the ranked list to the user before testing, with `send_to_user` in T3, and go on with your ranking. They may re-rank it at once ("we just deployed a change to #3") or rule some out.
+Show the ranked list to the user before testing, with `send_to_user`, and go on with your ranking. They may re-rank it at once ("we just deployed a change to #3") or rule some out.
 
 ## Phase 4: Instrument
 

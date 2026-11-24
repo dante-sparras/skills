@@ -30,7 +30,7 @@ A **seam** is the place you test at: where a module's interface lives, and where
 **Test only at agreed seams**, which puts the effort on the critical paths and not on every edge case.
 
 - Take the seams from the spec, ticket, or brief when it names them.
-- Otherwise propose them, each with one line on what it catches and what it misses, and confirm them with the user before you write a test. A worker chooses its own seams, and states them in its note and its PR.
+- Otherwise propose them, each with one line on what it catches and what it misses, and confirm them with the user before you write a test. A worker chooses its own seams, and states them in its PR's agent notes.
 - When the interface itself is in question (how deep the module is, where the seam belongs, what it exposes), call the Skill tool with "deepen" for the vocabulary.
 
 ## The loop
@@ -44,7 +44,7 @@ A **seam** is the place you test at: where a module's interface lives, and where
 
 Work in **vertical slices**: one seam, one test, one minimal implementation per cycle, each test a **tracer bullet** that responds to what the last cycle taught you. Writing all the tests first locks in imagined behavior.
 
-For a bug fix, commit the failing test before the fix, so the PR's commits show red then green even when the merge squashes them.
+For a bug fix in a repo that squash-merges, commit the failing test before the fix, so the PR's commits show red then green. Where commits land on main one by one, keep them in one commit and show the red run in the PR's evidence.
 
 Refactoring stays out of the loop. Tidy what you wrote once it is green, and leave a larger refactor as a follow-up.
 
@@ -82,7 +82,7 @@ Work without a new test still gets an executable check: a targeted script, a rep
 
 - **Check the real artifact.** Run the feature, read the actual value, inspect the diff. "It compiles", a self-report, and cached output are proxies.
 - **Check a bug fix on the surface where the bug showed up.** A unit test shows branch behavior, not that the bug is gone.
-- **Use the running app when the check needs it** (a UI, CLI, or service flow), through the repo's `verify-<app>` skill. If the repo has none, call the Skill tool with `new-verify-skill` first. A worker uses the one its brief names, and tells the coordinator when the repo has none.
+- **Use the running app when the check needs it** (a UI, CLI, or service flow), through the repo's `verify-<app>` skill. Outside a `coordinate` run, call the Skill tool with `new-verify-skill` first when the repo has none. A worker uses the one its brief names, and tells the coordinator when it names none.
 - **Script the check** when you can, so it reruns the same way.
 - **When a check fails**, suspect the observation method before the system.
 

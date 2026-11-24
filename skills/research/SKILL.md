@@ -3,7 +3,7 @@ name: research
 description: "Start a background agent that investigates a question against primary sources and writes cited findings to a Markdown file in the repo. Use when the user wants a topic researched, docs or API facts gathered before a decision, or reading legwork run in the background while work continues."
 ---
 
-Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) for the `explorer`. Start it in the background with a fresh context so you can keep working. Give it `isolation: "worktree"` when its findings go on a branch, so it never switches the branch under you.
+Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) for the `worker`, since findings that settle a decision need the stronger model. Start it in the background with a fresh context so you can keep working. Give it `isolation: "worktree"` when its findings go on a branch, so it never switches the branch under you.
 
 Its job:
 

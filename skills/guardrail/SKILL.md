@@ -11,7 +11,7 @@ Assume every contributor is an agent that sees only the files it opened, copies 
 
 ## 1. Read the evidence
 
-1. Read the sessions the user or your brief names, with `t3_thread_read` for a T3 thread. With none named, read the current one.
+1. Read the sessions the user or your brief names, with `t3_thread_read`. With none named, read the current one.
 2. Read recent commits, reverts, `AGENTS.md`, and `CODING_STANDARDS.md`.
 3. Read recent PRs, starting with any your brief names: their review comments, the findings reviewers posted, and the friction in each body's agent notes.
 4. Read the repo's own check command: its `package.json` or build-tool `lint` and `check` scripts, its pre-commit hooks, and its CI workflow. A check that already exists but sits unwired or silently broken is the finding, so repair it before you build a new one. A repo with no **guardrail** (no pre-commit hook and no CI job running its lint, typecheck, or test command) is itself a finding.
@@ -57,7 +57,7 @@ Search for an existing doc before you write a new one. Add navigation pointers t
 
 Fix the top classes now, one commit each. Prove each new check against the real past mistake:
 
-1. Reapply the commit or diff that made the mistake, on top of your new check.
+1. Reapply the commit or diff that made the mistake, on top of your new check. When that commit is gone, write the smallest change that makes the same mistake.
 2. Run the check and confirm it fails with an error that names the fix.
 3. Restore the fix and confirm the check passes.
 
@@ -72,7 +72,7 @@ Keep a table in `CODING_STANDARDS.md`, created when the repo has none, that pair
 | Import the database client only from `src/db/index.ts` | `no-restricted-imports` in `eslint.config.js` |
 | Name handlers after the domain event they handle | review |
 
-When the user corrects an agent, fix the mistake and add the rule. A rule already in the table that only review enforces is a repeat, so move it up a level in the same change. Drop a rule once its mistake can't happen, and delete `AGENTS.md` lines that change nothing.
+When the user corrects an agent, fix the mistake and add the rule. A rule already in the table that only review enforces is a repeat, so move it up a level in the same change. Drop a rule once its mistake can't happen, and delete `AGENTS.md` lines that change nothing. Leave the `## Agent skills` block alone: `setup-skills` owns it.
 
 ## Reply
 

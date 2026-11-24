@@ -54,7 +54,7 @@ List the `ready-for-agent` issues an agent can start now:
 - Drop every issue with an open blocker, per the tracker doc's count of open blockers.
 - Group tickets under their spec.
 - Mark a ticket that has an open PR as already being built.
-- For each issue left, give the route its agent brief names and the command that builds it: `/coordinate <issue>`.
+- For each issue left, give the route its agent brief names, or `build` for a ticket of a spec, and the command that builds it: `/coordinate <issue>`.
 
 ## Triage one issue or PR
 

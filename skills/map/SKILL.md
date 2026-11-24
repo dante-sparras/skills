@@ -12,7 +12,7 @@ Read `docs/agents/issue-tracker.md`, and its "Map operations" section for how th
 
 - **Plan, don't do.** A ticket resolves a decision, and the map is done when nothing is left to decide before someone does the work. The pull to just do the work is the signal that you reached the edge of the map: hand off. A map that leads to a spec hands off to `plan`. An effort overrides this only in its **Notes**.
 - **One ticket per session.** Research tickets are the exception.
-- **Refer by name.** In everything the human reads, call a map or ticket by its title, with its link wrapped inside the name. A row of bare ids is illegible.
+- **Refer by name.** In everything the user reads, call a map or ticket by its title, with its link wrapped inside the name. A row of bare ids is illegible.
 - **Expect other sessions.** The user may run unblocked tickets in parallel. Fetch the map's body again right before you write to it, and change only the lines you add or graduate.
 
 ## The map
@@ -52,19 +52,19 @@ A ticket is a child issue of the map. Its body is the question, sized to one ses
 ```
 
 - **Label.** One `map:<type>` label from the table below. A map carries the `map` label and its tickets a `map:<type>` label, with no triage label, since they are decisions and not work to grab.
-- **Claim.** A session claims a ticket by assigning it to the dev driving the map, before any work. An open, unassigned ticket is unclaimed. Unassign a ticket you give up on.
-- **Blocking.** Use the tracker's native dependency relationship, which shows the human what is takeable without opening the map. Fall back to a body convention only where the tracker has none.
+- **Claim.** A session claims a ticket by assigning it to the user, before any work. An open, unassigned ticket is unclaimed. Unassign a ticket you give up on.
+- **Blocking.** Use the tracker's native dependency relationship, which shows the user what is takeable without opening the map. Fall back to a body convention only where the tracker has none.
 - **Frontier.** The open, unblocked, unclaimed tickets. A ticket is unblocked when every ticket blocking it is closed.
 - **Answer.** Recorded when the ticket resolves, as a comment. Assets made along the way are linked from the issue.
 
 | Type | Driven by | Use when | Resolve by |
 | --- | --- | --- | --- |
-| `research` | Agent | A decision waits on a fact from outside the working directory: docs, a third-party API, a knowledge base | Starting a fresh `explorer` per [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role), as the `research` skill says. The explorer posts its findings' link as the ticket's answer and closes it |
+| `research` | Agent | A decision waits on a fact from outside the working directory: docs, a third-party API, a knowledge base | Starting a fresh `explorer` per [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role), as the `research` skill says. When it returns, record the ticket like any other |
 | `prototype` | Human and agent | The question is how it should look or behave | Making a cheap, rough thing to react to: an outline, a stub, UI or logic code. Keep it throwaway, on a branch outside main, linked from the ticket |
 | `interview` | Human and agent | The default: the decision needs a conversation | Calling the Skill tool with "interview" |
-| `task` | Either | Manual work blocks a decision: signing up for a service to judge its API, provisioning access, moving data to see its shape | Doing it alone where you can, and handing the human a precise checklist where you cannot. The answer records what was done and the facts later tickets depend on |
+| `task` | Either | Manual work blocks a decision: signing up for a service to judge its API, provisioning access, moving data to see its shape | Doing it alone where you can, and handing the user a precise checklist where you cannot. The answer records what was done and the facts later tickets depend on |
 
-A ticket driven with the human resolves only through the live exchange. Their side of it is theirs to answer.
+A ticket driven with the user resolves only through the live exchange. Their side of it is theirs to answer.
 
 ## Fog of war
 
@@ -90,7 +90,8 @@ The user brought a loose idea.
 3. **Create the map** with Destination and Notes filled in, Decisions so far empty, and the fog sketched under Not yet specified.
 4. **Create the tickets** you can specify now as child issues. Wire blockers and cross-references in a second pass, with real ids, since a placeholder `#<n>` links to an unrelated issue.
 5. **Start the research.** Claim each `research` ticket, then start a fresh `explorer` for it, in parallel. Each saves its findings on a pushed `chore/research-<name>` branch with no PR, linked from its ticket.
-6. **Stop.** Charting is one session's work, and it resolves nothing by hand.
+6. **Record the research** as each agent returns: post its findings' link as the ticket's answer, close the ticket, and add its line to Decisions so far.
+7. **Stop.** Charting is one session's work, and it resolves nothing else.
 
 ## Work through the map
 

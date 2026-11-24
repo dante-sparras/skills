@@ -97,7 +97,7 @@ const FRICTION_KINDS = ["navigation", "tool-economy", "information-access", "wro
 const Friction = Schema.Struct({
   kind: described(
     Schema.Literals(FRICTION_KINDS),
-    "navigation: a file or fact took long to find. tool-economy: a tool or command cost far more than it gave. information-access: something you needed was out of your reach. wrong-code: a mistake a type, lint, or test could catch. steering: a doc line that misled you or changed nothing. broken: a script, check, or command that does not work as its docs say.",
+    "navigation: a file or fact took long to find. tool-economy: a tool or command cost far more than it gave. information-access: something you needed was out of your reach. wrong-code: a mistake a type, lint, or test could catch. steering: a doc line that misled you or changed nothing. broken: a script, check, or command of this repo that fails every time it is run as its docs say. Leave out an error that a retry cleared, and trouble with a tool or doc from outside the repo, which no change to the repo fixes: that is a follow-up when it is worth a person's look.",
   ),
   target: described(
     Schema.String,
@@ -421,6 +421,17 @@ const rolesOf = Effect.fn(function* (config) {
   return found;
 });
 
+/** The open PRs that close an issue: what an earlier run of it left behind. */
+const openPrsFor = (config, number) => {
+  const [owner, name] = config.repository.split("/");
+  const query =
+    "query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){issue(number:$number){closedByPullRequestsReferences(first:20){nodes{url state}}}}}";
+  return gh(
+    ["api", "graphql", "-f", `query=${query}`, "-f", `owner=${owner}`, "-f", `name=${name}`, "-F", `number=${number}`, "--jq", ".data.repository.issue.closedByPullRequestsReferences.nodes"],
+    config.project,
+  ).pipe(Effect.map((out) => JSON.parse(out).filter((pr) => pr.state === "OPEN").map((pr) => pr.url)));
+};
+
 /** Each item of a paged GitHub list, with the fields `feedbackOf` reads. */
 const ghItems = (path, cwd) =>
   gh(["api", "--paginate", path, "--jq", ".[] | {id, state, body, author_association, html_url, login: .user.login}"], cwd).pipe(
@@ -563,12 +574,13 @@ const brief = (config, role, lines, verifySkill) =>
     "You may start the subagents your skills call for.",
   ].join("\n");
 
-const workerBrief = (input, verifySkill, resumed) =>
+const workerBrief = (input, verifySkill, resumed, openPrs) =>
   brief(
     input.config,
     "worker",
     [
       `Task: ${input.issue.url} (${input.issue.displayKey} ${input.issue.title})`,
+      ...(openPrs.length > 0 ? [`Open PR for this task, left by an earlier run: ${openPrs.join(", ")}. Continue its branch, as worker.md says.`] : []),
       ...(resumed
         ? [`Earlier run: thread ${resumed.thread}${resumed.pr ? `, PR ${resumed.pr}` : ""}. It stopped until the repo's verify skill landed. Continue its work.`]
         : []),
@@ -744,7 +756,7 @@ const afterMerge = (config, issue) =>
 const ship = workflow(
   "skills-factory-ship",
   {
-    version: 8,
+    version: 9,
     payload: ShipInput,
     // The issue leaves the queue however the run ends, unless the run parked it to wait on
     // another issue. A run that did not finish moves it to needs-triage, so a person sees it the
@@ -784,6 +796,9 @@ const ship = workflow(
     );
     const verifySkill = yield* step("verify-skill", { returns: Schema.NullOr(Schema.String) }, findVerifySkill(config));
     const roles = yield* step("roles", { returns: Roles }, rolesOf(config));
+    // A retried issue may have an open PR already. Without this the new worker opens a second one.
+    const left = yield* step.try("open-prs", { returns: Schema.Array(Schema.String) }, openPrsFor(config, issue.number));
+    const openPrs = left.outcome === "failed" ? [] : left.value;
 
     // ---- The worker builds the issue.
     const worker = yield* hire(
@@ -793,7 +808,7 @@ const ship = workflow(
         issue: issueAddress(config, issue.url),
         workspace: worktreeOf(config),
         title: `Worker: ${issue.displayKey} ${issue.title}`,
-        brief: workerBrief(input, verifySkill, resumed),
+        brief: workerBrief(input, verifySkill, resumed, openPrs),
         returns: WorkerResult,
         quiet: "2 hours",
         timeout: "24 hours",

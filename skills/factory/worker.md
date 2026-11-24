@@ -10,7 +10,7 @@ You are a worker with one task: an issue the [factory](factory.md) took from `re
 
 ## Before you build
 
-- **A PR that already exists**, named by the issue or by an earlier run in your brief: continue its branch, and do what is left. With nothing left to do, return it as it stands. If work is left and you cannot push to its branch, return `FAILED` and say so.
+- **A PR that already exists**, named by the issue or by your brief: continue its branch, and do what is left. With nothing left to do, return it as it stands. If work is left and you cannot push to its branch, return `FAILED` and say so.
 - **Work bigger than one PR.** If the change turns out to need a second PR, close any draft PR you opened and return `FAILED`, with why and how you would split it. A person turns it into a spec.
 
 ## Build

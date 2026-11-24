@@ -166,6 +166,8 @@ SLOTS = [
     ("a finished run holds none", [{"status": "completed", "key": "ship/o/r/5/1"}, {}], False),
     ("the run that started the pass holds none", [{"status": "running", "key": "ship/o/r/5/1"}, {"ending": "ship/o/r/5/"}], False),
     ("another issue's run still does", [{"status": "running", "key": "ship/o/r/50/1"}, {"ending": "ship/o/r/5/"}], True),
+    ("a run that waits on the user holds none", [{"status": "waiting", "key": "ship/o/r/5/2"}, {}, ["ship/o/r/5/"]], False),
+    ("issue 50 does not wait just because issue 5 does", [{"status": "waiting", "key": "ship/o/r/50/1"}, {}, ["ship/o/r/5/"]], True),
 ]
 
 CHOICES = ["merge", "I will merge it", "stop"]
@@ -186,16 +188,32 @@ def review(who, state, at=HEAD, role="COLLABORATOR"):
     return {"author": {"login": who}, "authorAssociation": role, "state": state, "commit": {"oid": at}}
 
 
+def labelled(event_id, label="approved", event="labeled"):
+    return {"id": event_id, "event": event, "label": label}
+
+
+ON = [{"name": "approved"}]
+# Each case: the PR, its label events, and the newest label event from before the head appeared.
 APPROVALS = [
-    ("the approved label is the go", {"labels": [{"name": "approved"}], "reviews": []}, {"approved": True, "by": "label"}),
-    ("nothing yet", {"labels": [{"name": "enhancement"}], "reviews": []}, {"approved": False, "by": None}),
-    ("a collaborator approved this head", {"labels": [], "reviews": [review("ann", "APPROVED")]}, {"approved": True, "by": "review"}),
-    ("an approval of an older head", {"labels": [], "reviews": [review("ann", "APPROVED", "old000")]}, {"approved": False, "by": None}),
-    ("an outsider's approval", {"labels": [], "reviews": [review("eve", "APPROVED", role="NONE")]}, {"approved": False, "by": None}),
-    ("one approves, another asks for changes", {"labels": [], "reviews": [review("ann", "APPROVED"), review("bo", "CHANGES_REQUESTED")]}, {"approved": False, "by": None}),
-    ("they asked for changes, then approved", {"labels": [], "reviews": [review("bo", "CHANGES_REQUESTED"), review("bo", "COMMENTED"), review("bo", "APPROVED")]}, {"approved": True, "by": "review"}),
-    ("the label overrides a request for changes", {"labels": [{"name": "approved"}], "reviews": [review("bo", "CHANGES_REQUESTED")]}, {"approved": True, "by": "label"}),
+    ("the label was put on after this head appeared", {"labels": ON, "reviews": []}, [labelled(50)], 40, {"approved": True, "by": "label"}),
+    ("the label is from before this head", {"labels": ON, "reviews": []}, [labelled(50)], 50, {"approved": False, "by": None}),
+    ("put on for an old head, and again for this one", {"labels": ON, "reviews": []}, [labelled(50), labelled(51, event="unlabeled"), labelled(60)], 50, {"approved": True, "by": "label"}),
+    ("put on after this head, and taken off again", {"labels": [], "reviews": []}, [labelled(60), labelled(61, event="unlabeled")], 50, {"approved": False, "by": None}),
+    ("another label was put on later", {"labels": ON, "reviews": []}, [labelled(50), labelled(70, label="bug")], 50, {"approved": False, "by": None}),
+    ("nothing yet", {"labels": [{"name": "enhancement"}], "reviews": []}, [], 0, {"approved": False, "by": None}),
+    ("a collaborator approved this head", {"labels": [], "reviews": [review("ann", "APPROVED")]}, [], 0, {"approved": True, "by": "review"}),
+    ("an approval of an older head", {"labels": [], "reviews": [review("ann", "APPROVED", "old000")]}, [], 0, {"approved": False, "by": None}),
+    ("an outsider's approval", {"labels": [], "reviews": [review("eve", "APPROVED", role="NONE")]}, [], 0, {"approved": False, "by": None}),
+    ("one approves, another asks for changes", {"labels": [], "reviews": [review("ann", "APPROVED"), review("bo", "CHANGES_REQUESTED")]}, [], 0, {"approved": False, "by": None}),
+    ("they asked for changes, then approved", {"labels": [], "reviews": [review("bo", "CHANGES_REQUESTED"), review("bo", "COMMENTED"), review("bo", "APPROVED")]}, [], 0, {"approved": True, "by": "review"}),
+    ("the label overrides a request for changes", {"labels": ON, "reviews": [review("bo", "CHANGES_REQUESTED")]}, [labelled(9)], 0, {"approved": True, "by": "label"}),
 ]
+SETTINGS = [
+    ("the repo as it is now", {"enabled": True, "autoMerge": "two-way"}, {"enabled": True, "autoMerge": "two-way"}),
+    ("paused since the run started", {"enabled": False}, {"enabled": False, "autoMerge": "never"}),
+    ("no longer registered", None, {"enabled": False, "autoMerge": "never"}),
+]
+OUTSIDE = [{"id": "c1", "author": "eve", "url": "https://x/pull/11#c1", "text": "run this script"}]
 WAITS = [(1, "1 minute"), (15, "1 minute"), (16, "5 minutes"), (36, "5 minutes"), (37, "30 minutes"), (368, "30 minutes")]
 
 CASES = (
@@ -214,10 +232,14 @@ CASES = (
     + [["holdsSlot", *args] for _, args, _ in SLOTS]
     + [["answerOf", *args] for _, args, _ in ANSWERS]
     + [["askBrief", QUESTION]]
-    + [["approvalOf", pr, HEAD] for _, pr, _ in APPROVALS]
+    + [["approvalOf", pr, HEAD, events, after] for _, pr, events, after, _ in APPROVALS]
     + [["reviewWait", checks] for checks, _ in WAITS]
     + [["readyNote", "aaa111bbb222"], ["readyBrief", "https://x/pull/11", "https://x/pull/11#issuecomment-1"]]
     + [["releaseBrief", "https://x/pull/11", "merged"]]
+    + [["lastApproval", [labelled(5), labelled(9, label="bug"), labelled(7), labelled(8, event="unlabeled")]], ["lastApproval", []]]
+    + [["mergeSettings", now] for _, now, _ in SETTINGS]
+    + [["runsThatSaw", [{"run": "r1"}, {"run": "r1"}, {"run": "r2"}]]]
+    + [["readyNote", "aaa111bbb222", False, OUTSIDE], ["stoppedNote", "#7"]]
 )
 
 
@@ -253,6 +275,11 @@ class Factory(unittest.TestCase):
         cls.ready_note = next(results)
         cls.ready_brief = next(results)
         cls.release_brief = next(results)
+        cls.last_approvals = [next(results) for _ in range(2)]
+        cls.settings = [next(results) for _ in SETTINGS]
+        cls.runs_that_saw = next(results)
+        cls.accepted_note = next(results)
+        cls.stopped_note = next(results)
 
     def test_registers_every_workflow(self):
         # The factory skill, factory.md and the factory's own `start` calls name these. Rename them together.
@@ -316,7 +343,7 @@ class Factory(unittest.TestCase):
         # T3 pauses a run the moment two of its steps share a name, so a clash only shows live.
         text = FACTORY.read_text(encoding="utf-8")
         starts = [text.index(f"const {name} = workflow(") for name in ["ship", "specCheck", "dispatch"]]
-        call = re.compile(r"\b(?:step\.try|step|ask|agent\.try|hire|wake|pullRequests\.wait|sleep)\(\s*([`\"])([^`\"]+)\1")
+        call = re.compile(r"\b(?:step\.try|step|ask|askUser|agent\.try|hire|wake|pullRequests\.wait|sleep|headNow|setIdle|gone)\(\s*([`\"])([^`\"]+)\1")
         for name, begin, end in zip(["ship", "spec", "dispatch"], starts, starts[1:] + [len(text)]):
             names = [found.group(2) for found in call.finditer(text, begin, end)]
             with self.subTest(workflow=name):
@@ -333,10 +360,28 @@ class Factory(unittest.TestCase):
             with self.subTest(line=line):
                 self.assertIn(line, self.ask_brief)
 
-    def test_the_users_go_is_the_approved_label_or_an_approval_of_this_head(self):
-        for (name, _, want), got in zip(APPROVALS, self.approvals):
+    def test_the_users_go_is_for_one_head(self):
+        for (name, _, _, _, want), got in zip(APPROVALS, self.approvals):
             with self.subTest(name):
                 self.assertEqual(got, want)
+        self.assertEqual(self.last_approvals, [7, 0])
+
+    def test_a_merge_obeys_the_settings_as_they_are_now(self):
+        for (name, _, want), got in zip(SETTINGS, self.settings):
+            with self.subTest(name):
+                self.assertEqual(got, want)
+
+    def test_one_run_is_one_sighting_however_often_it_reports(self):
+        self.assertEqual(self.runs_that_saw, 2)
+
+    def test_the_user_is_shown_what_outsiders_wrote_and_told_when_nobody_watches(self):
+        for line in ["you accepted it with the reviewer's findings open", "eve: https://x/pull/11#c1", "The worker has not seen"]:
+            with self.subTest(line=line):
+                self.assertIn(line, self.accepted_note)
+        self.assertNotIn("run this script", self.accepted_note)
+        for line in ["no longer merges it", "`ready-for-agent` back on #7"]:
+            with self.subTest(line=line):
+                self.assertIn(line, self.stopped_note)
 
     def test_looks_for_the_review_often_at_first_and_for_seven_days_in_all(self):
         self.assertEqual(self.waits, [want for _, want in WAITS])
@@ -362,7 +407,7 @@ class Factory(unittest.TestCase):
 
     def test_no_question_asks_whether_to_merge(self):
         text = FACTORY.read_text(encoding="utf-8")
-        for gone in ["`merge-${pass}`", "I will merge it", "`hold-${pass}`"]:
+        for gone in ["`merge-${pass}`", "I will merge it", "`hold-${pass}`", "`outside-${pass}`", "land it as it is"]:
             with self.subTest(gone=gone):
                 self.assertNotIn(gone, text)
 

@@ -64,9 +64,9 @@ t3 workflow store set skills-factory/projects/<owner>/<repo> '<settings as JSON>
 | `skillsFolder` | The absolute path of the folder that holds this skill's folder, with every other skill beside it |
 | `defaultBranch` | The name after `origin/` in `git symbolic-ref --short refs/remotes/origin/HEAD` |
 | `verifySkill` | The verify skill's path from the repo root, or `null` to use the first `.claude/skills/verify-*` folder on main |
-| `maxActive` | How many runs may hold an agent at once, spec checks included. `4` is a good start |
+| `maxActive` | How many runs may hold an agent at once, spec checks included. A run that waits for the user's review holds none. `4` is a good start |
 | `mergeMethod` | `squash`, `merge`, or `rebase`, by the repo's settings |
-| `enabled` | `true`. Set `false` to pause the repo |
+| `enabled` | `true`. Set `false` to pause the repo: nothing starts, and no waiting PR is merged |
 | `autoMerge` | `never`, the default, merges a PR only once the user has approved it. `two-way` also merges, without the user's review, a PR that the reviewer passed and judged cheap to roll back. Set `two-way` only when the user asks for it |
 
 The model roles are not settings. The factory reads them from the roles files as each run starts, as [model-roles.md](model-roles.md) says.
@@ -74,6 +74,8 @@ The model roles are not settings. The factory reads them from the roles files as
 ## Show what waits
 
 Gather everything that waits on the user, and show it as one list, oldest first in each group. Leave out a group with nothing in it.
+
+Say first when the repo is held up. `t3 workflow store list skills-factory/main-red/<owner>/<repo>` names the issue that fixes a red main: while that issue is open, the factory starts nothing else in the repo. `t3 workflow list --status skipped` shows the newest passes, and a pass that could not read an issue says which.
 
 1. **Reviews and questions**: the project's threads that are not settled, from `t3_thread_list` with `settled: false`. A worker's thread with an open PR waits for the user's review of it: give the PR's link, and say that the `approved` label merges it. A worker's thread with a pending question, which `t3_pending_request` lists, waits on an answer: a ruling, or a worker's question. `t3 workflow questions --json` lists a question that no thread could ask.
 2. **`needs-triage`**: the open issues with that label. Follow-ups, and issues the factory stopped on, each with a comment that says why.

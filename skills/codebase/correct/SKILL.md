@@ -11,9 +11,9 @@ Assume every contributor is an agent that sees only the files it opened, copies 
 
 ## 1. Read the evidence
 
-1. Read the session the operator names, from its transcript or the session logs on this machine. With no session named, read the current one.
+1. Read the sessions the operator or your brief names, with `t3_thread_read` for a T3 thread. With none named, read the current one.
 2. Read recent commits, reverts, `AGENTS.md`, and `CODING_STANDARDS.md`.
-3. Read the comments on recent PRs, starting with any your brief names: the review comments, the verdicts that failed a head, and the friction workers reported.
+3. Read the comments on recent PRs, starting with any your brief names: the review comments, the findings reviewers posted, and the friction workers reported.
 4. Read the repo's own check command: its `package.json` or build-tool `lint` and `check` scripts, its pre-commit hooks, and its CI workflow. A check that already exists but sits unwired or silently broken is the finding, so repair it before you build a new one. A repo with no **guardrail** (no pre-commit hook and no CI job running its lint, typecheck, or test command) is itself a finding.
 
 Done when every correction, revert, failed attempt, and friction line in the evidence has a line in your notes.
@@ -41,12 +41,12 @@ Try each level in order and stop at the first one that makes the mistake impossi
 
 ### Implementation vs review
 
-All work passes through two agents. The **implementation agent** carries the most **context pressure**: it explores, writes code, and debugs failures. The **review agent** carries the least: it receives a diff, so it explores little and rarely writes code. Judgment-call rules belong to the review agent.
+All work passes through two agents. The **worker** carries the most **context pressure**: it explores, writes code, and debugs failures. The **reviewer** carries the least: it receives a diff, so it explores little and rarely writes code. Judgment-call rules belong to the reviewer.
 
 | File | Read by | Holds |
 | --- | --- | --- |
 | `AGENTS.md` | every agent, every turn | navigation pointers only |
-| `CODING_STANDARDS.md` | the review agent, via `/code-review` | judgment-call rules and the rule table |
+| `CODING_STANDARDS.md` | the reviewer, via `/code-review` | judgment-call rules and the rule table |
 | `GLOSSARY.md` | any agent naming a domain concept | domain terms, per the `domain-modeling` skill |
 | a skill | the agent its description triggers, or the operator | a repeatable procedure |
 | other docs | an agent following a pointer | reference too long for the files above |

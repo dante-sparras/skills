@@ -16,12 +16,20 @@ _Avoid_: Orchestrator, main agent
 One outcome the operator asked for, or one ticket. One worker carries it, and it lands through one PR when it changes code.
 _Avoid_: Unit, job
 
+**Spec**:
+The issue that describes one feature: the problem, the solution, the user stories, and the decisions made. `to-spec` writes it, and its tickets are its sub-issues.
+_Avoid_: PRD, plan
+
+**Ticket**:
+One tracer-bullet slice of a spec, published as an issue that names its blockers. One ticket becomes one task.
+_Avoid_: Story, subtask
+
 **Worker**:
 A fresh agent the coordinator starts with one task and a brief that opens with `auto-mode/worker.md`. It sizes the task, then opens a PR for it or splits it into tickets, and fixes what review finds. The operator answers it in its own thread.
-_Avoid_: Helper, child, implementer, planner
+_Avoid_: Helper, planner
 
 **Reviewer**:
-The agent the coordinator sends to one PR it did not write. It proves the behavior, runs `code-review`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
+The agent the coordinator sends to one PR it did not write, with a brief that opens with `auto-mode/reviewer.md`. It proves the behavior, runs `code-review`, and argues each finding with the PR's worker by message until they agree: the worker fixes it, or the reviewer withdraws it. Then it posts `PASS` or `NO AGREEMENT` on the PR. It runs on the `reviewer` model role.
 _Avoid_: Verifier, checker, QA agent
 
 **Verdict comment**:
@@ -33,7 +41,7 @@ What cost a worker time during its task, returned as facts at the end of its rep
 _Avoid_: Mistake log, complaints
 
 **Repeat**:
-The same friction or failure reason from two workers, or the same correction from the operator twice. A repeat becomes a task for the `correct` skill.
+The same friction from two workers, the same finding from two reviewers, or the same correction from the operator twice. A repeat becomes a task for the `correct` skill.
 _Avoid_: Pattern, recurring issue
 
 ## Verification

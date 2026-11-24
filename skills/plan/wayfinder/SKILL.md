@@ -10,7 +10,7 @@ Read `docs/agents/issue-tracker.md`, and its "Wayfinding operations" section for
 
 ## Rules
 
-- **Plan, don't do.** A ticket resolves a decision, and the map is done when nothing is left to decide before someone does the work. The pull to just do the work is the signal that you reached the edge of the map: hand off. An effort overrides this only in its **Notes**.
+- **Plan, don't do.** A ticket resolves a decision, and the map is done when nothing is left to decide before someone does the work. The pull to just do the work is the signal that you reached the edge of the map: hand off. A map that leads to a spec hands off to `to-spec`. An effort overrides this only in its **Notes**.
 - **One ticket per session.** Research tickets are the exception.
 - **Refer by name.** In everything the human reads, call a map or ticket by its title, with its link wrapped inside the name. A row of bare ids is illegible.
 - **Expect other sessions.** The user may run unblocked tickets in parallel. Fetch the map's body again right before you write to it, and change only the lines you add or graduate.
@@ -89,7 +89,7 @@ The user brought a loose idea.
 2. **Map the frontier.** Interview again, breadth-first: fan out across the whole space, surfacing the open decisions and the steps takeable now. If this finds no fog, the work needs no map. Stop and ask the user how to proceed.
 3. **Create the map** with Destination and Notes filled in, Decisions so far empty, and the fog sketched under Not yet specified.
 4. **Create the tickets** you can specify now as child issues. Wire blockers and cross-references in a second pass, with real ids, since a placeholder `#<n>` links to an unrelated issue.
-5. **Start the research.** Start a fresh `explorer` for each `research` ticket, in parallel. Each saves its findings on a pushed `research/<name>` branch with no PR, linked from its ticket.
+5. **Start the research.** Claim each `research` ticket, then start a fresh `explorer` for it, in parallel. Each saves its findings on a pushed `chore/research-<name>` branch with no PR, linked from its ticket.
 6. **Stop.** Charting is one session's work, and it resolves nothing by hand.
 
 ## Work through the map

@@ -23,8 +23,8 @@ A Breakage or Spec finding survives only when you rerun its command and the outp
 2. **State the intent** in two or three sentences, from the user's message, the commit messages, and the PR description. Ask the user when it is unclear. Every reviewer gets it, and a finding counts only when it breaks it.
 
 3. **Find the spec.** Take the first that exists:
-   1. An issue the commit messages reference (`#123`, `Closes #45`), fetched per `docs/agents/issue-tracker.md`. If that file is missing, say that `/setup-skills` has not run in this repo and carry on down this list.
-   2. A path the user passed.
+   1. The spec your caller or the user passed: a path, an issue, or text.
+   2. An issue the commit messages reference (`#123`, `Closes #45`), fetched per `docs/agents/issue-tracker.md`. If that file is missing, say that `/setup-skills` has not run in this repo and carry on down this list.
    3. A file under `docs/` or `specs/` that matches the branch name or the feature.
    4. The user's answer when you ask where the spec is. If there is none, the reviewers skip the Spec axis and the report says "no spec available".
 
@@ -48,7 +48,7 @@ A Breakage or Spec finding survives only when you rerun its command and the outp
    If a reviewer returns nothing, continue with the rest and note the dropout.
 
 7. **Verify.**
-   - Rerun each Breakage and Spec finding's command yourself, in the reviewer's worktree when it still exists, or after writing the reported repro file into a checkout of `HEAD`. Keep a finding when the output shows the failure and the failure breaks the intent or the spec.
+   - Rerun each Breakage and Spec finding's command yourself, in the reviewer's worktree when it still exists, or after writing the reported repro file into a checkout of `HEAD`. Keep a finding when the output shows the failure, and the failure breaks the intent or the spec, or is a regression: the same command passes at the fixed point.
    - Keep each Standards finding that cites a real rule, or names a smell against a real hunk. These are not rerun.
    - Merge findings that share a root cause, and list every reviewer that found each.
    - Mark each mechanical finding (a fixed syntax pattern, a banned API, an import shape, a file-location rule) as a candidate for the `correct` skill to turn into a check.
@@ -68,7 +68,7 @@ A Breakage or Spec finding survives only when you rerun its command and the outp
 >
 > For Standards, cite the documented rule (file and rule) for each breach, and name each baseline smell with the hunk it applies to. Smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything the tooling list already enforces. Use the glossary's terms for domain concepts, and flag a new name for a concept the glossary already names.
 >
-> No findings is a valid result. Report under `## Breakage`, `## Spec`, and `## Standards`, under 600 words.
+> No findings is a valid result. Report under `## Breakage`, `## Spec`, and `## Standards`, under 600 words, not counting code blocks and command output.
 
 ## Smell baseline
 

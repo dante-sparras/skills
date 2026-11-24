@@ -72,20 +72,20 @@ Every skill lives at `skills/<name>/`, the same layout it installs to.
 
 | Skill | What it does |
 | --- | --- |
+| [add-guardrail](./skills/add-guardrail/SKILL.md) | Turns a mistake agents repeat into a check that fails |
 | [coordinate](./skills/coordinate/SKILL.md) | The entry point. Makes each request a task, starts a worker for it, and ships it |
+| [create-verify-skill](./skills/create-verify-skill/SKILL.md) | Generates a `verify-<app>` skill that drives the real app |
 | [debug](./skills/debug/SKILL.md) | Finds the cause of a hard bug or a slowdown, then fixes it with a regression test |
-| [deepen](./skills/deepen/SKILL.md) | The deep-module vocabulary, and a survey that finds modules worth deepening |
+| [deepen-modules](./skills/deepen-modules/SKILL.md) | The deep-module vocabulary, and a survey that finds modules worth deepening |
 | [glossary](./skills/glossary/SKILL.md) | Keeps the project's domain terms in `GLOSSARY.md` |
-| [guardrail](./skills/guardrail/SKILL.md) | Turns a mistake agents repeat into a check that fails |
-| [interrogate](./skills/interrogate/SKILL.md) | Adversarial review of a diff by models from different families |
 | [interview](./skills/interview/SKILL.md) | Questions you in rounds until a plan or decision is settled |
 | [map](./skills/map/SKILL.md) | Charts work too big for one session as decision tickets |
-| [new-verify-skill](./skills/new-verify-skill/SKILL.md) | Generates a `verify-<app>` skill that drives the real app |
-| [plan](./skills/plan/SKILL.md) | Turns a conversation into a spec and its tickets |
-| [pr-body](./skills/pr-body/SKILL.md) | Writes a PR description: a summary diagram, evidence, and merge danger |
 | [research](./skills/research/SKILL.md) | Investigates a question against primary sources in the background |
+| [review-changes](./skills/review-changes/SKILL.md) | Adversarial review of a diff by models from different families |
 | [setup-skills](./skills/setup-skills/SKILL.md) | Sets up a repo's tracker, labels, and model roles for these skills |
 | [tdd](./skills/tdd/SKILL.md) | Test-first for bug fixes and core logic, and proof for everything else |
+| [to-pr](./skills/to-pr/SKILL.md) | Writes a PR description: a summary diagram, evidence, and merge danger |
+| [to-spec-and-tickets](./skills/to-spec-and-tickets/SKILL.md) | Turns a conversation into a spec and its tickets |
 | [triage](./skills/triage/SKILL.md) | Moves issues and outside PRs through triage states |
 | [writing-for-agents](./skills/writing-for-agents/SKILL.md) | Reference for writing skills and other docs that agents read |
 

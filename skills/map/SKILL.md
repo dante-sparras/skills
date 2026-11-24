@@ -12,7 +12,7 @@ Read `docs/agents/issue-tracker.md`, and its "Map operations" section for how th
 
 ## Rules
 
-- **Plan, don't do.** A ticket resolves a decision, and the map is done when nothing is left to decide before someone does the work. The pull to just do the work is the signal that you reached the edge of the map: hand off. A map that leads to a spec hands off to `plan`. An effort overrides this only in its **Notes**.
+- **Plan, don't do.** A ticket resolves a decision, and the map is done when nothing is left to decide before someone does the work. The pull to just do the work is the signal that you reached the edge of the map: hand off. A map that leads to a spec hands off to `to-spec-and-tickets`. An effort overrides this only in its **Notes**.
 - **One ticket per session.** Research tickets are the exception.
 - **Refer by name.** In everything the user reads, call a map or ticket by its title, with its link wrapped inside the name. A row of bare ids is illegible.
 - **Expect other sessions.** The user may run unblocked tickets in parallel. Fetch the map's body again right before you write to it, and change only the lines you add or graduate.

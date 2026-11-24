@@ -1,9 +1,9 @@
 ---
-name: new-verify-skill
+name: create-verify-skill
 description: "Generate a project-local `verify-<app>` skill that launches the real app, drives it the way a user does, and captures evidence. Use when proving a change needs the running app (a UI, CLI, TUI, or service flow) and the repo has no `verify-<app>` skill yet, or when asked to make one."
 ---
 
-# New Verify Skill
+# Create Verify Skill
 
 Generate a project-local **verification skill** that drives the real app and proves behavior: launch it, exercise a feature the way a user would, and capture evidence. Write it for the next agent, who reads it cold, mid-task, and has never seen the app.
 

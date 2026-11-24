@@ -11,6 +11,6 @@ The skills speak in canonical roles: five triage states, two categories, and `sp
 | `wontfix`         | `wontfix`            | Will not be actioned                     |
 | `bug`             | `bug`                | Category: something is broken            |
 | `enhancement`     | `enhancement`        | Category: new feature or improvement     |
-| `spec`            | `spec`               | A spec from `/plan`, not a ticket     |
+| `spec`            | `spec`               | A spec from `/to-spec-and-tickets`, not a ticket     |
 
 When a skill names a role, apply the label string from this table. Edit the "Label in our tracker" column to match the vocabulary this repo uses.

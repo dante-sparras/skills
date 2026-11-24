@@ -27,10 +27,17 @@ Write the body from this template:
 
 <optional: potential ramifications of merge>
 
+<details><summary>Agent notes</summary>
+
+**Seams:** <where the tests go, when an agent chose them>
+**Friction:** <what cost the agent time, or "none">
+
+</details>
+
 Closes #<issue>
 ```
 
-Keep the `Closes` line for each issue the PR resolves, and drop it when there is none.
+Keep the `Closes` line for each issue the PR resolves, and drop it when there is none. Keep the agent notes when an agent wrote the PR, and drop them otherwise.
 
 ## Sections
 
@@ -153,7 +160,7 @@ function expandSkill(command: string): string {
 
 Show that the change works, before and after.
 
-- **A visual change**: screenshots, when the environment can take them.
+- **A visual change**: screenshots or a short video, when the environment can take them. Reference each file in the body by its local path, as `![the login error state](./after.png)`, and upload it with `gh pr edit <number> --body-file <body file> --attach ./before.png --attach ./after.png`. `gh` uploads each file and rewrites the reference to point at it, so nothing is hosted elsewhere or committed. `gh pr edit --help` lists `--attach` when your `gh` has it.
 - **Anything else**: a run. Name the exact test or command and paste its real output, failing before the change and passing after.
 
 ### Merge Danger

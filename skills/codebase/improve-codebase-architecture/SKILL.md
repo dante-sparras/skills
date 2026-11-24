@@ -28,7 +28,7 @@ Two vocabularies, used exactly:
 
    Apply the **deletion test** to each suspect: a module whose deletion would spread complexity across its callers is worth keeping, and one whose deletion makes complexity vanish is a candidate.
 
-3. **Report.** Write the candidates as one HTML file, per [HTML-REPORT.md](HTML-REPORT.md), to `<tmpdir>/architecture-review-<timestamp>.html`, so nothing lands in the repo. The temp dir is `$TMPDIR`, else `/tmp`, or `%TEMP%` on Windows. Give the user its absolute path as a link they can open.
+3. **Report.** Write the candidates as one HTML page, per [HTML-REPORT.md](HTML-REPORT.md), to `<tmpdir>/architecture-review-<timestamp>.html`, so nothing lands in the repo. The temp dir is `$TMPDIR`, else `/tmp`, or `%TEMP%` on Windows. Show it in the thread with `html_preview`, then `html_render`.
 
    Propose no interfaces yet. Ask: "Which of these would you like to explore?"
 

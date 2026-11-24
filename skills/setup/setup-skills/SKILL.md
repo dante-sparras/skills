@@ -18,7 +18,6 @@ Read what exists:
 - `AGENTS.md` at the root: is there an `## Agent skills` section already?
 - `GLOSSARY.md` and `GLOSSARY-MAP.md` at the root.
 - `docs/agents/`: output from an earlier run of this skill.
-- Which of `triage`, `to-spec`, and `wayfinder` are installed, as a folder beside this one or a name among your skills. The first two decide whether Section B runs. `wayfinder` decides whether its labels are created.
 - Monorepo signals: a `pnpm-workspace.yaml`, a `workspaces` field in `package.json`, or a populated `packages/*` where each package has its own `src/`. Without them the repo has a single context, as almost every repo does.
 
 ## 2. Ask
@@ -32,7 +31,7 @@ Summarise what is present and what is missing. Then take the sections in order, 
 
 The GitHub template has a "PRs as a request surface" flag, off by default. Leave it off without asking. The user can flip it in the file later.
 
-**Section B: Labels.** Runs only when `triage` or `to-spec` is installed. Ask one question:
+**Section B: Labels.** Ask one question:
 
 > Do you want to keep the default labels? (recommended: **yes**)
 
@@ -46,11 +45,11 @@ The defaults are the canonical roles, each label named after its role: the state
 
 The `auto-mode` coordinator reads the answer. It still hands the merge to a person wherever branch protection requires an approval it cannot give.
 
-**Section E: Required checks.** Runs on GitHub when the repo has CI. List the checks that run on a PR, and whether a ruleset or branch protection on the default branch requires them. When none is required, ask one question:
+**Section E: Required checks.** Runs on GitHub when the repo has CI and no ruleset or branch protection on the default branch requires a check. Ask one question:
 
 > Make `<check>` a required check on `<default branch>`? (recommended: **yes**)
 
-T3 wakes the coordinator when a required check passes and stays silent for any other, so without this a green PR waits until something else wakes the coordinator. On a yes, add a ruleset with `gh api --method POST repos/<owner>/<repo>/rulesets` that targets the default branch and holds one `required_status_checks` rule naming the check. Tell the user that pushes straight to the default branch stop working once it is active.
+T3 wakes the coordinator when a required check passes and stays silent for any other, so without this a green PR waits until something else wakes the coordinator. Tell the user that pushes straight to the default branch stop working once the ruleset is active.
 
 ## 3. Confirm
 
@@ -73,7 +72,7 @@ Show the user a draft of the `## Agent skills` block and of each `docs/agents/` 
 
 ### Domain docs
 
-[one-line summary of layout: "single-context" or "multi-context"]. See `docs/agents/domain.md`.
+Read `GLOSSARY.md` at the repo root before exploring, or each glossary that `GLOSSARY-MAP.md` lists for the topic. Use its terms, and stay off the synonyms it lists under `_Avoid_`.
 
 ### Landing
 
@@ -85,10 +84,29 @@ Show the user a draft of the `## Agent skills` block and of each `docs/agents/` 
 | File | Seed | Write when |
 | --- | --- | --- |
 | `issue-tracker.md` | [issue-tracker-github.md](./issue-tracker-github.md), or the user's description for another tracker | Always |
-| `domain.md` | [domain.md](./domain.md) | Always |
-| `triage-labels.md` | [triage-labels.md](./triage-labels.md) | Section B ran. Otherwise leave out the file and the `### Triage labels` sub-block |
+| `triage-labels.md` | [triage-labels.md](./triage-labels.md) | Always |
 
-**Labels**, on GitHub: create each one the tracker lacks with `gh label create`. That is the configured labels when Section B ran, and `wayfinder:map`, `wayfinder:research`, `wayfinder:prototype`, `wayfinder:interview`, and `wayfinder:task` when `wayfinder` is installed.
+**Labels**, on GitHub: create each one the tracker lacks with `gh label create`. That is the configured labels, and `wayfinder:map`, `wayfinder:research`, `wayfinder:prototype`, `wayfinder:interview`, and `wayfinder:task`.
+
+**Required checks**, on a yes to Section E: `gh api --method POST repos/<owner>/<repo>/rulesets --input <file>`, with the body below. A `403` means GitHub does not offer rulesets for this repo on its plan: say so and move on.
+
+```json
+{
+  "name": "main: required checks",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
+  "rules": [
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": false,
+        "required_status_checks": [{ "context": "<check>" }]
+      }
+    }
+  ]
+}
+```
 
 ## 5. Set model roles
 

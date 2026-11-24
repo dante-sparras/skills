@@ -55,7 +55,7 @@ Omit for an enhancement.
 
 - `bug`: something is broken and nobody has named the cause. The fix starts with diagnosis.
 - `change`: one PR, with every decision settled in this brief.
-- `feature`: more than one PR, or a decision still open. The brief is the starting point for a spec, not the contract for a build.
+- `feature`: more than one PR. The brief is the starting point for a spec, not the contract for a build.
 
 Pick it from what triage learned in the code, not from the label: a bug whose cause triage already found is a `change`.
 

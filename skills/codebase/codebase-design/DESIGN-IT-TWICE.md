@@ -2,7 +2,7 @@
 
 Explore alternative interfaces for one deepening candidate with parallel agents. Uses the vocabulary in [SKILL.md](SKILL.md).
 
-1. **Frame the problem** for the user, then go straight to step 2 so they read while the agents work:
+1. **Frame the problem** for the user, with `send_to_user` in T3, then go straight to step 2 so they read while the agents work:
    - the constraints any new interface must satisfy
    - the dependencies it relies on, and each one's category from [DEEPENING.md](DEEPENING.md)
    - a rough code sketch that makes the constraints concrete. It is an illustration, not a proposal

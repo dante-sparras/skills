@@ -52,8 +52,8 @@ The whole flow is four files: one per role, and the rules they share. [GLOSSARY.
 
 | File | Who reads it | What it holds |
 | --- | --- | --- |
-| [`coordinate/SKILL.md`](./skills/coordinate/SKILL.md) | The coordinator | The loop: intake, start, receive, review, land, check |
-| [`coordinate/worker.md`](./skills/coordinate/worker.md) | Every worker | How to size a task, build it, or split it |
+| [`coordinate/SKILL.md`](./skills/coordinate/SKILL.md) | The coordinator | How to take in tasks, start workers, react to what comes back, and review and land PRs |
+| [`coordinate/worker.md`](./skills/coordinate/worker.md) | Every worker | The four paths for a task: answer, talk it through, build, or split |
 | [`coordinate/reviewer.md`](./skills/coordinate/reviewer.md) | The reviewer of a PR | How to review it, and argue each finding with its worker |
 | [`coordinate/rules.md`](./skills/coordinate/rules.md) | All three | Trust, the AI marker, messages, git, PR tools, and how to run a skill |
 

@@ -4,16 +4,16 @@ Agent skills that plan, build, test, review, and land work in a repository.
 
 ## Coordination
 
-**Operator**:
-The person a run works for. Skills written for a conversation call this person the user, and `triage` calls them the maintainer.
-_Avoid_: Owner, end user
+**User**:
+The person a run works for. `triage` calls them the maintainer.
+_Avoid_: Operator, owner
 
 **Coordinator**:
-The one agent the operator talks to. It makes everything the operator asks for a task, starts a worker for each, and makes sure each one ships. It sends a reviewer to every PR once its checks are green, and it is the only agent that watches CI and merges.
+The one agent the user talks to. It makes everything the user asks for a task, starts a worker for each, and makes sure each one ships. It sends a reviewer to every PR once its checks are green, and it is the only agent that watches CI and merges.
 _Avoid_: Orchestrator, main agent
 
 **Task**:
-One outcome the operator asked for, or one ticket. One worker carries it, and it lands through one PR when it changes code.
+One outcome the user asked for, or one ticket. One worker carries it, and it lands through one PR when it changes code.
 _Avoid_: Unit, job
 
 **Spec**:
@@ -25,7 +25,7 @@ One tracer-bullet slice of a spec, published as an issue that names its blockers
 _Avoid_: Story, subtask
 
 **Worker**:
-A fresh agent the coordinator starts with one task and a brief that opens with `coordinate/rules.md` and `coordinate/worker.md`. It sizes the task, then opens a PR for it or splits it into tickets, and fixes what review finds. The operator answers it in its own thread.
+A fresh agent the coordinator starts with one task and a brief that opens with `coordinate/rules.md` and `coordinate/worker.md`. It sizes the task, then opens a PR for it or splits it into tickets, and fixes what review finds. The user answers it in its own thread.
 _Avoid_: Helper, planner
 
 **Reviewer**:
@@ -41,7 +41,7 @@ The line that opens every comment and issue an agent posts. It starts `> *This w
 _Avoid_: Disclaimer, signature
 
 **Model role**:
-A named pair of models, a default and a backup, that `setup-skills` saves: `implementer`, `reviewer`, or `explorer`. A worker runs on `implementer` and a reviewer on `reviewer`.
+A named pair of models, a default and a backup, that `setup-skills` saves: `worker`, `reviewer`, or `explorer`. A worker runs on `worker` and a reviewer on `reviewer`.
 _Avoid_: Agent type, profile
 
 **Panel**:
@@ -61,7 +61,7 @@ What cost a worker time during its task, returned as facts at the end of its res
 _Avoid_: Mistake log, complaints
 
 **Repeat**:
-The same friction from two workers, the same finding from two reviewers, or the same correction from the operator twice. A repeat becomes a task for the `guardrail` skill.
+The same friction from two workers, the same finding from two reviewers, or the same correction from the user twice. A repeat becomes a task for the `guardrail` skill.
 _Avoid_: Pattern, recurring issue
 
 ## Verification

@@ -77,6 +77,15 @@ const ShipInput = Schema.Struct({ config: Config, issue: IssueRef });
 /** Whether the user has said go on a PR, and how: the approved label, or an approving review. */
 const Approval = Schema.Struct({ approved: Schema.Boolean, by: Schema.NullOr(Schema.String) });
 
+/** The head a go must be for, and the newest approved-label event from before that head appeared. */
+const Go = Schema.Struct({ head: Schema.String, after: Schema.Number });
+
+/** The two settings a run reads again before it merges. */
+const MergeSettings = Schema.Struct({ enabled: Schema.Boolean, autoMerge: Schema.String });
+
+/** What one repo's part of a pass did: the runs it started, and what it could not do. */
+const PassResult = Schema.Struct({ started: Schema.Array(Schema.String), notes: Schema.Array(Schema.String) });
+
 /** What the user answered, when a thread asked them with its question tool. */
 const Answer = Schema.Struct({
   choice: described(Schema.String, "The choice the user picked, word for word as the question offered it. Empty when you have no tool that asks the user."),
@@ -300,14 +309,21 @@ const askBrief = (question) =>
     "Settle this thread with `t3_thread_organize` before you return.",
   ].join("\n");
 
+/** The id of the newest event that put the approved label on a PR, or 0. `events` is its label events. */
+const lastApproval = (events) =>
+  (events ?? []).filter((event) => event.event === "labeled" && event.label === LABELS.approved).reduce((newest, event) => Math.max(newest, Number(event.id) || 0), 0);
+
 /**
- * Whether the user has reviewed a PR and said go. `pr` is `gh pr view --json labels,reviews`. The
- * approved label is the go on a PR the user's own account opened, which GitHub does not let them
- * approve. On any other PR a collaborator's approving review of this head counts too, unless a
- * collaborator's latest review asks for changes. The label overrides such a request.
+ * Whether the user has reviewed a PR and said go. `pr` is `gh pr view --json labels,reviews`, and
+ * `events` is the PR's label events. The approved label is the go on a PR the user's own account
+ * opened, which GitHub does not let them approve. It counts for one head: only a label put on
+ * after `after`, the newest such event from before that head appeared, is a go for it. On any
+ * other PR a collaborator's approving review of this head counts too, unless a collaborator's
+ * latest review asks for changes. The label overrides such a request.
  */
-const approvalOf = (pr, head) => {
-  if ((pr.labels ?? []).some((label) => label.name === LABELS.approved)) return { approved: true, by: "label" };
+const approvalOf = (pr, head, events, after) => {
+  const labelled = (pr.labels ?? []).some((label) => label.name === LABELS.approved);
+  if (labelled && lastApproval(events) > after) return { approved: true, by: "label" };
   const latest = new Map();
   for (const review of pr.reviews ?? []) {
     if (!COLLABORATORS.includes(review.authorAssociation) || !["APPROVED", "CHANGES_REQUESTED", "DISMISSED"].includes(review.state)) continue;
@@ -319,12 +335,37 @@ const approvalOf = (pr, head) => {
   return approving && !holding ? { approved: true, by: "review" } : { approved: false, by: null };
 };
 
+/** The settings a merge obeys: the repo's as they are now. A repo that is no longer registered merges nothing. */
+const mergeSettings = (now) => (now ? { enabled: now.enabled === true, autoMerge: now.autoMerge ?? "never" } : { enabled: false, autoMerge: "never" });
+
+/** How many runs saw a friction. One run that reports it twice is one sighting. */
+const runsThatSaw = (sightings) => new Set(sightings.map((sighting) => sighting.run)).size;
+
 /** How long to wait before looking for the user's review again: often at first, then less. */
 const reviewWait = (checks) => (checks <= 15 ? "1 minute" : checks <= 36 ? "5 minutes" : "30 minutes");
 
-/** The comment that tells the user a PR is theirs to review, and how to say go. */
-const readyNote = (head) =>
-  `${AI_MARKER}\n\nReady for your review at \`${String(head).slice(0, 7)}\`: the reviewer passed it, and its checks are green. Add the \`${LABELS.approved}\` label, and the factory merges it. A comment or a request for changes goes back to the worker.`;
+/**
+ * The comment that tells the user a PR is theirs to review, and how to say go. It lists what
+ * people outside the repo wrote, which the worker is never given.
+ */
+const readyNote = (head, passed = true, outside = []) =>
+  [
+    AI_MARKER,
+    "",
+    `Ready for your review at \`${String(head).slice(0, 7)}\`: ${passed ? "the reviewer passed it" : "you accepted it with the reviewer's findings open"}, and its checks are green. Add the \`${LABELS.approved}\` label, and the factory merges it. A comment or a request for changes goes back to the worker.`,
+    ...(outside.length === 0
+      ? []
+      : [
+          "",
+          "People outside the repo commented. The worker has not seen what they wrote: comment on the PR yourself to pass anything on.",
+          "",
+          ...outside.map((item) => `- ${item.author}: ${item.url}`),
+        ]),
+  ].join("\n");
+
+/** The comment that takes back what `readyNote` promised, once no run watches the PR. */
+const stoppedNote = (issue) =>
+  `${AI_MARKER}\n\nThe factory stopped waiting for a review of this PR after seven days, so the \`${LABELS.approved}\` label no longer merges it. Put \`${LABELS.ready}\` back on ${issue} to pick it up again, or merge it by hand.`;
 
 /** The turn that tells the user, in the worker's thread, that its PR waits for their review. */
 const readyBrief = (pr, verdict) =>
@@ -351,8 +392,12 @@ const namedButUnlisted = (pass, repository, listed) =>
     ? [...new Set((pass.issues ?? []).map((n) => String(n).replace(/^#/, "")))].filter((n) => !listed.some((issue) => issueNumber(issue) === n))
     : [];
 
-/** Whether a run still holds one of the repo's slots: it is active, and it is not the run that started this pass. */
-const holdsSlot = (run, pass) => ACTIVE.includes(run.status) && !(pass?.ending && run.key?.startsWith(pass.ending));
+/**
+ * Whether a run still holds one of the repo's slots: it is active, it is not the run that started
+ * this pass, and it does not wait on the user. `waiting` holds the key starts of the runs that do.
+ */
+const holdsSlot = (run, pass, waiting = []) =>
+  ACTIVE.includes(run.status) && !(pass?.ending && run.key?.startsWith(pass.ending)) && !waiting.some((own) => run.key?.startsWith(own));
 
 /** The store key of one friction: its kind and its target, written one way. */
 const repeatKey = (repository, kind, target) => {
@@ -500,12 +545,38 @@ const rolesOf = Effect.fn(function* (config) {
   return found;
 });
 
-/** Whether the user has said go on a PR at this head. */
-const readApproval = (config, pr, head) =>
-  gh(["pr", "view", pr, "--json", "labels,reviews"], config.project).pipe(Effect.map((out) => approvalOf(JSON.parse(out), head)));
+/** A PR's label events: which label was put on or taken off, oldest first. */
+const labelEvents = (config, prNumber) =>
+  ghLines(["api", "--paginate", `repos/${config.repository}/issues/${prNumber}/events`, "--jq", ".[] | {id, event, label: .label.name}"], config.project);
 
-/** Take the approved label off a PR whose diff changed, so a go covers only what the user saw. */
-const unapprove = (config, pr) => gh(["pr", "edit", pr, "--remove-label", LABELS.approved], config.project).pipe(Effect.asVoid);
+/** Whether the user has said go on a PR, for the head `go` names. */
+const readApproval = Effect.fn(function* (config, pr, prNumber, go) {
+  const seen = JSON.parse(yield* gh(["pr", "view", pr, "--json", "labels,reviews"], config.project));
+  return approvalOf(seen, go.head, yield* labelEvents(config, prNumber), go.after);
+});
+
+/** Take the approved label off a PR whose commits changed, so the user sees that their go is void. */
+const unapprove = (config, prNumber) =>
+  gh(["pr", "edit", prNumber, "--repo", config.repository, "--remove-label", LABELS.approved], config.project).pipe(Effect.asVoid);
+
+/**
+ * The head a go must be for. It is kept in the store, so a later run of the same PR knows what
+ * the user was shown. The first sight of a new head sets the mark: every label event up to now
+ * is too old to be a go for it. The label comes off too, but the mark is what voids it.
+ */
+const goFor = Effect.fn(function* (config, prNumber, head) {
+  const entry = store.entry(`${PREFIX}/go/${config.repository}/${prNumber}`, Go);
+  const found = yield* entry.get;
+  if (Option.isSome(found) && found.value.head === head) return found.value;
+  const next = { head, after: lastApproval(yield* labelEvents(config, prNumber)) };
+  yield* entry.set(next);
+  if (next.after > 0) yield* unapprove(config, prNumber).pipe(Effect.orElseSucceed(() => undefined));
+  return next;
+});
+
+/** The repo's merge settings as they are in the store now. */
+const currentSettings = (config) =>
+  store.entry(`${PREFIX}/projects/${config.repository}`, Config).get.pipe(Effect.map((found) => mergeSettings(Option.isSome(found) ? found.value : null)));
 
 /** The open PRs that close an issue: what an earlier run of it left behind. */
 const openPrsFor = (config, number) => {
@@ -640,13 +711,18 @@ const readFeedback = (config, prUrl, handled) =>
     });
   });
 
-const createIssue = (config, title, body, labels) =>
-  gh(["issue", "create", "--repo", config.repository, "--title", cut(title, 80), "--body", body, ...labels.flatMap((l) => ["--label", l])], config.project).pipe(
+const createIssue = (config, title, body, labels, parent = null) =>
+  gh(
+    ["issue", "create", "--repo", config.repository, "--title", cut(title, 80), "--body", body, ...labels.flatMap((l) => ["--label", l]), ...(parent ? ["--parent", String(parent)] : [])],
+    config.project,
+  ).pipe(
     Effect.map((out) => out.trim().split(/\s+/).pop()),
   );
 
 const issueAddress = (config, url) => ({ project: config.project, url });
 const resumeKey = (config, issue) => `${PREFIX}/resume/${config.repository}/${issue.number}`;
+// A run sets this while it waits on the user. The dispatcher gives its slot to other work.
+const waitingKey = (config, issue) => `${PREFIX}/waiting/${config.repository}/${issue.number}`;
 
 const brief = (config, role, lines, verifySkill) =>
   [
@@ -722,25 +798,39 @@ const countRepeat = Effect.fn(function* (config, name, seen) {
   const key = repeatKey(config.repository, seen.kind, seen.target);
   const entry = store.entry(key, Repeat);
   const sighting = { run: seen.run, task: seen.task, thread: seen.thread, pr: seen.pr, detail: seen.detail };
+  const needed = seen.kind === "broken" ? 1 : REPEAT_AFTER;
+  const claim = `claimed by ${seen.run}`;
+  // Count the sighting, and in the same write claim the issue when this is the sighting that
+  // makes a repeat. Two runs that end together cannot both claim it.
   const counted = yield* step(
     name,
     { returns: Repeat },
     entry
       .update((found) => {
         const earlier = Option.isSome(found) ? found.value : { kind: seen.kind, target: seen.target, sightings: [], filed: null };
-        return { ...earlier, sightings: [...earlier.sightings, sighting] };
+        const sightings = [...earlier.sightings, sighting];
+        return { ...earlier, sightings, filed: earlier.filed === null && runsThatSaw(sightings) >= needed ? claim : earlier.filed };
       })
       .pipe(Effect.map((next) => Option.getOrThrow(next))),
   );
-  if (counted.filed !== null) {
+  if (counted.filed === null) return;
+  if (counted.filed !== claim) {
+    // Another run filed the issue, or is filing it now.
+    if (!counted.filed.startsWith("http")) return;
     yield* step(
       `${name}-seen-again`,
       { returns: Schema.Void },
-      issues.comment(issueAddress(config, counted.filed), `${AI_MARKER}\n\nSeen again:\n\n${sightingLine(sighting)}`),
+      Effect.gen(function* () {
+        if ((yield* issueState(config, counted.filed)) === "OPEN") {
+          yield* issues.comment(issueAddress(config, counted.filed), `${AI_MARKER}\n\nSeen again:\n\n${sightingLine(sighting)}`);
+          return;
+        }
+        // The issue was closed, and the friction is back. The count starts over from this sighting.
+        yield* entry.set({ kind: seen.kind, target: seen.target, sightings: [sighting], filed: null });
+      }),
     );
     return;
   }
-  if (counted.sightings.length < (seen.kind === "broken" ? 1 : REPEAT_AFTER)) return;
   const singles = yield* step(
     `${name}-singles`,
     { returns: Schema.Array(Repeat) },
@@ -765,9 +855,15 @@ const countRepeat = Effect.fn(function* (config, name, seen) {
 const ledgerOf = (config, run, task) => {
   const followUps = [];
   const sightings = [];
+  // A worker that is woken may return its whole list again, so each follow-up and each
+  // friction is kept once per run.
   const keep = (result, where) => {
-    followUps.push(...result.followUps);
+    for (const line of result.followUps) {
+      if (!followUps.some((kept) => titleKey(cut(kept, 80)) === titleKey(cut(line, 80)))) followUps.push(line);
+    }
     for (const item of [...result.friction, ...(result.checkable ?? [])]) {
+      const key = repeatKey(config.repository, item.kind, item.target);
+      if (sightings.some((seen) => repeatKey(config.repository, seen.kind, seen.target) === key)) continue;
       sightings.push({ ...item, run: run.id, task, thread: where.thread ?? null, pr: where.pr ?? null });
     }
   };
@@ -812,17 +908,21 @@ const shipOwn = (config) => `ship/${config.repository}/`;
  * last open ticket, put the spec in ready-for-agent, where the dispatcher starts its check. A spec
  * gets one check that finishes: once the gaps it filed have landed too, the spec closes.
  */
-const afterMerge = (config, issue) =>
+const afterMerge = (config, issue, closing) =>
   Effect.gen(function* () {
     const repo = config.repository;
     const cwd = config.project;
     const ticket = yield* readIssue(config, issue.number);
-    if (ticket.state === "open") yield* gh(["issue", "close", issue.number, "--repo", repo, "--comment", `${AI_MARKER}\n\nIts PR merged.`], cwd);
-    const parent = yield* gh(["api", `repos/${repo}/issues/${issue.number}/parent`, "--jq", ".number"], cwd).pipe(
-      Effect.map((out) => out.trim() || parentInBody(ticket.body)),
-      Effect.orElseSucceed(() => parentInBody(ticket.body)),
+    if (ticket.state === "open") yield* gh(["issue", "close", issue.number, "--repo", repo, "--comment", `${AI_MARKER}\n\n${closing}`], cwd);
+    const native = yield* gh(["api", `repos/${repo}/issues/${issue.number}/parent`, "--jq", ".number"], cwd).pipe(
+      Effect.map((out) => out.trim()),
+      Effect.orElseSucceed(() => ""),
     );
+    const parent = native || parentInBody(ticket.body);
     if (!parent) return "no spec";
+    // A spec's tickets are counted as its sub-issues. A ticket that names its spec only in its
+    // body is linked now, so the count below holds it.
+    if (!native) yield* gh(["issue", "edit", parent, "--repo", repo, "--add-sub-issue", issue.number], cwd).pipe(Effect.orElseSucceed(() => ""));
     const spec = yield* readIssue(config, parent);
     if (spec.state !== "open" || !spec.labels.some((label) => label.name === LABELS.spec)) return `#${parent} is not an open spec`;
     if (!(yield* allTicketsClosed(config, parent))) return `spec #${parent} has open tickets`;
@@ -843,7 +943,7 @@ const afterMerge = (config, issue) =>
 const ship = workflow(
   "skills-factory-ship",
   {
-    version: 12,
+    version: 13,
     payload: ShipInput,
     // The issue leaves the queue however the run ends, unless the run parked it to wait on
     // another issue. A run that did not finish moves it to needs-triage, so a person sees it the
@@ -851,6 +951,7 @@ const ship = workflow(
     onEnd: (input, end) =>
       Effect.gen(function* () {
         const { config, issue } = input;
+        yield* store.entry(waitingKey(config, issue), Schema.String).delete.pipe(Effect.orElseSucceed(() => undefined));
         const parked = yield* store.entry(resumeKey(config, issue), Resume).get;
         if (end.outcome === "stopped" && Option.isSome(parked)) return;
         const triage = end.outcome === "completed" ? [] : ["--add-label", LABELS.triage];
@@ -1053,57 +1154,103 @@ const ship = workflow(
 
     if (result.status !== "DONE") return yield* halt(`the worker returned ${result.status}: ${result.summary}`);
     if (result.pr === null) {
-      yield* ledger.wrapUp(`The skills factory finished this issue without a PR.\n\n${result.summary}`);
+      // No PR means nobody reviewed anything, so the user says whether the issue is done. In
+      // needs-triage they see it. Left open with no label, it would block what waits on it unseen.
+      yield* step("no-pr", { returns: Schema.Void }, gh(["issue", "edit", issue.number, "--repo", config.repository, "--add-label", LABELS.triage], config.project).pipe(Effect.asVoid));
+      yield* ledger.wrapUp(
+        `The skills factory finished this issue without a PR, and moved it to \`${LABELS.triage}\`. Close it if you agree that nothing is left to do.\n\n${result.summary}`,
+      );
       return { summary: result.summary };
     }
 
     // ---- The PR's path: green checks, collaborators heard, a review of the current head, then
-    // a person's go to merge.
+    // the user's review, which is the go to merge.
     const pr = issueAddress(config, result.pr);
-    let verdict = null; // { headSha, comment, approved, door }
+    const prNumber = String(result.pr).split("/").pop();
+    let verdict = null; // { headSha, comment, door, passed }: the review that covers a head.
+    let earlier = "none"; // The last verdict comment, for the next reviewer.
     let rulings = "none";
     let rounds = 0;
-    const handled = []; // Ids of collaborator comments the worker has been given.
-    let lastHead = null; // The head the last pass saw. A new one voids the user's go.
+    const handled = []; // Ids of comments the worker was given, or the user was shown.
+    let go = null; // { head, after }: the head a go must be for, and the label events too old to be one.
     let announced = null; // The head the user was last told is ready for their review.
     let waited = 0; // Looks so far for the user's review of that head.
+    let refused = 0; // Merges of one head that GitHub refused.
+    let idle = false; // Whether the store says this run waits on the user, and so holds no slot.
+
+    /** Read the PR's head. A new head needs a new go, so a label that was on the PR stops counting. */
+    const headNow = Effect.fn(function* (name) {
+      const seen = yield* step(
+        name,
+        { returns: Go },
+        Effect.gen(function* () {
+          const detail = yield* pullRequests.read(pr);
+          return yield* goFor(config, prNumber, detail.headSha ?? "");
+        }),
+      );
+      if (go !== null && seen.head !== go.head) refused = 0;
+      go = seen;
+      return seen.head;
+    });
+
+    /** Say in the store whether this run waits on the user. A run that does holds none of the repo's slots. */
+    const setIdle = Effect.fn(function* (name, value) {
+      if (idle === value) return;
+      idle = value;
+      const entry = store.entry(waitingKey(config, issue), Schema.String);
+      yield* step.try(name, { returns: Schema.Void }, value ? entry.set(pr.url) : entry.delete);
+    });
 
     /** Wake the worker on its own thread, and take what it returns. */
     const wake = Effect.fn(function* (name, what) {
       rounds++;
+      yield* setIdle(`${name}-busy`, false);
       const woken = yield* agent.try(name, { thread: workerThread, brief: wokeBrief(what), returns: WorkerResult, quiet: "2 hours", timeout: "12 hours" });
       if (woken.outcome === "failed") return yield* halt(`the worker failed after it was woken: ${woken.reason}`);
       ledger.keep(woken.value, { thread: workerThread.threadId, pr: pr.url });
       const settled = yield* answered(woken.value);
       if (settled.status !== "DONE") return yield* halt(`the worker returned ${settled.status}: ${settled.summary}`);
-      yield* step.try(`${name}-unapprove`, { returns: Schema.Void }, unapprove(config, pr.url));
+      // The worker may have pushed, and only a push voids the user's go. Its turn settled the
+      // thread, so the user is told again when the PR next waits for them.
+      yield* headNow(`${name}-head`);
+      announced = null;
       return settled;
     });
 
-    /** End the run on a merge, whoever made it. */
-    const landed = Effect.fn(function* (how, asked = true) {
-      const next = yield* step.try("after-merge", { returns: Schema.String }, afterMerge(config, issue));
-      yield* ledger.wrapUp(next.outcome === "failed" ? `The PR merged, but the factory could not check its spec: ${next.reason}` : null);
-      // What this merge unblocked starts now, not at the next timed pass.
-      yield* step.try(
+    /** Start a pass now, so what this run unblocked does not wait for the timer. */
+    const nextPass = () =>
+      step.try(
         "next-pass",
         { returns: Schema.Void },
         Effect.gen(function* () {
           yield* start(dispatch, { scheduledAt: new Date().toISOString(), ending: `${shipOwn(config)}${issue.number}/` }, { key: `pass/${run.id}` });
         }),
       );
+
+    /** End the run on a merge, whoever made it. */
+    const landed = Effect.fn(function* (how, asked = true) {
+      const next = yield* step.try("after-merge", { returns: Schema.String }, afterMerge(config, issue, "Its PR merged."));
+      yield* ledger.wrapUp(next.outcome === "failed" ? `The PR merged, but the factory could not check its spec: ${next.reason}` : null);
+      yield* nextPass();
       // The worker's thread stayed in the user's list while its PR waited for them. It leaves now.
       yield* agent.try("release", { thread: workerThread, brief: releaseBrief(pr.url, "merged"), timeout: "15 minutes" });
       return { pr: pr.url, merged: how, asked };
     });
 
+    /** Stop the run over a PR that will not merge, and take the worker's thread out of the user's list. */
+    const gone = Effect.fn(function* (name, why, reason) {
+      yield* agent.try(name, { thread: workerThread, brief: releaseBrief(pr.url, why), timeout: "15 minutes" });
+      return yield* halt(reason);
+    });
+
+    yield* headNow("head-first");
     for (let pass = 1; ; pass++) {
       if (rounds >= MAX_ROUNDS) return yield* halt(`${pr.url} went round fixes and review ${MAX_ROUNDS} times without landing.`);
       const at = yield* pullRequests.wait(`checks-${pass}`, pr, { until: "checks", timeout: "3 hours" });
       if (Option.isNone(at)) return yield* halt(`the checks on ${pr.url} were still running after 3 hours.`);
       const standing = at.value;
       if (standing.state === "merged") return yield* landed("outside the factory");
-      if (standing.state === "closed") return yield* halt(`${pr.url} was closed outside the factory.`);
+      if (standing.state === "closed") return yield* gone(`closed-early-${pass}`, "was closed", `${pr.url} was closed outside the factory.`);
       if (standing.checks === "failing" || standing.mergeability === "conflicting") {
         const what = standing.checks === "failing" ? "a check fails on your PR." : "your PR conflicts with main.";
         result = yield* wake(`fix-${pass}`, `${what} PR: ${pr.url}.`);
@@ -1111,6 +1258,8 @@ const ship = workflow(
       }
 
       // A collaborator's comment goes to the worker before anything else, as a request to weigh.
+      // Anyone else's comment is data: it never reaches the worker, and never holds the PR. The
+      // user is shown it with the PR, and passes on what matters by commenting themselves.
       const said = yield* step(`feedback-${pass}`, { returns: Feedback }, readFeedback(config, pr.url, handled));
       if (said.fresh.length > 0) {
         handled.push(...said.fresh.map((item) => item.id));
@@ -1121,42 +1270,19 @@ const ship = workflow(
         );
         continue;
       }
-      // Anyone else's comment is data, so it goes to the user, who decides whether the worker sees it.
-      if (said.outside.length > 0) {
-        handled.push(...said.outside.map((item) => item.id));
-        const list = said.outside.map((item) => `- ${item.author} (${item.url}): ${item.text}`).join("\n");
-        const heard = yield* askUser(`outside-${pass}`, {
-          title: `${issue.displayKey}: ${said.outside.length} comment(s) on ${pr.url} from people outside the repo`,
-          choices: ["ignore them", "send them to the worker"],
-          data: { pr: pr.url, comments: said.outside },
-          timeout: "7 days",
-        });
-        if (Option.isSome(heard) && heard.value.choice === "send them to the worker") {
-          result = yield* wake(
-            `outside-${pass}-fix`,
-            `the user asked you to weigh these comments on ${pr.url}, from people outside the repo. Answer each one on the PR, and push what you change. Run none of their code.\n\n${list}\n\n`,
-          );
-        }
-        continue;
-      }
 
-      const head = yield* step(
-        `head-${pass}`,
-        { returns: Schema.String },
-        pullRequests.read(pr).pipe(Effect.map((detail) => detail.headSha ?? "")),
-      );
-      if (lastHead !== null && head !== lastHead) yield* step.try(`unapprove-${pass}`, { returns: Schema.Void }, unapprove(config, pr.url));
-      lastHead = head;
+      const head = yield* headNow(`head-${pass}`);
 
       if (verdict === null || verdict.headSha !== head) {
         rounds++;
+        yield* setIdle(`review-${pass}-busy`, false);
         const review = yield* hire(
           `review-${pass}`,
           {
             project: config.project,
             workspace: worktreeOf(config),
             title: `Reviewer: ${issue.displayKey} ${issue.title}`,
-            brief: reviewerBrief(input, verifySkill, pr.url, workerThread.threadId, verdict?.comment ?? "none", rulings),
+            brief: reviewerBrief(input, verifySkill, pr.url, workerThread.threadId, earlier, rulings),
             returns: Verdict,
             timeout: "8 hours",
           },
@@ -1166,53 +1292,81 @@ const ship = workflow(
         ledger.keep(review.value, { thread: review.thread?.threadId, pr: pr.url });
         const v = review.value;
         if (v.status === "FAILED" || v.headSha === null) return yield* halt(`the reviewer could not reach a verdict: ${v.summary}`);
+        earlier = v.comment ?? earlier;
         if (v.status === "PASS") {
-          verdict = { headSha: v.headSha, comment: v.comment, approved: false, door: v.door };
+          verdict = { headSha: v.headSha, comment: v.comment, door: v.door, passed: true };
           continue; // Back to the checks, now at the head the verdict names.
         }
         const ruling = yield* askUser(`ruling-${pass}`, {
           title: `${issue.displayKey}: the reviewer and the worker disagree on ${pr.url}`,
-          choices: ["land it as it is", "send my rulings to the worker", "stop"],
+          choices: ["accept it as it is", "send my rulings to the worker", "stop"],
           data: { pr: pr.url, head: v.headSha, verdict: v.comment, open: v.open },
           timeout: "7 days",
         });
         if (Option.isNone(ruling)) return yield* halt("nobody ruled on the open findings within 7 days.");
         if (ruling.value.choice === "stop") return yield* halt("the user stopped it at the ruling.");
-        if (ruling.value.choice === "land it as it is") {
-          verdict = { headSha: v.headSha, comment: v.comment, approved: true, door: "one-way" };
+        if (ruling.value.choice === "accept it as it is") {
+          // The open findings stand. The PR still waits for the user's review, like any other.
+          verdict = { headSha: v.headSha, comment: v.comment, door: "one-way", passed: false };
           continue;
         }
         rulings = ruling.value.reason?.trim() || "The user sided with the reviewer on every open finding.";
-        verdict = { headSha: v.headSha, comment: v.comment, approved: false, door: "one-way" };
+        // No verdict covers the head now, so the next reviewer checks what the worker did with the
+        // rulings, whether or not the worker pushed.
+        verdict = null;
         result = yield* wake(`rulings-${pass}`, `the user ruled on the reviewer's open findings on ${pr.url}: ${rulings}`);
         continue;
       }
 
+      // The settings as they are now, not as they were when the run started: a repo that was
+      // paused since, or that no longer merges without the user's review, is obeyed.
+      const now = yield* step(`settings-${pass}`, { returns: MergeSettings }, currentSettings(config));
+      if (!now.enabled) {
+        const moved = yield* pullRequests.wait(`paused-${pass}`, pr, { until: "merged", timeout: "10 minutes" });
+        if (Option.isSome(moved) && moved.value.state === "merged") return yield* landed("by the user");
+        if (Option.isSome(moved) && moved.value.state === "closed") return yield* gone(`closed-paused-${pass}`, "was closed", `${pr.url} was closed outside the factory.`);
+        continue;
+      }
+
       // Checks are green at the head the verdict covers. The user's review is the go: the approved
-      // label, or a collaborator's approving review of this head. Nothing is asked.
-      const unasked = !verdict.approved && said.held.length === 0 && mayMergeUnasked(config, verdict);
-      if (!verdict.approved && !unasked) {
-        const review = yield* step(`approval-${pass}`, { returns: Approval }, readApproval(config, pr.url, head));
+      // label, added after this head appeared, or a collaborator's approving review of it. Nothing
+      // is asked.
+      const unasked = verdict.passed && said.held.length === 0 && mayMergeUnasked(now, verdict);
+      if (!unasked) {
+        const review = yield* step(`approval-${pass}`, { returns: Approval }, readApproval(config, pr.url, prNumber, go));
         if (!review.approved) {
-          if (announced !== head) {
+          if (announced !== head || said.outside.length > 0) {
+            if (announced !== head) waited = 0;
             announced = head;
-            waited = 0;
-            yield* step.try(`ready-note-${pass}`, { returns: Schema.Void }, gh(["pr", "comment", pr.url, "--body", readyNote(head)], config.project).pipe(Effect.asVoid));
+            const outside = said.outside;
+            handled.push(...outside.map((item) => item.id));
+            yield* step.try(
+              `ready-note-${pass}`,
+              { returns: Schema.Void },
+              gh(["pr", "comment", pr.url, "--body", readyNote(head, verdict.passed, outside)], config.project).pipe(Effect.asVoid),
+            );
             // The worker's thread says so too, and stays in the user's list until the PR merges.
             yield* agent.try(`ready-${pass}`, { thread: workerThread, brief: readyBrief(pr.url, verdict.comment), timeout: "30 minutes" });
           }
+          yield* setIdle(`idle-${pass}`, true);
           waited++;
           if (waited > MAX_REVIEW_CHECKS) {
-            yield* agent.try(`release-${pass}`, { thread: workerThread, brief: releaseBrief(pr.url, "waited seven days for a review, and the factory stopped waiting"), timeout: "15 minutes" });
-            return yield* halt(`nobody reviewed ${pr.url} within 7 days. It stays open: put \`${LABELS.ready}\` back on the issue to pick it up again.`);
+            // The note on the PR promised a merge for the label. Nothing watches the PR now, so say so there.
+            yield* step.try(
+              `stopped-note-${pass}`,
+              { returns: Schema.Void },
+              gh(["pr", "comment", pr.url, "--body", stoppedNote(issue.displayKey)], config.project).pipe(Effect.asVoid),
+            );
+            return yield* gone(
+              `release-${pass}`,
+              "waited seven days for a review, and the factory stopped waiting",
+              `nobody reviewed ${pr.url} within 7 days. It stays open: put \`${LABELS.ready}\` back on the issue to pick it up again.`,
+            );
           }
           // A merge or a close by hand ends the wait early. Otherwise the next pass looks again.
           const moved = yield* pullRequests.wait(`await-review-${pass}`, pr, { until: "merged", timeout: reviewWait(waited) });
           if (Option.isSome(moved) && moved.value.state === "merged") return yield* landed("by the user");
-          if (Option.isSome(moved) && moved.value.state === "closed") {
-            yield* agent.try(`closed-${pass}`, { thread: workerThread, brief: releaseBrief(pr.url, "was closed"), timeout: "15 minutes" });
-            return yield* halt(`${pr.url} was closed outside the factory.`);
-          }
+          if (Option.isSome(moved) && moved.value.state === "closed") return yield* gone(`closed-${pass}`, "was closed", `${pr.url} was closed outside the factory.`);
           continue;
         }
       }
@@ -1224,13 +1378,33 @@ const ship = workflow(
         gh(["pr", "merge", pr.url, `--${config.mergeMethod}`, "--match-head-commit", head], config.project).pipe(Effect.asVoid),
       );
       if (merge.outcome === "failed") {
-        const now = yield* step(
-          `head-after-merge-${pass}`,
-          { returns: Schema.String },
-          pullRequests.read(pr).pipe(Effect.map((detail) => detail.headSha ?? "")),
-        );
-        if (now !== head) continue; // The head moved, so it goes back through checks and review.
-        return yield* halt(`the merge of ${pr.url} failed: ${merge.reason}`);
+        if ((yield* headNow(`head-after-merge-${pass}`)) !== head) continue; // The head moved, so it goes back through checks and review.
+        // A refusal may pass: main moved, or GitHub hiccuped. Three in a row is a rule the factory cannot meet.
+        refused++;
+        if (refused >= 3) {
+          return yield* gone(
+            `refused-${pass}`,
+            "could not be merged by the factory",
+            `GitHub refused the merge of ${pr.url} three times: ${merge.reason}. If a rule on the branch asks for a review that the \`${LABELS.approved}\` label cannot give, merge the PR by hand.`,
+          );
+        }
+        yield* sleep(`merge-retry-${pass}`, "1 minute");
+        continue;
+      }
+      // A merge queue takes the PR without merging it yet. Nothing that follows a merge happens
+      // until GitHub says the PR is in. It mostly is at once, and GitHub says so sooner than the
+      // wait does, so ask it first.
+      const state = yield* step.try(
+        `state-${pass}`,
+        { returns: Schema.String },
+        gh(["pr", "view", pr.url, "--json", "state", "--jq", ".state"], config.project).pipe(Effect.map((out) => out.trim())),
+      );
+      if (state.outcome === "failed" || state.value !== "MERGED") {
+        const inMain = yield* pullRequests.wait(`merged-${pass}`, pr, { until: "merged", timeout: "6 hours" });
+        if (Option.isNone(inMain)) {
+          return yield* gone(`queued-${pass}`, "was taken for merging, and is not merged yet", `GitHub took the merge of ${pr.url}, and had not merged it 6 hours later. A merge queue may hold it.`);
+        }
+        if (inMain.value.state !== "merged") return yield* gone(`closed-after-${pass}`, "was closed", `${pr.url} was closed after GitHub took its merge.`);
       }
       yield* step.try(`delete-branch-${pass}`, { returns: Schema.Void }, pullRequests.act(pr, "delete-branch"));
       if (unasked) {
@@ -1246,7 +1420,7 @@ const ship = workflow(
 const specCheck = workflow(
   "skills-factory-spec",
   {
-    version: 6,
+    version: 7,
     payload: SpecInput,
     // The dispatcher started this check because the spec carried ready-for-agent. Putting the
     // label back checks it again.
@@ -1283,6 +1457,10 @@ const specCheck = workflow(
     if (v.status === "FAILED") {
       yield* ledger.wrapUp(`The skills factory could not check this spec: ${v.summary}\n\n${again}`);
       return yield* stop(`the spec check failed: ${v.summary}`);
+    }
+    if (v.status === "GAPS" && v.gaps.length === 0) {
+      yield* ledger.wrapUp(`The skills factory could not check this spec: the reviewer returned GAPS and named no gap.\n\n${again}`);
+      return yield* stop("the spec check returned GAPS with no gap");
     }
     if (v.status === "PASS") {
       yield* ledger.wrapUp(null);
@@ -1325,17 +1503,11 @@ const specCheck = workflow(
             `#${spec.number}`,
           ].join("\n"),
           [labels.ready, labels.bug],
+          // The spec counts its tickets as its sub-issues, so the gap is one from the start.
+          spec.number,
         ),
       );
       filed.push(url);
-      yield* step.try(
-        `gap-${i + 1}-link`,
-        { returns: Schema.Void },
-        Effect.gen(function* () {
-          const id = (yield* gh(["api", `repos/${config.repository}/issues/${url.split("/").pop()}`, "--jq", ".id"], config.project)).trim();
-          yield* gh(["api", "--method", "POST", `repos/${config.repository}/issues/${spec.number}/sub_issues`, "-F", `sub_issue_id=${id}`], config.project);
-        }),
-      );
     }
     yield* ledger.wrapUp(
       `The spec check found ${filed.length} gap(s), each filed as a ticket of this spec:\n\n${filed.map((url) => `- ${url}`).join("\n")}\n\nThe spec closes once they land.`,
@@ -1344,62 +1516,95 @@ const specCheck = workflow(
   }),
 );
 
+/** Start the run of one ready issue, and give its key. Null when the issue is not to start now. */
+const startIfReady = (config, issue, number, shipRuns, specRuns) =>
+  Effect.gen(function* () {
+    const detail = yield* readIssue(config, number);
+    // The list trails GitHub by some seconds, so the issue itself says whether it still waits.
+    if (detail.state !== "open" || !detail.labels.some((label) => label.name === LABELS.ready)) return null;
+    // A spec in ready-for-agent gets a spec check, once every ticket of it is closed.
+    const isSpec = detail.labels.some((label) => label.name === LABELS.spec);
+    const own = isSpec ? specOwn(config) : shipOwn(config);
+    const tries = triesOf(isSpec ? specRuns : shipRuns, own, number);
+    if (tries.some((r) => ACTIVE.includes(r.status))) return null;
+    if (isSpec ? !(yield* allTicketsClosed(config, number)) : (yield* openBlockers(config, detail)) > 0) return null;
+    // A new key per try: a key already used gives back the run that has it.
+    const key = `${own}${number}/${tries.length + 1}`;
+    const ref = { number, displayKey: issue.displayKey, title: issue.title, url: issue.url };
+    yield* isSpec ? start(specCheck, { config, spec: ref }, { key }) : start(ship, { config, issue: ref }, { key });
+    return key;
+  });
+
+/** One repo's part of a pass: the runs it started, and what it could not do. */
+const dispatchRepo = (config, pass) =>
+  Effect.gen(function* () {
+    const started = [];
+    const notes = [];
+    const shipRuns = yield* runs({ workflow: ship });
+    const specRuns = yield* runs({ workflow: specCheck });
+    // A red main pauses everything but its fix. A failed look at main pauses nothing.
+    const fixing = yield* guardMain(config).pipe(Effect.orElseSucceed(() => null));
+    if (fixing !== null) notes.push(`main is red in ${config.repository}, so only its fix, #${fixing}, may start`);
+    // A run that waits on the user holds no slot: its agents are done until the user acts.
+    const marks = yield* store.entries(`${PREFIX}/waiting/${config.repository}/`, Schema.String);
+    const waiting = marks.map((row) => `${shipOwn(config)}${row.key.split("/").pop()}/`);
+    const mine = (r) => r.key?.startsWith(shipOwn(config)) || r.key?.startsWith(specOwn(config));
+    let room = config.maxActive - [...shipRuns, ...specRuns].filter((r) => mine(r) && holdsSlot(r, pass, waiting)).length;
+    // The fix of a red main never waits for a slot, since nothing else may start until it lands.
+    if (fixing !== null) room = Math.max(room, 1);
+    if (room <= 0) return { started, notes };
+    const listed = yield* issues.list({ project: config.project, labels: [LABELS.ready], limit: 100 });
+    // An issue the pass names is read by its number, which GitHub answers at once. So is the fix
+    // of a red main, which this pass may have filed a moment ago.
+    const wanted = namedButUnlisted(pass, config.repository, listed);
+    if (fixing !== null && !listed.some((issue) => issueNumber(issue) === fixing) && !wanted.includes(fixing)) wanted.push(fixing);
+    const named = [];
+    for (const number of wanted) {
+      const detail = yield* readIssue(config, number).pipe(Effect.orElseSucceed(() => null));
+      const isReady = detail?.state === "open" && !detail.pull_request && detail.labels.some((label) => label.name === LABELS.ready);
+      if (isReady) named.push({ displayKey: `#${number}`, title: detail.title, url: detail.html_url, createdAt: detail.created_at });
+    }
+    // Oldest first, so nothing waits behind newer work for long.
+    const queue = [...listed, ...named]
+      .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))
+      .filter((issue) => fixing === null || issueNumber(issue) === fixing);
+    for (const issue of queue) {
+      if (room <= 0) break;
+      const number = issueNumber(issue);
+      // An issue that cannot be read, or that names a blocker that is not there, skips itself
+      // and nothing else.
+      const key = yield* startIfReady(config, issue, number, shipRuns, specRuns).pipe(Effect.orElseSucceed(() => "unreadable"));
+      if (key === "unreadable") notes.push(`could not read #${number} in ${config.repository}, or an issue it names as a blocker`);
+      if (key === null || key === "unreadable") continue;
+      started.push(key);
+      room--;
+    }
+    return { started, notes };
+  });
+
 const dispatch = workflow(
   "skills-factory-dispatch",
-  { version: 4, payload: Pass, triggers: [every("10 minutes")] },
+  { version: 5, payload: Pass, triggers: [every("10 minutes")] },
   Effect.fn(function* (pass) {
-    const started = yield* step(
-      "dispatch",
-      { returns: Schema.Array(Schema.String) },
-      Effect.gen(function* () {
-        const projects = yield* store.entries(`${PREFIX}/projects/`, Config);
-        const shipRuns = yield* runs({ workflow: ship });
-        const specRuns = yield* runs({ workflow: specCheck });
-        const keys = [];
-        for (const { value: config } of projects) {
-          if (!config.enabled) continue;
-          // A red main pauses everything but its fix. A failed look at main pauses nothing.
-          const fixing = yield* guardMain(config).pipe(Effect.orElseSucceed(() => null));
-          const mine = (r) => r.key?.startsWith(shipOwn(config)) || r.key?.startsWith(specOwn(config));
-          let room = config.maxActive - [...shipRuns, ...specRuns].filter((r) => mine(r) && holdsSlot(r, pass)).length;
-          if (room <= 0) continue;
-          const listed = yield* issues.list({ project: config.project, labels: [LABELS.ready], limit: 100 });
-          // An issue the pass names is read by its number, which GitHub answers at once.
-          const named = [];
-          for (const number of namedButUnlisted(pass, config.repository, listed)) {
-            const detail = yield* readIssue(config, number).pipe(Effect.orElseSucceed(() => null));
-            const isReady = detail?.state === "open" && !detail.pull_request && detail.labels.some((label) => label.name === LABELS.ready);
-            if (isReady) named.push({ displayKey: `#${number}`, title: detail.title, url: detail.html_url, createdAt: detail.created_at });
-          }
-          const ready = [...listed, ...named];
-          // Oldest first, so nothing waits behind newer work for long.
-          const queue = [...ready]
-            .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))
-            .filter((issue) => fixing === null || issueNumber(issue) === fixing);
-          for (const issue of queue) {
-            if (room <= 0) break;
-            const number = issueNumber(issue);
-            const detail = yield* readIssue(config, number);
-            // The list trails GitHub by some seconds, so the issue itself says whether it still waits.
-            if (detail.state !== "open" || !detail.labels.some((label) => label.name === LABELS.ready)) continue;
-            // A spec in ready-for-agent gets a spec check, once every ticket of it is closed.
-            const isSpec = detail.labels.some((label) => label.name === LABELS.spec);
-            const own = isSpec ? specOwn(config) : shipOwn(config);
-            const tries = triesOf(isSpec ? specRuns : shipRuns, own, number);
-            if (tries.some((r) => ACTIVE.includes(r.status))) continue;
-            if (isSpec ? !(yield* allTicketsClosed(config, number)) : (yield* openBlockers(config, detail)) > 0) continue;
-            // A new key per try: a key already used gives back the run that has it.
-            const key = `${own}${number}/${tries.length + 1}`;
-            const ref = { number, displayKey: issue.displayKey, title: issue.title, url: issue.url };
-            yield* isSpec ? start(specCheck, { config, spec: ref }, { key }) : start(ship, { config, issue: ref }, { key });
-            keys.push(key);
-            room--;
-          }
-        }
-        return keys;
-      }),
+    const projects = yield* step(
+      "projects",
+      { returns: Schema.Array(Config) },
+      store.entries(`${PREFIX}/projects/`, Config).pipe(Effect.map((rows) => rows.map((row) => row.value))),
     );
-    if (started.length === 0) return yield* skip("no issue to start");
-    return started;
+    const started = [];
+    const notes = [];
+    for (const config of projects) {
+      if (!config.enabled) continue;
+      // One repo's trouble ends that repo's part of the pass, and no other's.
+      const done = yield* step.try(`repo ${config.repository}`, { returns: PassResult }, dispatchRepo(config, pass));
+      if (done.outcome === "failed") {
+        notes.push(`${config.repository}: ${done.reason}`);
+        continue;
+      }
+      started.push(...done.value.started);
+      notes.push(...done.value.notes);
+    }
+    if (started.length === 0) return yield* skip(notes.length > 0 ? cut(notes.join(". "), 300) : "no issue to start");
+    return { started, notes };
   }),
 );

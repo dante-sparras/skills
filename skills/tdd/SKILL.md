@@ -1,6 +1,7 @@
 ---
 name: tdd
 description: "Test-driven development, and proof for the work a test cannot cover. Use when fixing a bug, building domain rules, calculations, parsers, or state transitions, writing a regression or integration test, or when the user mentions TDD or red-green."
+disable-model-invocation: true
 ---
 
 # TDD
@@ -31,7 +32,7 @@ A **seam** is the place you test at: where a module's interface lives, and where
 
 - Take the seams from the spec, ticket, or brief when it names them.
 - Otherwise propose them, each with one line on what it catches and what it misses, and confirm them with the user before you write a test. A worker chooses its own seams, and states them in its PR's agent notes.
-- When the interface itself is in question (how deep the module is, where the seam belongs, what it exposes), call the Skill tool with "deepen" for the vocabulary.
+- When the interface itself is in question (how deep the module is, where the seam belongs, what it exposes), read [deepen-modules](../deepen-modules/SKILL.md) for the vocabulary.
 
 ## The loop
 
@@ -82,7 +83,7 @@ Work without a new test still gets an executable check: a targeted script, a rep
 
 - **Check the real artifact.** Run the feature, read the actual value, inspect the diff. "It compiles", a self-report, and cached output are proxies.
 - **Check a bug fix on the surface where the bug showed up.** A unit test shows branch behavior, not that the bug is gone.
-- **Use the running app when the check needs it** (a UI, CLI, or service flow), through the repo's `verify-<app>` skill. Outside a `coordinate` run, call the Skill tool with `new-verify-skill` first when the repo has none. A worker uses the one its brief names, and tells the coordinator when it names none.
+- **Use the running app when the check needs it** (a UI, CLI, or service flow), through the repo's `verify-<app>` skill. Outside a `coordinate` run, read [create-verify-skill](../create-verify-skill/SKILL.md) and follow it first when the repo has none. A worker uses the one its brief names, and tells the coordinator when it names none.
 - **Script the check** when you can, so it reruns the same way.
 - **When a check fails**, suspect the observation method before the system.
 

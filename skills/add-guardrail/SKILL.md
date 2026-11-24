@@ -1,9 +1,10 @@
 ---
-name: guardrail
+name: add-guardrail
 description: "Turn each mistake agents repeat in this repo into a check that fails. Use when the user corrects an agent for something already corrected once, two agents make the same mistake, a review or a fixed bug shows a mistake a check could have caught, or the user asks for a look back at a session."
+disable-model-invocation: true
 ---
 
-# Guardrail
+# Add Guardrail
 
 The user keeps correcting agents in this repo for the same mistakes. Change the repo so the next agent can't make them.
 
@@ -37,7 +38,7 @@ Try each level in order and stop at the first one that makes the mistake impossi
 2. **Enforce it with types**, so the bad state can't be written.
 3. **Add a lint or CI check whose error names the fix.** A **mechanical** mistake (a fixed syntax pattern, a banned API, an import shape, a file-location rule) gets a deterministic check at this level whenever types can't catch it. Use a custom rule in the repo's own linter, a pre-commit hook, or a CI job, whichever the repo's language and existing guardrail make cheapest. The error message names the file, type, or function to use instead. If the pattern is already common, fail only when a change adds more.
 4. **Test the behavior.** Fix or delete any test that still passes when the behavior it checks breaks, or that fails when only the internals change.
-5. **Write docs last, only for judgment calls**, such as cross-file consistency or matching the surrounding style. Nothing fails when an agent skips a doc. Call the `writing-for-agents` skill before you write one, and put it where the reader in [Implementation vs review](#implementation-vs-review) will see it.
+5. **Write docs last, only for judgment calls**, such as cross-file consistency or matching the surrounding style. Nothing fails when an agent skips a doc. Read [writing-for-agents](../writing-for-agents/SKILL.md) before you write one, and put it where the reader in [Implementation vs review](#implementation-vs-review) will see it.
 
 ### Implementation vs review
 
@@ -46,7 +47,7 @@ All work passes through two agents. The **worker** carries the most **context pr
 | File | Read by | Holds |
 | --- | --- | --- |
 | `AGENTS.md` | every agent, every turn | navigation pointers only |
-| `CODING_STANDARDS.md` | the reviewer, via `/interrogate` | judgment-call rules and the rule table |
+| `CODING_STANDARDS.md` | the reviewer, via `/review-changes` | judgment-call rules and the rule table |
 | `GLOSSARY.md` | any agent naming a domain concept | domain terms, per the `glossary` skill |
 | a skill | the agent its description triggers, or the user | a repeatable procedure |
 | other docs | an agent following a pointer | reference too long for the files above |

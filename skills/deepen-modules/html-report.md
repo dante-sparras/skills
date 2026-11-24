@@ -104,7 +104,7 @@ Pick the pattern that fits each candidate, and vary them across the report.
 
 ## Tone
 
-Plain, concise English in the `deepen` vocabulary: module, interface, implementation, depth, deep, shallow, seam, adapter, leverage, locality.
+Plain, concise English in the `deepen-modules` vocabulary: module, interface, implementation, depth, deep, shallow, seam, adapter, leverage, locality.
 
 - "Order intake module is shallow: interface nearly matches the implementation."
 - "Pricing leaks across the seam."

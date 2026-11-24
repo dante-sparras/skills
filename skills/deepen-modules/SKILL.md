@@ -1,9 +1,10 @@
 ---
-name: deepen
+name: deepen-modules
 description: "Deep-module design: the shared vocabulary (module, interface, depth, seam, adapter) and a survey for shallow modules. Use when designing or reshaping a module's interface, deciding where a seam goes, making code more testable or easier for agents to navigate, or when a person wants architectural friction found in a codebase."
+disable-model-invocation: true
 ---
 
-# Deepen
+# Deepen Modules
 
 Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Callers get leverage, maintainers get locality, and tests get one surface.
 

@@ -1,3 +1,5 @@
 interface:
   display_name: "Glossary"
   short_description: "Build and sharpen the domain glossary"
+policy:
+  allow_implicit_invocation: false

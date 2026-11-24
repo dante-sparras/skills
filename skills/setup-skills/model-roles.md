@@ -12,7 +12,7 @@ The coordinator is the thread the user talks to, so it runs on that thread's mod
 | Role | Default | Backup |
 | --- | --- | --- |
 | `worker` | The strongest coding model in the catalog | The strongest coding model from another model family |
-| `reviewer` | The strongest coding model from another family than `worker`, so a review is independent of the worker | The `worker` model, so an `interrogate` panel still gets two families |
+| `reviewer` | The strongest coding model from another family than `worker`, so a review is independent of the worker | The `worker` model, so an `review-changes` panel still gets two families |
 | `explorer` | A fast, low-cost model, for quick lookups | A fast model from another model family |
 
 Both files use a `roles` object keyed by role name. Each role holds a default and backup with `providerInstanceId`, `model`, and `effort`. Store the catalog's exact provider and model IDs and the chosen effort value.

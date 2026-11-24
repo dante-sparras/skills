@@ -64,30 +64,30 @@ The whole flow is four files: one per role, and the rules they share. [GLOSSARY.
 | [`coordinate/reviewer.md`](./skills/coordinate/reviewer.md) | The reviewer of a PR, or of a finished spec | How to review a PR and argue each finding with its worker, and how to check a spec once its tickets have landed |
 | [`coordinate/rules.md`](./skills/coordinate/rules.md) | All three | Trust, the AI marker, messages, git, PR tools, and how to run a skill |
 
-Every other skill is a tool a worker picks up when its task calls for it. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo.
+Every other skill is a tool a worker picks up when its task calls for it. None of them triggers on its own: an agent reads a skill only when the flow sends it there, and you can still type any of them. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo.
 
 ## Skills
 
-Every skill lives at `skills/<name>/`, the same layout it installs to.
+Every skill lives at `skills/<name>/`, the same layout it installs to. The skills fall into seven categories, listed in the order work happens.
 
-| Skill | What it does |
-| --- | --- |
-| [coordinate](./skills/coordinate/SKILL.md) | The entry point. Makes each request a task, starts a worker for it, and ships it |
-| [debug](./skills/debug/SKILL.md) | Finds the cause of a hard bug or a slowdown, then fixes it with a regression test |
-| [deepen](./skills/deepen/SKILL.md) | The deep-module vocabulary, and a survey that finds modules worth deepening |
-| [glossary](./skills/glossary/SKILL.md) | Keeps the project's domain terms in `GLOSSARY.md` |
-| [guardrail](./skills/guardrail/SKILL.md) | Turns a mistake agents repeat into a check that fails |
-| [interrogate](./skills/interrogate/SKILL.md) | Adversarial review of a diff by models from different families |
-| [interview](./skills/interview/SKILL.md) | Questions you in rounds until a plan or decision is settled |
-| [map](./skills/map/SKILL.md) | Charts work too big for one session as decision tickets |
-| [new-verify-skill](./skills/new-verify-skill/SKILL.md) | Generates a `verify-<app>` skill that drives the real app |
-| [plan](./skills/plan/SKILL.md) | Turns a conversation into a spec and its tickets |
-| [pr-body](./skills/pr-body/SKILL.md) | Writes a PR description: a summary diagram, evidence, and merge danger |
-| [research](./skills/research/SKILL.md) | Investigates a question against primary sources in the background |
-| [setup-skills](./skills/setup-skills/SKILL.md) | Sets up a repo's tracker, labels, and model roles for these skills |
-| [tdd](./skills/tdd/SKILL.md) | Test-first for bug fixes and core logic, and proof for everything else |
-| [triage](./skills/triage/SKILL.md) | Moves issues and outside PRs through triage states |
-| [writing-for-agents](./skills/writing-for-agents/SKILL.md) | Reference for writing skills and other docs that agents read |
+| Category | Skill | What it does |
+| --- | --- | --- |
+| **Run**: the one you start with | [coordinate](./skills/coordinate/SKILL.md) | The entry point. Makes each request a task, starts a worker for it, and ships it |
+| **Setup**: done once per repo | [setup-skills](./skills/setup-skills/SKILL.md) | Sets up a repo's tracker, labels, and model roles for these skills |
+| | [create-verify-skill](./skills/create-verify-skill/SKILL.md) | Generates a `verify-<app>` skill that drives the real app |
+| **Define**: settle what to build | [interview](./skills/interview/SKILL.md) | Questions you in rounds until a plan or decision is settled |
+| | [triage](./skills/triage/SKILL.md) | Moves issues and outside PRs through triage states |
+| | [map](./skills/map/SKILL.md) | Charts work too big for one session as decision tickets |
+| | [research](./skills/research/SKILL.md) | Investigates a question against primary sources in the background |
+| | [glossary](./skills/glossary/SKILL.md) | Keeps the project's domain terms in `GLOSSARY.md` |
+| **Plan**: write it down as a spec and tickets | [to-spec-and-tickets](./skills/to-spec-and-tickets/SKILL.md) | Turns a conversation into a spec and its tickets |
+| **Build**: make the change and prove it works | [tdd](./skills/tdd/SKILL.md) | Test-first for bug fixes and core logic, and proof for everything else |
+| | [debug](./skills/debug/SKILL.md) | Finds the cause of a hard bug or a slowdown, then fixes it with a regression test |
+| | [deepen-modules](./skills/deepen-modules/SKILL.md) | The deep-module vocabulary, and a survey that finds modules worth deepening |
+| **Review**: get the change reviewed | [to-pr](./skills/to-pr/SKILL.md) | Writes a PR description: a summary diagram, evidence, and merge danger |
+| | [review-changes](./skills/review-changes/SKILL.md) | Adversarial review of a diff by models from different families |
+| **Learn**: stop a mistake from repeating | [add-guardrail](./skills/add-guardrail/SKILL.md) | Turns a mistake agents repeat into a check that fails |
+| | [writing-for-agents](./skills/writing-for-agents/SKILL.md) | Reference for writing skills and other docs that agents read |
 
 ## Install
 

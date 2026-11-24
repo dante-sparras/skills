@@ -1,6 +1,7 @@
 ---
 name: glossary
 description: "Build and sharpen a project's domain model and write it down in GLOSSARY.md. Use when changing the model rather than reading it: a term is fuzzy, overloaded, or contested, a design names a new concept, or GLOSSARY.md or GLOSSARY-MAP.md needs creating or editing."
+disable-model-invocation: true
 ---
 
 # Glossary

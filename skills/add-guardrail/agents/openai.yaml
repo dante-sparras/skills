@@ -1,3 +1,5 @@
 interface:
-  display_name: "Guardrail"
+  display_name: "Add Guardrail"
   short_description: "Turn repeated agent mistakes into checks"
+policy:
+  allow_implicit_invocation: false

@@ -42,11 +42,11 @@ Open every message to another agent with a status word.
 
 ## Pull requests
 
-Use T3's PR tools, not `gh`: `pull_request_create`, `pull_request_update`, `pull_request_respond` to comment, `ci_logs` for a failed check, and `pull_request_read` with the PR's `number` and an `include` of what you need: `checks`, `comments`, `threads`. Those tools take text only, so an image or video is the one exception: attach it with `gh pr edit <number> --attach <file>`, as the `pr-body` skill says. Issues go through `docs/agents/issue-tracker.md`.
+Use T3's PR tools, not `gh`: `pull_request_create`, `pull_request_update`, `pull_request_respond` to comment, `ci_logs` for a failed check, and `pull_request_read` with the PR's `number` and an `include` of what you need: `checks`, `comments`, `threads`. Those tools take text only, so an image or video is the one exception: attach it with `gh pr edit <number> --attach <file>`, as the `to-pr` skill says. Issues go through `docs/agents/issue-tracker.md`.
 
 ## Skills
 
-- **Run a skill** by calling the Skill tool with its name. With no such tool, or when it refuses, read `<skills folder>/<name>/SKILL.md` and follow it. Do the same wherever a skill tells you to call the Skill tool.
+- **Run a skill** by reading `<skills folder>/<name>/SKILL.md` and following it. Run one when your brief, your role's file, or the skill you are following names it.
 - **Your brief names the skills folder.** A link that starts `../<name>/` means `<skills folder>/<name>/`.
 - **The repo's verify skill** is at the path your brief gives.
 

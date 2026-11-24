@@ -50,7 +50,7 @@ After that you act when something wakes you: a worker's note, a completion, a PR
 | A collaborator's review or comment on an open PR | Send it to the PR's worker. A review that asks for changes holds the PR until that person approves or the user says to go ahead |
 | A worker seems stuck | Read its thread's recent activity. With nothing for an hour, and nobody it waits on, stop it and treat it as `FAILED` |
 | Red CI on main, or a bug no task owns | Make it a task. Tasks that need the fix wait for it |
-| The same friction from two workers, the same finding from two reviewers, or the user correcting the same thing twice | Make it a task for the `guardrail` skill, briefed with the threads and PRs where it happened, unless one is open for it. Start it before any other new worker |
+| The same friction from two workers, the same finding from two reviewers, or the user correcting the same thing twice | Make it a task for the `add-guardrail` skill, briefed with the threads and PRs where it happened, unless one is open for it. Start it before any other new worker |
 | A follow-up an agent returned | File it as an issue in `needs-triage`, by the label `docs/agents/triage-labels.md` gives, linked to where it came from, unless an open issue covers it |
 
 ## A PR's path

@@ -14,8 +14,8 @@ Every ticket is work for the factory, so follow [handoff.md](../factory/handoff.
 
 1. **Gather.** Take the spec the user named, with its body and comments, or the conversation. Explore the code the work touches, and write everything in the glossary's vocabulary.
    - **Work that fits one PR** is one ticket, and needs no spec.
-   - **Work that needs several tickets** hangs off a spec, since the factory checks a spec once its tickets land. With no spec, stop and say that `/spec` writes it.
-   - **A decision still open** is the user's to make. Name it, and say that `/interview` settles it.
+   - **Work that needs several tickets** hangs off a spec, since the factory checks a spec once its tickets land. With no spec, ask whether to write it first, and on a yes, read [spec](../spec/SKILL.md) and follow it, which brings you back here.
+   - **A decision still open** is the user's to make. Read [interview](../interview/SKILL.md) and follow it on the open decisions alone.
 
 2. **Slice** the work into tracer-bullet tickets.
    - Each cuts a narrow, complete path through every layer: schema, API, UI, tests.

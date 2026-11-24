@@ -8,7 +8,7 @@ You need T3 Code with **Settings → Labs → Workflows** on, a GitHub repo, and
 1. Install every skill: `npx skills add dante-sparras/skills`.
 2. Type `/factory` once in each repo you work in. It creates the labels, sets the model roles, and installs the factory.
 3. Type the skill that fits what you have: `/debug` for a bug, `/ticket` for a small change, `/spec` then `/ticket` for a feature, `/triage` for the tracker.
-4. Answer what the factory asks in T3 Code's **Workflows** page.
+4. Answer what the factory asks in T3 Code's **Workflows** page. Type `/factory` again at any time to see everything that waits on you.
 
 ## How the skills fit together
 
@@ -60,7 +60,7 @@ Blue is where you come in. A solid arrow follows one issue, from what you ask fo
    | --- | --- |
    | A bug | [`/debug`](./skills/debug/SKILL.md). It reproduces the bug, and files it with the steps |
    | A change that fits one PR, with nothing left to decide | [`/ticket`](./skills/ticket/SKILL.md). It files one ticket |
-   | A feature | [`/spec`](./skills/spec/SKILL.md), then `/ticket`. `/spec` asks about whatever is still open, writes the spec, and `/ticket` slices it |
+   | A feature | [`/spec`](./skills/spec/SKILL.md), then `/ticket`. `/spec` asks about whatever is still open, writes the spec, and offers to slice it |
    | A decision you want stress-tested before anything is written | [`/interview`](./skills/interview/SKILL.md) |
    | Issues nobody has looked at, or a PR with no issue | [`/triage`](./skills/triage/SKILL.md) |
    | A question the code cannot answer | [`/research`](./skills/research/SKILL.md), or ask in plain words |
@@ -71,7 +71,7 @@ Blue is where you come in. A solid arrow follows one issue, from what you ask fo
 
 ### What waits on you
 
-The factory never merges, rules, or decides for you. Everything it needs from you waits in one of two places.
+The factory never rules or decides for you, and it asks before every merge unless you turn on `autoMerge` for a repo. Everything it needs from you waits in one of two places, and `/factory` lists both.
 
 | Where | What waits there |
 | --- | --- |
@@ -88,11 +88,11 @@ Every skill lives at `skills/<name>/`, the same layout it installs to. The skill
 
 | Category | Skill | What it does |
 | --- | --- | --- |
-| **Setup**: done once per repo | [factory](./skills/factory/SKILL.md) | Sets up and runs the factory: a repo's labels, the model roles, the workflow, and its runs |
+| **Setup**: done once per repo | [factory](./skills/factory/SKILL.md) | Sets up the factory, shows what waits on you, and retries, stops, or pauses its runs |
 | | [create-verify-skill](./skills/create-verify-skill/SKILL.md) | Generates a `verify-<app>` skill that drives the real app |
 | **Define**: settle what to build | [interview](./skills/interview/SKILL.md) | Questions you in rounds until a decision or an idea is settled |
 | | [triage](./skills/triage/SKILL.md) | Moves issues and outside PRs through triage states, up to `ready-for-agent` |
-| | [research](./skills/research/SKILL.md) | Investigates a question against primary sources in the background |
+| | [research](./skills/research/SKILL.md) | Investigates a question against primary sources in the background, and reports what it found |
 | | [glossary](./skills/glossary/SKILL.md) | Keeps the project's domain terms in `GLOSSARY.md` |
 | **Plan**: write it down as issues | [spec](./skills/spec/SKILL.md) | Turns a conversation into a spec, asking about whatever is still open |
 | | [ticket](./skills/ticket/SKILL.md) | Slices a spec, or a change that fits one PR, into tickets the factory builds |

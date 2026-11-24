@@ -133,6 +133,26 @@ REPEAT = {
 }
 SINGLE = {"kind": "navigation", "target": "docs/", "filed": None, "sightings": [{"run": "r9", "task": "t", "thread": None, "pr": None, "detail": "No index"}]}
 
+STRONG = {"providerInstanceId": "anthropic", "model": "strong", "options": [{"id": "effort", "value": "high"}]}
+OTHER = {"providerInstanceId": "openai", "model": "other"}
+USER_ROLES = {"roles": {"worker": {"default": STRONG, "backup": OTHER}, "reviewer": {"default": OTHER}}}
+PROJECT_ROLES = {"roles": {"reviewer": {"default": STRONG}}}
+ROLE_PAIRS = [
+    ("the user's file sets it", ["worker", USER_ROLES, None],
+     {"default": {"instanceId": "anthropic", "model": "strong", "options": [{"id": "effort", "value": "high"}]}, "backup": {"instanceId": "openai", "model": "other"}}),
+    ("the project's file wins", ["reviewer", USER_ROLES, PROJECT_ROLES],
+     {"default": {"instanceId": "anthropic", "model": "strong", "options": [{"id": "effort", "value": "high"}]}}),
+    ("neither file sets it", ["explorer", USER_ROLES, PROJECT_ROLES], None),
+    ("no files", ["worker", None, None], None),
+    ("an entry with no model", ["worker", {"roles": {"worker": {"default": {"providerInstanceId": "anthropic"}}}}, None], None),
+]
+UNASKED = [
+    ({"autoMerge": "two-way"}, {"door": "two-way"}, True),
+    ({"autoMerge": "two-way"}, {"door": "one-way"}, False),
+    ({"autoMerge": "never"}, {"door": "two-way"}, False),
+    ({}, {"door": "two-way"}, False),
+]
+
 CASES = (
     [["blockersInBody", body] for body, _ in BLOCKERS]
     + [["issueNumber", {"displayKey": key}] for key in ["#526", "526"]]
@@ -143,6 +163,8 @@ CASES = (
     + [["failingChecks", checks, statuses] for _, checks, statuses, _ in FAILING]
     + [["titleKey", title] for title, _ in TITLES]
     + [["searchWords", "Rename the `db` client: it is used in one, two, three, four, five places"]]
+    + [["pairOf", *args] for _, args, _ in ROLE_PAIRS]
+    + [["mayMergeUnasked", config, verdict] for config, verdict, _ in UNASKED]
 )
 
 
@@ -167,6 +189,8 @@ class Factory(unittest.TestCase):
         cls.failing = [next(results) for _ in FAILING]
         cls.titles = [next(results) for _ in TITLES]
         cls.search = next(results)
+        cls.pairs = [next(results) for _ in ROLE_PAIRS]
+        cls.unasked = [next(results) for _ in UNASKED]
 
     def test_registers_every_workflow(self):
         # The factory skill, factory.md and the factory's own `start` calls name these. Rename them together.
@@ -205,6 +229,16 @@ class Factory(unittest.TestCase):
         self.assertIn("A run of the skills factory", one)
         self.assertNotIn("seen once", one)
 
+
+    def test_a_role_comes_from_the_roles_files(self):
+        for (name, _, want), got in zip(ROLE_PAIRS, self.pairs):
+            with self.subTest(name):
+                self.assertEqual(got, want)
+
+    def test_merges_unasked_only_when_the_repo_allows_it_and_the_door_is_two_way(self):
+        for (config, verdict, want), got in zip(UNASKED, self.unasked):
+            with self.subTest(config=config, verdict=verdict):
+                self.assertEqual(got, want)
 
     def test_main_is_red_only_on_a_finished_failure(self):
         for (name, _, _, want), got in zip(FAILING, self.failing):

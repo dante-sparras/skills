@@ -5,9 +5,10 @@
 1. Call T3's `orchestrator_capabilities` for the live catalog.
 2. Use `~/.config/skills/roles.json` by default, which is `%USERPROFILE%\.config\skills\roles.json` on Windows. In a repository, offer `.skills/roles.json` at the root of the main checkout for a project override. Its ids belong to one machine, so keep it out of git with a line in `.git/info/exclude`. Show any active project overrides. For a user write, start from the user file. For a project write, start from the effective roles after applying overrides.
 3. Propose all three default and backup pairs. For unset roles, pick models from the live catalog by the table below, at high effort for `worker` and `reviewer` and at low effort for `explorer`. Prefer native providers. Flag unavailable targets and offer runnable replacements. Ask the user to confirm or edit all three pairs, including effort.
+   - Effort is saved as the model's own reasoning option, since its id differs by model: `effort`, `reasoningEffort`, `reasoning_effort`, or `variant`. Take the id and the value from the catalog. Leave `options` out for a model that offers none.
 4. Validate the confirmed targets using the catalog checks below. Write all three pairs to the chosen file. Reread the JSON and report the saved path and choices.
 
-An agent you type a skill to runs on its own thread's model and has no role here. A factory worker runs on `worker`, and the reviewer of a PR or a spec on `reviewer`, through the factory's settings.
+An agent you type a skill to runs on its own thread's model and has no role here. A factory worker runs on `worker`, and the reviewer of a PR or a spec on `reviewer`. The factory reads these files itself as each run starts, so a change takes effect on the next run.
 
 | Role | Default | Backup |
 | --- | --- | --- |
@@ -15,7 +16,7 @@ An agent you type a skill to runs on its own thread's model and has no role here
 | `reviewer` | The strongest coding model from another family than `worker`, so a review is independent of the worker | The `worker` model, so a `review-pr` panel still gets two families |
 | `explorer` | A fast, low-cost model, for quick lookups | A fast model from another model family |
 
-Both files use a `roles` object keyed by role name. Each role holds a default and backup with `providerInstanceId`, `model`, and `effort`. Store the catalog's exact provider and model IDs and the chosen effort value.
+Both files use a `roles` object keyed by role name. Each role holds a default and backup with `providerInstanceId`, `model`, and `options`. Store the catalog's exact provider, model, and option IDs.
 
 ```json
 {
@@ -24,12 +25,12 @@ Both files use a `roles` object keyed by role name. Each role holds a default an
       "default": {
         "providerInstanceId": "<provider id from the catalog>",
         "model": "<model id from the catalog>",
-        "effort": "high"
+        "options": [{ "id": "<the model's reasoning option id>", "value": "high" }]
       },
       "backup": {
         "providerInstanceId": "<another provider id>",
         "model": "<a model id from another family>",
-        "effort": "high"
+        "options": [{ "id": "<the model's reasoning option id>", "value": "high" }]
       }
     }
   }
@@ -40,5 +41,5 @@ Both files use a `roles` object keyed by role name. Each role holds a default an
 
 1. Read `~/.config/skills/roles.json` and overlay roles from `.skills/roles.json` in the main checkout, which is the folder above `git rev-parse --path-format=absolute --git-common-dir`. A worker's own checkout never holds that file. A project entry replaces the whole pair for that role. If the role is absent from both files, omit `target` so the child inherits. Report malformed config with its path.
 2. Use the live `orchestrator_capabilities` catalog before the first delegation. Check `canRunChildTask` and, for a different provider, `canRunCrossProviderChildTask`. Use catalog search if the target model is missing from the short list and the provider lists omitted models.
-3. Find the model's reasoning option in the catalog and check that it accepts the saved `effort` value. Build `delegate_task.target` with `providerInstanceId`, `model`, and `options` using that option ID. The option ID differs by model: `effort`, `reasoningEffort`, `reasoning_effort`, or `variant`. Leave the option out for a model that offers none.
+3. Build `delegate_task.target` from the saved `providerInstanceId`, `model`, and `options`. Check in the catalog that the model still offers each saved option with that value, and leave out one it does not.
 4. Launch the `default`. If its target is unavailable, T3 rejects it, or the child hits a usage limit before returning the required result, resolve and launch the `backup` once. Refresh the catalog after a failed launch. Report the switch and why. If both fail, report both and leave that delegation blocked. Before retrying a write, check what the first child already changed.

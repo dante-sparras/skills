@@ -29,4 +29,4 @@ Each round of answers pushes the frontier outward. Recompute it and ask the next
 - **A fact from the environment.** Read [Resolve a role](../factory/model-roles.md#resolve-a-role) and start a fresh `explorer` to look it up. Ask the rest of the frontier while it runs.
 - **A term that settles or sharpens.** In a repo, read [glossary](../glossary/SKILL.md) and follow it as terms come up, so each lands in `GLOSSARY.md` during the session.
 
-The session is done when the frontier is empty: every branch visited, nothing left silently assumed. Act on it only once the user confirms you have reached a shared understanding. To have the result built, the user types `/spec`, which writes it up, then `/ticket`: say so.
+The session is done when the frontier is empty: every branch visited, nothing left silently assumed. Act on it only once the user confirms you have reached a shared understanding. When another skill sent you here, go back to it. When the user typed `/interview` themselves, ask whether to write the result up as a spec, and on a yes, read [spec](../spec/SKILL.md) and follow it.

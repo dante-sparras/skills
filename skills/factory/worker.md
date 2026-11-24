@@ -17,7 +17,7 @@ You are a worker with one task: an issue the [factory](factory.md) took from `re
 
 Your job is to open one PR, and to argue each of its reviewer's findings until the two of you agree. The factory sends the reviewer, watches CI, and merges.
 
-1. **Branch** off main, in the checkout you were started in. That branch is the only one you write. Merging and pushing main belong to the factory.
+1. **Branch** off main, in the checkout you were started in. T3 may have named that branch already: rename it with `git branch -m` before your first push when its name does not fit the change. That branch is the only one you write. Merging and pushing main belong to the factory.
 2. **Make the change** with the skill this table names. Take the seams your tests go at from the issue. When it names none, choose them yourself.
 
    | When | Skill |

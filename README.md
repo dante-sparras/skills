@@ -24,7 +24,7 @@ flowchart TD
     triage[("<b>needs-triage</b><br/>Issues that wait on you")]:::you
 
     subgraph factory["The factory runs on its own"]
-        start{{"<b>Every 10 minutes</b><br/>Starts each unblocked issue"}}
+        start{{"<b>On each pass</b><br/>Starts each unblocked issue"}}
         worker["<b>Worker</b><br/>Builds the issue in one PR"]
         checks{"Checks"}
         review["<b>Reviewer</b><br/>Argues each finding with the worker"]
@@ -66,7 +66,7 @@ Blue is where you come in. A solid arrow follows one issue, from what you ask fo
    | A question the code cannot answer | [`/research`](./skills/research/SKILL.md), or ask in plain words |
    | A codebase that is hard to change | [`/deepen-modules`](./skills/deepen-modules/SKILL.md), then `/spec` |
 
-2. **Ship.** The [factory](./skills/factory/factory.md) is a T3 Code workflow. Every ten minutes it starts a **worker** for each ready issue whose blockers are closed, up to a limit per repo. The worker opens a PR, and wakes again for a red check, a conflict, or a collaborator's comment. Once the checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges.
+2. **Ship.** The [factory](./skills/factory/factory.md) is a T3 Code workflow. It starts a **worker** for each ready issue whose blockers are closed, up to a limit per repo: at once when you file the issue or its blocker merges, and on a pass every ten minutes besides. The worker opens a PR, and wakes again for a red check, a conflict, or a collaborator's comment. Once the checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges.
 3. **Learn.** When a spec's last ticket lands, a reviewer proves the spec's user stories on main, and each gap becomes a ticket. Friction that repeats across runs becomes an issue the factory fixes with the `correct` skill. Follow-ups land in `needs-triage`, ready for step 1.
 
 ### What waits on you

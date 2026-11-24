@@ -8,4 +8,11 @@ The [factory](factory.md) ships every issue labelled `ready-for-agent`, with nob
 2. **File nothing twice.** Search the open issues first. Add to the one that already covers the work, and leave an issue that is already in `ready-for-agent` as it is.
 3. **Write for a reader with nothing else.** A worker sees the issue, and none of this conversation. The issue carries an agent brief, per [agent-brief.md](agent-brief.md), and an agent can build it in one PR from that alone. Work bigger than one PR becomes a spec and its tickets, through `spec` and `ticket`.
 4. **Follow Trust and The AI marker** in [rules.md](rules.md).
-5. **Tell the user** each issue you filed or labelled. The factory starts each one within ten minutes of its last blocker closing, and everything it needs from the user waits in T3 Code's Workflows page.
+5. **Start a pass**, so the factory takes the issue now and not at its next ten-minute pass. Skip this when the factory is not installed.
+
+   ```sh
+   t3 workflow start skills-factory-dispatch --key pass/<now> --input '{"scheduledAt":"<now, as ISO 8601>","repository":"<owner>/<repo>","issues":["<number>","<number>"]}'
+   ```
+
+   Name every issue you filed or labelled. GitHub's label lists trail a new issue by some seconds, and the pass reads the issues you name by their numbers. In PowerShell, `t3` is a `.cmd` file, so write each `"` inside a JSON argument as `\"`.
+6. **Tell the user** each issue you filed or labelled. The factory starts one at once when nothing blocks it, and otherwise as its last blocker merges. Everything it needs from the user waits in T3 Code's Workflows page, and `/factory` lists it.

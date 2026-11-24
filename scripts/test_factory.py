@@ -1,5 +1,6 @@
 """Tests for skills/factory/factory.ts, the T3 Code workflow. Needs Node 18 or newer."""
 import json
+import re
 import shutil
 import subprocess
 import unittest
@@ -153,6 +154,20 @@ UNASKED = [
     ({}, {"door": "two-way"}, False),
 ]
 
+LISTED = [{"displayKey": "#5"}, {"displayKey": "#6"}]
+NAMED = [
+    ("a named issue the list lacks", [{"repository": "o/r", "issues": ["5", "#7", "7"]}, "o/r", LISTED], ["7"]),
+    ("another repo's pass", [{"repository": "o/other", "issues": ["7"]}, "o/r", LISTED], []),
+    ("a timed pass names nothing", [{"scheduledAt": "now"}, "o/r", LISTED], []),
+]
+SLOTS = [
+    ("an active run holds a slot", [{"status": "running", "key": "ship/o/r/5/1"}, {"scheduledAt": "now"}], True),
+    ("a waiting run holds one too", [{"status": "waiting", "key": "ship/o/r/5/1"}, {}], True),
+    ("a finished run holds none", [{"status": "completed", "key": "ship/o/r/5/1"}, {}], False),
+    ("the run that started the pass holds none", [{"status": "running", "key": "ship/o/r/5/1"}, {"ending": "ship/o/r/5/"}], False),
+    ("another issue's run still does", [{"status": "running", "key": "ship/o/r/50/1"}, {"ending": "ship/o/r/5/"}], True),
+]
+
 CASES = (
     [["blockersInBody", body] for body, _ in BLOCKERS]
     + [["issueNumber", {"displayKey": key}] for key in ["#526", "526"]]
@@ -165,6 +180,8 @@ CASES = (
     + [["searchWords", "Rename the `db` client: it is used in one, two, three, four, five places"]]
     + [["pairOf", *args] for _, args, _ in ROLE_PAIRS]
     + [["mayMergeUnasked", config, verdict] for config, verdict, _ in UNASKED]
+    + [["namedButUnlisted", *args] for _, args, _ in NAMED]
+    + [["holdsSlot", *args] for _, args, _ in SLOTS]
 )
 
 
@@ -191,6 +208,8 @@ class Factory(unittest.TestCase):
         cls.search = next(results)
         cls.pairs = [next(results) for _ in ROLE_PAIRS]
         cls.unasked = [next(results) for _ in UNASKED]
+        cls.named = [next(results) for _ in NAMED]
+        cls.slots = [next(results) for _ in SLOTS]
 
     def test_registers_every_workflow(self):
         # The factory skill, factory.md and the factory's own `start` calls name these. Rename them together.
@@ -239,6 +258,27 @@ class Factory(unittest.TestCase):
         for (config, verdict, want), got in zip(UNASKED, self.unasked):
             with self.subTest(config=config, verdict=verdict):
                 self.assertEqual(got, want)
+
+    def test_a_pass_reads_the_issues_it_names_that_the_list_lacks(self):
+        for (name, _, want), got in zip(NAMED, self.named):
+            with self.subTest(name):
+                self.assertEqual(got, want)
+
+    def test_a_run_that_starts_a_pass_as_it_ends_holds_no_slot(self):
+        for (name, _, want), got in zip(SLOTS, self.slots):
+            with self.subTest(name):
+                self.assertEqual(got, want)
+
+    def test_no_step_name_is_written_twice_in_a_workflow(self):
+        # T3 pauses a run the moment two of its steps share a name, so a clash only shows live.
+        text = FACTORY.read_text(encoding="utf-8")
+        starts = [text.index(f"const {name} = workflow(") for name in ["ship", "specCheck", "dispatch"]]
+        call = re.compile(r"\b(?:step\.try|step|ask|agent\.try|hire|wake|pullRequests\.wait|sleep)\(\s*([`\"])([^`\"]+)\1")
+        for name, begin, end in zip(["ship", "spec", "dispatch"], starts, starts[1:] + [len(text)]):
+            names = [found.group(2) for found in call.finditer(text, begin, end)]
+            with self.subTest(workflow=name):
+                self.assertTrue(names, "found no step names, so the pattern no longer fits the file")
+                self.assertEqual(sorted(set(names)), sorted(names))
 
     def test_main_is_red_only_on_a_finished_failure(self):
         for (name, _, _, want), got in zip(FAILING, self.failing):

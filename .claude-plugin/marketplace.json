@@ -9,15 +9,15 @@
   "plugins": [
     {
       "name": "dante-skills",
-      "description": "Hand the coordinator your work, and the factory builds, reviews, and lands it, one issue at a time.",
+      "description": "Hand your work to the factory, and it builds, reviews, and lands it, one issue at a time.",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/add-guardrail",
-        "./skills/coordinate",
         "./skills/create-verify-skill",
         "./skills/debug",
         "./skills/deepen-modules",
+        "./skills/factory",
         "./skills/glossary",
         "./skills/interview",
         "./skills/map",

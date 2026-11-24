@@ -7,15 +7,15 @@ You need T3 Code with **Settings → Labs → Workflows** on, a GitHub repo, and
 
 1. Install every skill: `npx skills add dante-sparras/skills`.
 2. Type `/setup-skills` once in each repo you work in. It writes the repo's settings and installs the factory.
-3. Type `/coordinate` and hand it your work.
+3. Type `/factory` and say what you want done: a change, a bug, a feature.
 4. Answer what the factory asks in T3 Code's **Workflows** page.
 
 ## How the skills fit together
 
 Work moves in two halves: you shape it into issues with an agent, and the **factory** ships each issue on its own.
 
-1. **Shape.** Type [`/coordinate`](./skills/coordinate/SKILL.md) and hand it your work, one thing or several: bugs, features, issues, questions, PRs. The agent you typed it to is the **coordinator**. It answers questions itself. Everything else becomes an issue in `ready-for-agent` that an agent can build in one PR, through `triage`, `interview`, `to-spec-and-tickets`, or `map`, with you in the conversation.
-2. **Ship.** The [factory](./skills/coordinate/factory.md) is a T3 Code workflow. Every ten minutes it starts a **worker** for each ready issue whose blockers are closed, up to a limit per repo. The worker opens a PR, and wakes again for a red check, a conflict, or a collaborator's comment. Once the checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges.
+1. **Shape.** Type [`/factory`](./skills/factory/SKILL.md) and say what you want done, one thing or several: bugs, features, issues, questions, PRs. The agent you typed it to answers questions itself. Everything else becomes an issue in `ready-for-agent` that an agent can build in one PR, through `triage`, `interview`, `to-spec-and-tickets`, or `map`, with you in the conversation.
+2. **Ship.** The [factory](./skills/factory/factory.md) is a T3 Code workflow. Every ten minutes it starts a **worker** for each ready issue whose blockers are closed, up to a limit per repo. The worker opens a PR, and wakes again for a red check, a conflict, or a collaborator's comment. Once the checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges.
 3. **Learn.** When a spec's last ticket lands, a reviewer proves the spec's user stories on main, and each gap becomes a ticket. Friction that repeats across runs becomes an issue the factory fixes with `add-guardrail`. Follow-ups land in `needs-triage`, ready for step 1.
 
 ### What waits on you
@@ -36,7 +36,7 @@ The factory checks main on every pass. When a check fails there, it files one `b
 sequenceDiagram
     autonumber
     actor You
-    participant C as Coordinator
+    participant C as Your agent
     participant F as Factory
     participant W as Worker
     participant R as Reviewer
@@ -66,16 +66,16 @@ sequenceDiagram
 
 Read the diagram top to bottom. Each arrow is a message, and the numbers give the order.
 
-The flow lives in six files in `coordinate/`. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
+The flow lives in six files in `factory/`. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
 
 | File | Who reads it | What it holds |
 | --- | --- | --- |
-| [`coordinate/SKILL.md`](./skills/coordinate/SKILL.md) | The coordinator | How to turn work into issues the factory can build |
-| [`coordinate/factory.ts`](./skills/coordinate/factory.ts) | T3 Code | The factory itself |
-| [`coordinate/factory.md`](./skills/coordinate/factory.md) | You, and `setup-skills` | What the factory runs, how to install it, and how to retry or stop a run |
-| [`coordinate/worker.md`](./skills/coordinate/worker.md) | Every worker | How to build an issue in one PR and settle its review |
-| [`coordinate/reviewer.md`](./skills/coordinate/reviewer.md) | The reviewer of a PR, or of a finished spec | How to review a PR and argue each finding with its worker, and how to check a spec |
-| [`coordinate/rules.md`](./skills/coordinate/rules.md) | Workers and reviewers | Trust, the AI marker, results, messages, git, PR tools, and how to run a skill |
+| [`factory/SKILL.md`](./skills/factory/SKILL.md) | The agent you type `/factory` to | How to turn what you want done into issues the factory can build |
+| [`factory/factory.ts`](./skills/factory/factory.ts) | T3 Code | The factory itself |
+| [`factory/factory.md`](./skills/factory/factory.md) | You, and `setup-skills` | What the factory runs, how to install it, and how to retry or stop a run |
+| [`factory/worker.md`](./skills/factory/worker.md) | Every worker | How to build an issue in one PR and settle its review |
+| [`factory/reviewer.md`](./skills/factory/reviewer.md) | The reviewer of a PR, or of a finished spec | How to review a PR and argue each finding with its worker, and how to check a spec |
+| [`factory/rules.md`](./skills/factory/rules.md) | Workers and reviewers | Trust, the AI marker, results, messages, git, PR tools, and how to run a skill |
 
 Every other skill is a tool an agent picks up when its work calls for it. None of them triggers on its own: an agent reads a skill only when the flow sends it there, and you can still type any of them. You type one more yourself: [setup-skills](./skills/setup-skills/SKILL.md), once per repo, which also installs the factory.
 
@@ -85,7 +85,7 @@ Every skill lives at `skills/<name>/`, the same layout it installs to. The skill
 
 | Category | Skill | What it does |
 | --- | --- | --- |
-| **Run**: the one you start with | [coordinate](./skills/coordinate/SKILL.md) | The entry point. Turns what you want done into issues the factory ships |
+| **Run**: the one you start with | [factory](./skills/factory/SKILL.md) | The entry point. Turns what you want done into issues the factory ships |
 | **Setup**: done once per repo | [setup-skills](./skills/setup-skills/SKILL.md) | Sets up a repo's tracker, labels, and model roles, and installs the factory |
 | | [create-verify-skill](./skills/create-verify-skill/SKILL.md) | Generates a `verify-<app>` skill that drives the real app |
 | **Define**: settle what to build | [interview](./skills/interview/SKILL.md) | Questions you in rounds until a plan or decision is settled |

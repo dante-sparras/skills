@@ -1,6 +1,6 @@
 # The factory
 
-The **factory** is a T3 Code workflow, [factory.ts](factory.ts), that ships the issues you label `ready-for-agent`, with no person to start it. Every ten minutes it checks main, looks for open issues with that label, and starts a run for each one it can. Each run takes one issue down the same path:
+The **factory** is a T3 Code workflow, [factory.ts](factory.ts), that ships the issues you label `ready-for-agent`, with no person to start it. On each pass it checks main, looks for open issues with that label, and starts a run for each one it can. A pass runs every ten minutes, when a skill files an issue, and when a PR merges, so a ticket starts as soon as its blocker lands. Each run takes one issue down the same path:
 
 1. **A worker** builds the issue in one PR, briefed with `rules.md` and `worker.md`.
 2. **Checks.** The run waits for the PR's checks. A red check or a conflict wakes the worker on its own thread.

@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 Write the **spec** from what this conversation and the codebase already hold, slice it into **tickets**, and publish both after one approval. Synthesize: the interview already happened.
 
-Read `docs/agents/issue-tracker.md` for the tracker and `docs/agents/triage-labels.md` for the label strings. If the tracker doc is missing, stop and say that `/setup-skills` has not run in this repo.
+Read `docs/agents/issue-tracker.md` for the tracker and `docs/agents/triage-labels.md` for the label strings. If either is missing, stop and say that `/setup-skills` has not run in this repo.
 
 ## Steps
 

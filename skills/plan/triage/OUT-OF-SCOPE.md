@@ -17,7 +17,7 @@ During triage's **Gather** step, read every file. Match by concept, not by keywo
 Write here only when an **enhancement** is rejected as `wontfix`, whether it arrived as an issue or as a PR. A request closed because it is already built stays out: recording it would make later checks report a rejection that never happened.
 
 1. If a file for the concept exists, add the issue to its Prior requests. Otherwise create one.
-2. Post a comment on the issue that explains the decision and names the file.
+2. Post a comment on the issue that explains the decision, names the file, and links the PR that adds or updates it.
 3. Close the issue as `wontfix`.
 
 ## The file

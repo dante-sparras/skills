@@ -65,7 +65,7 @@ Write **three to five ranked hypotheses** before you test any, so the first plau
 
 A hypothesis with no prediction is a vibe: sharpen it or drop it.
 
-Show the ranked list to the user before testing. They may re-rank it at once ("we just deployed a change to #3") or rule some out. If they are away, proceed with your ranking.
+Show the ranked list to the user before testing, with `send_to_user` in T3, and go on with your ranking. They may re-rank it at once ("we just deployed a change to #3") or rule some out.
 
 ## Phase 4: Instrument
 
@@ -91,7 +91,7 @@ With a correct seam:
 3. Apply the fix.
 4. Watch it pass.
 5. Rerun the Phase 1 loop against the original, un-minimised scenario.
-6. Ask whether a type, a lint, or a CI check could have caught this bug before it shipped. If one could, call the Skill tool with `correct`.
+6. Ask whether a type, a lint, or a CI check could have caught this bug before it shipped. If one could, name it in your report as a follow-up for the `correct` skill.
 
 ## Phase 6: Clean up
 

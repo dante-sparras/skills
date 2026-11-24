@@ -13,7 +13,7 @@ Assume every contributor is an agent that sees only the files it opened, copies 
 
 1. Read the sessions the operator or your brief names, with `t3_thread_read` for a T3 thread. With none named, read the current one.
 2. Read recent commits, reverts, `AGENTS.md`, and `CODING_STANDARDS.md`.
-3. Read the comments on recent PRs, starting with any your brief names: the review comments, the findings reviewers posted, and the friction workers reported.
+3. Read recent PRs, starting with any your brief names: their review comments, the findings reviewers posted, and the friction in each body's agent notes.
 4. Read the repo's own check command: its `package.json` or build-tool `lint` and `check` scripts, its pre-commit hooks, and its CI workflow. A check that already exists but sits unwired or silently broken is the finding, so repair it before you build a new one. A repo with no **guardrail** (no pre-commit hook and no CI job running its lint, typecheck, or test command) is itself a finding.
 
 Done when every correction, revert, failed attempt, and friction line in the evidence has a line in your notes.
@@ -25,7 +25,7 @@ Group the notes into **mistake classes**. A class counts once it has happened tw
 - **Navigation**: the agent took a long time to find a file or a fact, or missed a hidden dependency between files.
 - **Tool economy**: the agent made an expensive tool call, or a CLI or MCP tool spent many tokens for little output.
 - **Information access**: a crucial piece of information was out of the agent's reach, such as dev server output or the state of a third-party service.
-- **Steering**: a line in `AGENTS.md` (in the repo or the operator's global scope) changes nothing the agent does, or steers behavior that a check or `CODING_STANDARDS.md` should own.
+- **Steering**: a line in `AGENTS.md` (in the repo or the operator's global scope) changes nothing the agent does, or steers behavior that a check or `CODING_STANDARDS.md` should own. Report a finding in the operator's global file, since a PR cannot change it.
 
 Rank the classes by how often they happened and how much each one cost.
 
@@ -57,7 +57,7 @@ Search for an existing doc before you write a new one. Add navigation pointers t
 
 Fix the top classes now, one commit each. Prove each new check against the real past mistake:
 
-1. Reapply the commit or diff that made the mistake, or check it out.
+1. Reapply the commit or diff that made the mistake, on top of your new check.
 2. Run the check and confirm it fails with an error that names the fix.
 3. Restore the fix and confirm the check passes.
 
@@ -65,7 +65,7 @@ Run the same command locally and in CI. Exceptions live in one allowlist file th
 
 ## 5. Keep the rule table
 
-Keep a table in `CODING_STANDARDS.md` that pairs each rule with what enforces it:
+Keep a table in `CODING_STANDARDS.md`, created when the repo has none, that pairs each rule with what enforces it:
 
 | Rule | Enforced by |
 | --- | --- |

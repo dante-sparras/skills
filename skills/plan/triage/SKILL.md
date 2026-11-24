@@ -80,7 +80,7 @@ List the `ready-for-agent` issues an agent can start now:
    | `wontfix`, rejected bug | Close with a polite explanation |
    | `wontfix`, rejected enhancement | Record it per [OUT-OF-SCOPE.md](OUT-OF-SCOPE.md), link the file from a comment, then close |
 
-6. **Hand off.** Tell the maintainer what happens next. For `ready-for-agent`, give the route the brief names and the command that builds it: `/auto-mode <issue>`. For `needs-info`, say that the issue returns to `needs-triage` when the reporter replies.
+6. **Hand off.** Tell the maintainer what happens next. For `ready-for-agent`, give the route the brief names and the command that builds it: `/auto-mode <issue>`. For `needs-info`, say that the issue returns to `needs-triage` when the reporter replies. Inside an `auto-mode` worker, return the issue and its route to the coordinator in place of the command.
 
 ## Quick state override
 

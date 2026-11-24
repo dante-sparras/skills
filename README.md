@@ -48,13 +48,14 @@ sequenceDiagram
 
 Read the diagram top to bottom. Each arrow is a message, and the numbers give the order. A task takes path A or path B.
 
-The whole flow is three files, one per role. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
+The whole flow is four files: one per role, and the rules they share. [GLOSSARY.md](./GLOSSARY.md) defines the terms.
 
 | File | Who reads it | What it holds |
 | --- | --- | --- |
 | [`auto-mode/SKILL.md`](./skills/auto-mode/SKILL.md) | The coordinator | The loop: intake, start, receive, review, land, check |
 | [`auto-mode/worker.md`](./skills/auto-mode/worker.md) | Every worker | How to size a task, build it, or split it |
 | [`auto-mode/reviewer.md`](./skills/auto-mode/reviewer.md) | The reviewer of a PR | How to review it, and argue each finding with its worker |
+| [`auto-mode/rules.md`](./skills/auto-mode/rules.md) | All three | Trust, the AI marker, messages, git, PR tools, and how to run a skill |
 
 Every other skill is a tool a worker picks up when its task calls for it. You type one more yourself: [setup-skills](./skills/setup/setup-skills/SKILL.md), once per repo.
 
@@ -75,7 +76,11 @@ Install every skill into your agent's skills folder, flat and side by side, each
 
 The skills reach each other by the installed layout, with paths such as `../tdd/SKILL.md` and `../setup-skills/MODEL-ROLES.md`. Those paths cross category folders, so they resolve once installed and not inside this repo, and a skill installed alone loses them.
 
-Run `python3 scripts/check.py` before you push. CI runs the same command.
+Agents open those paths with a file tool. A shell follows `..` through a linked folder to the wrong place.
+
+The manifest lists only the four categories, so a Claude plugin install leaves out `auto-mode`. Add it with `npx skills add` or a link.
+
+Run `python3 scripts/check.py` before you push, or `python scripts/check.py` on Windows. CI runs the same command.
 
 ## Upstream
 

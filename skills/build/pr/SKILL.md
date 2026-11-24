@@ -27,10 +27,17 @@ Write the body from this template:
 
 <optional: potential ramifications of merge>
 
+<details><summary>Agent notes</summary>
+
+**Seams:** <where the tests go, when an agent chose them>
+**Friction:** <what cost the agent time, or "none">
+
+</details>
+
 Closes #<issue>
 ```
 
-Keep the `Closes` line for each issue the PR resolves, and drop it when there is none.
+Keep the `Closes` line for each issue the PR resolves, and drop it when there is none. Keep the agent notes when an agent wrote the PR, and drop them otherwise.
 
 ## Sections
 

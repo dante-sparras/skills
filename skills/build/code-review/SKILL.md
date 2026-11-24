@@ -18,7 +18,7 @@ A Breakage or Spec finding survives only when you rerun its command and the outp
 1. **Pin the fixed point.** Use what the user gave: a SHA, branch, tag, `main`, `HEAD~5`. Ask when they gave none. Done when `git rev-parse <fixed-point>` resolves and the diff is non-empty.
    - The diff is `git diff <fixed-point>...HEAD`, with three dots, so it compares against the merge-base.
    - The commits are `git log <fixed-point>..HEAD --oneline`.
-   - For uncommitted changes the user wants reviewed, save `git diff HEAD` to a patch file outside the repo. That leaves out new files, so append each path from `git ls-files --others --exclude-standard` with `git diff --no-index /dev/null <path>`.
+   - For uncommitted changes the user wants reviewed, save `git diff HEAD` to a patch file outside the repo. That leaves out new files, so append each path from `git ls-files --others --exclude-standard` with `git diff --no-index -- /dev/null <path>`, in a POSIX shell. That command exits 1 for a non-empty file, which is not an error.
 
 2. **State the intent** in two or three sentences, from the user's message, the commit messages, and the PR description. Ask the user when it is unclear. Every reviewer gets it, and a finding counts only when it breaks it.
 
@@ -35,7 +35,8 @@ A Breakage or Spec finding survives only when you rerun its command and the outp
 
 5. **Pick the panel.** Read [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role) for the `reviewer`.
    - Run one reviewer per model family among the runnable default and backup. The same model offered by two providers is one family, and so are one vendor's other models.
-   - Run the default first. Run the backup in parallel when it adds a family. If the default is unavailable or hits a usage limit, promote the backup, and reuse its review if it already started.
+   - Start the default and the backup together when the backup adds a family. If the default is unavailable or hits a usage limit, the backup's review stands in for it.
+   - A caller that is itself reviewing, in a clean checkout of the head, is the first seat: start only the other family.
    - When the role resolves to inheritance, run one reviewer on the current model.
    - **No panel.** When your caller asks for a review without a panel, review the diff yourself against the same brief and say so under **Panel**.
 
@@ -48,7 +49,7 @@ A Breakage or Spec finding survives only when you rerun its command and the outp
    If a reviewer returns nothing, continue with the rest and note the dropout.
 
 7. **Verify.**
-   - Rerun each Breakage and Spec finding's command yourself, in the reviewer's worktree when it still exists, or after writing the reported repro file into a checkout of `HEAD`. Keep a finding when the output shows the failure, and the failure breaks the intent or the spec, or is a regression: the same command passes at the fixed point.
+   - Rerun each Breakage and Spec finding's command yourself, in the reviewer's worktree when it still exists, or after writing the reported repro file into a checkout of `HEAD`. Keep a finding when the output shows the failure, and the failure breaks the intent or the spec, or is a regression: the same command passes at the fixed point. Keep a finding no command can show, such as a wrong line of config, a migration, or a doc, when it cites the exact hunk, what it breaks, and why it cannot be run.
    - Keep each Standards finding that cites a real rule, or names a smell against a real hunk. These are not rerun.
    - Merge findings that share a root cause, and list every reviewer that found each.
    - Mark each mechanical finding (a fixed syntax pattern, a banned API, an import shape, a file-location rule) as a candidate for the `correct` skill to turn into a check.
@@ -64,7 +65,7 @@ A Breakage or Spec finding survives only when you rerun its command and the outp
 
 > Break this change. Read the diff, then the code around it and the callers it touches. Try each of these: inputs and states the author did not test (empty, huge, concurrent, malformed, repeated), error and retry paths, a spec requirement that is missing, partial, or wrong, and code outside the diff that depends on what changed.
 >
-> Prove each Breakage and Spec finding with a run against the real code, such as a failing test, a repro script, or command output that shows the wrong behavior. Keep repros in your own worktree and do not edit the reviewed checkout. Report each one with a title, the absolute path of your worktree, the full contents of any repro file you wrote, the exact command, the output it printed, and the output the intent or spec requires. A Spec finding also quotes the spec line. Leave out any Breakage or Spec finding you did not run.
+> Prove each Breakage and Spec finding with a run against the real code, such as a failing test, a repro script, or command output that shows the wrong behavior. Keep repros in your own worktree and do not edit the reviewed checkout. Report each one with a title, the absolute path of your worktree, the full contents of any repro file you wrote, the exact command, the output it printed, and the output the intent or spec requires. A Spec finding also quotes the spec line. Leave out any Breakage or Spec finding you did not run, unless nothing can run it: then cite the exact hunk, what it breaks, and why it cannot be run.
 >
 > For Standards, cite the documented rule (file and rule) for each breach, and name each baseline smell with the hunk it applies to. Smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything the tooling list already enforces. Use the glossary's terms for domain concepts, and flag a new name for a concept the glossary already names.
 >

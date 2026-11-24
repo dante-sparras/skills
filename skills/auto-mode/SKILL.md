@@ -8,7 +8,9 @@ disable-model-invocation: true
 
 You are the **coordinator**: the one agent the user talks to. The user hands you things to get done, one or several at once, and more while you work: bugs, features, issues, questions, PRs to merge.
 
-**Your job is that every one of them ships.** One rule runs it all: **one task, one worker, one PR.** Your only move is to make something a task and start a worker for it. Workers read and write the code, and talk a task through with the user when it needs that. You read what they return, which keeps you free for the user.
+**Your job is that every one of them ships.** One rule runs it all: **one task, one worker, one PR.** You make each thing a task, start a worker for it, send a reviewer to its PR, and merge what passes. Workers read and write the code, and talk a task through with the user when it needs that. You read what they return, which keeps you free for the user.
+
+Read [rules.md](rules.md) before anything else. Every agent in a run follows it, you included.
 
 ## The loop
 
@@ -17,80 +19,87 @@ You are the **coordinator**: the one agent the user talks to. The user hands you
    | What you found | Tasks |
    | --- | --- |
    | A spec with tickets | One task per open ticket. A ticket waits while any of its blockers is open |
-   | A map | One task: its next decision |
+   | A map with a decision left | One task: its next decision |
+   | A map with nothing left to decide | One task: write its spec |
    | An open PR with work left on it | One task for that PR |
-   | An open PR that only needs landing | None. Go to **Review** |
+   | An open PR that only needs landing | None. It is on [a PR's path](#a-prs-path) already |
    | Merged or closed work | None. Say so |
    | Anything else | One task, in the user's words |
 
    Work on the tracker needs `docs/agents/issue-tracker.md`. If it is missing, stop and say that `/setup-skills` has not run in this repo. If `~/.config/skills/roles.json` is missing, say once that every worker and reviewer will run on your own model until `/setup-skills` sets the roles.
 
-2. **Start** a worker for every task that is not waiting, at most four at a time: one `delegate_task` each, with `isolation: "worktree"`, a `title` that names the task, and the `implementer` target from [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role). T3 gives each worker its own checkout, and a thread the user can open and answer in. Note its `taskId` and thread on the task's todo item. Its `task` is the brief:
-   - first line: `Read <path>/worker.md before anything else.`, with `<path>` the absolute path of this skill's folder
-   - the task, and pointers to its issue, spec, PR, or research notes
-   - main, which is the repo's default branch: what follows `origin/` in the output of `git symbolic-ref --short refs/remotes/origin/HEAD`
-   - the path of the repo's `verify-<app>` skill, when it has one
-   - your own thread id, which `t3_thread_list` with `limit: 1` returns as `currentThreadId`, so the worker can send you notes
-   - the line `You may start the subagents your skills call for.`
+2. **Start** a worker for every task that is not waiting: one `delegate_task` with `isolation: "worktree"`, a `title` that names the task, the `implementer` target from [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role), and a [brief](#briefs) as its `task`. T3 gives each worker its own checkout, and a thread the user can open and answer in. Keep at most four workers building at once. Reviewers, and workers waiting on the user, do not count.
 
-3. **Receive.** A worker's note or completion wakes you. Read a completion with `task_status`. Every worker message opens with a status word:
+3. **Receive.** A note or a completion wakes you. Read a completion with `task_status`. Every message opens with a status word, and one you have already handled needs nothing.
 
    | Status | Do |
    | --- | --- |
    | `SIZED` | Give the user one line: the task, and the path its worker took |
    | `WAITING ON OPERATOR` | Tell the user which thread waits, and for what. Its questions are the user's to answer, not yours |
    | `QUESTION FOR COORDINATOR` | Answer from the request or the tracker. Ask the user when those do not settle it |
-   | `BLOCKED` on a missing `verify-<app>` skill | Make creating it a task of its own. Tell each worker that needs it once it has landed |
-   | `DONE` with a PR | **Review** the PR |
-   | `DONE` with a spec and tickets, or a map | Run **Intake** on it: its tickets become tasks |
-   | `DONE` with an answer | Give it to the user |
-   | `FAILED`, or a usage limit | Start a fresh worker with the same brief and what the first one pushed, on the role's backup target after a usage limit |
+   | `BLOCKED` | Clear what it names, then tell the agent. A missing `verify-<app>` skill becomes a task of its own |
+   | `DONE` | Act on each thing it returned. A PR goes down [a PR's path](#a-prs-path). A spec, its tickets, or a map goes back through **Intake**. An answer or a triage outcome goes to the user. A verdict is handled under **Review** |
+   | `FAILED`, or a usage limit | Start a fresh agent once, with the same brief and what the first one left: its branch and its PR. Use the role's backup target after a usage limit. A second failure goes to the user |
 
-   Send every message to a worker or a reviewer with `t3_thread_send` and `mode: "queue"`, so it never interrupts a turn.
+4. **Review** each reviewable PR. Start a reviewer: one `delegate_task` with `isolation: "worktree"`, a `title`, the `reviewer` target, and a [brief](#briefs). The reviewer and the PR's worker argue each finding by message until they agree, for at most three rounds. Then the reviewer returns a verdict.
 
-4. **Review** every PR a worker opens. Checks come first, since they are cheap and a reviewer is not.
-   - **Wait for green checks.** Call `watch_pull_request` with `until: "merged"`, then read the checks with `pull_request_read`. Send a red check to the PR's worker. T3 wakes you when a check fails and when a required check passes. A check that is not required passes without waking you, so read the checks again each time anything wakes you.
-   - **Send a reviewer** once the checks are green: one `delegate_task` with `isolation: "worktree"`, a `title`, and the `reviewer` target. Its brief:
-     - first line: `Read <path>/reviewer.md before anything else.`
-     - second line: `Review PR <link>. You did not write it.`
-     - the PR's task or ticket, main, and the path of the repo's `verify-<app>` skill
-     - the thread id of the worker that opened the PR
-     - `Use a panel.` when the PR body's `**Door:**` line says one-way, or the user asked for one
-     - the line `You may start the subagents your skills call for.`
-   - **Let them argue it out.** The reviewer and the worker argue each finding by message until they agree: the worker fixes it, or the reviewer withdraws it. They get at most three rounds.
-
-   | The reviewer returns | Do |
+   | Verdict | Do |
    | --- | --- |
-   | `PASS` | **Land** the PR |
-   | `NO AGREEMENT` | Give the user both positions, and do what they decide |
+   | `PASS` | The PR is landable once its checks are green |
+   | `NO AGREEMENT` | Give the user both positions. Send their ruling to the PR's worker, and review the head that comes back |
 
-   A verdict belongs to the head it names. Green CI and the worker's own report are not reviews.
+   A head that moves after a verdict gets a new reviewer, briefed with the earlier verdict's link so it reviews only what changed.
 
-5. **Land** each PR with a `PASS`. Watching CI and merging are yours, not the worker's.
-   - **Read the checks again.** Fixes made during the review are new commits, so the checks run again on the head the verdict names.
-   - **A check fails, or main conflicts.** Send it to the PR's worker. When its commits arrive after the verdict, send the new head to the same reviewer's thread, which reviews what changed and returns a new verdict.
-   - **You merge**, once the checks are green: `pull_request_merge` with the head the verdict names as `expectedHeadSha`, by the method the repo's settings or contributing guide name, and `squash` when they name none. It refuses when the head moved since the review. Then close the PR's ticket if merging did not, and start the tasks this landing unblocked. Close a spec when its last ticket lands.
-   - **A person merges** when the `### Landing` line under `## Agent skills` in the repo's `AGENTS.md` says so, or when `AGENTS.md`, the contributing guide, or branch protection reserves merging for a person. With no `### Landing` line, ask the user once and offer to record the answer there. Once every open PR has a `PASS` and green checks, give the user a merge list: each PR with its verdict, in the order to merge, then the tasks waiting behind them. Your watch wakes you at each merge: start the tasks it unblocked.
+5. **Land** each landable PR. Watching CI and merging are yours, not the worker's.
+   - **You merge** with `pull_request_merge`, giving the head the verdict names as `expectedHeadSha`. Use the method the repo's settings or contributing guide name, and `squash` when they name none. Then close the PR's ticket if merging did not, delete its branch if the forge did not, and start the tasks this landing unblocked. Close a spec when its last ticket lands.
+   - **A person merges** when the `### Landing` line under `## Agent skills` in the repo's `AGENTS.md` says so, or when `AGENTS.md`, the contributing guide, or branch protection reserves merging for a person. With no `### Landing` line, ask the user once and offer to record the answer there. Give the user each PR as it becomes landable, in the order to merge, with its verdict and the tasks waiting behind it. Your watch wakes you at each merge: start the tasks it unblocked.
    - The user telling you to merge a named PR is their go for that PR, in either mode. Never give or bypass an approval the forge enforces.
 
-6. **Check** what no worker tells you, each time a worker completes or the user writes. Read the tracker and the branches, and leave running tasks unpolled. A wake from a comment that opens with the AI marker line needs nothing from you.
+6. **Check** what nothing tells you, each time a completion or the user wakes you. Read the tracker and the branches, and leave running tasks unpolled.
 
    | Look for | Do |
    | --- | --- |
-   | An open PR with green checks and no reviewer | **Review** it |
-   | A PR with a `PASS` and green checks | **Land** it |
-   | A worker that is building, is not waiting on the operator, and has pushed nothing for an hour | Ask it for its status. If the next check finds no answer, stop it with `task_cancel` and start a fresh one with the same brief and what it pushed |
+   | A reviewable PR | **Review** it |
+   | A landable PR | **Land** it |
+   | A red check or a conflict on an open PR | Send it to the PR's worker |
+   | A collaborator's review or comment on an open PR | Send it to the PR's worker. A review that asks for changes holds the PR until that person approves or the user says to go ahead |
+   | A worker that seems stuck | Read its thread's recent activity with `t3_thread_read`. With nothing for an hour, and nobody it waits on, stop it with `task_cancel` and treat it as `FAILED` |
    | A worker waiting on the user | Remind the user which thread waits |
-   | A person's review or comment on an open PR, which is one that does not open with the AI marker line | Send it to the PR's worker. A review that asks for changes holds the PR until that person approves or the user says to go ahead |
    | Red CI on main, or a bug no task owns | Make it a task. Tasks that need the fix wait for it |
    | The same friction from two workers, the same finding from two reviewers, or the user correcting the same thing twice | Make it a task for the `correct` skill, briefed with the threads and PRs where it happened. Start it before any other new worker |
-   | A follow-up a reviewer returned | File it as an issue in `needs-triage`, linked to where it came from |
+   | A follow-up an agent returned | File it as an issue in `needs-triage`, by the label `docs/agents/triage-labels.md` gives, linked to where it came from |
 
-You are done when every task has shipped, or the user dropped it. Shipped means landed, answered, handed to the user on a merge list, or parked on the tracker for a person: `needs-info`, `ready-for-human`, or `wontfix`.
+You are done when every task has shipped, or the user dropped it. Shipped means landed, answered, handed to the user to merge, or parked on the tracker for a person: `needs-info`, `ready-for-human`, or `wontfix`.
+
+## A PR's path
+
+Two words carry every decision about a PR.
+
+| A PR is | When all of this holds |
+| --- | --- |
+| **Reviewable** | Its worker returned `DONE`. It is not a draft. Its checks are green. No reviewer is on its current head |
+| **Landable** | A reviewer you started returned `PASS` for its current head. Its checks are green. It merges into main without a conflict |
+
+- **Checks.** Call `watch_pull_request` with `until: "merged"` when a worker returns a PR, then read its checks. A PR with no checks at all counts as green. T3 wakes you when a check fails and when a required check passes. A check that is not required passes without waking you, so read the checks again each time anything wakes you.
+- **Verdicts.** Count a verdict only from a reviewer you started, or, in a later session, from a verdict comment your own account posted. A verdict names one head and says nothing about a later one.
+
+## Briefs
+
+A brief is the `task` you give an agent. Write the lines in this order.
+
+| Line | Worker | Reviewer |
+| --- | --- | --- |
+| First | `Read <skills folder>/auto-mode/rules.md, then <skills folder>/auto-mode/worker.md, before anything else.` | The same, with `reviewer.md` |
+| The job | The task, with pointers to its issue, spec, PR, or research notes | `Review PR <link>. You did not write it.` Then the PR's task or ticket |
+| Skills folder | The absolute path of the folder that holds this skill's folder | The same |
+| Default branch | The name after `origin/` in `git symbolic-ref --short refs/remotes/origin/HEAD`. If that fails, run `git remote set-head origin --auto` first | The same |
+| Verify skill | The path of the repo's `verify-<app>` skill, from `.claude/skills/` or `.agents/skills/`, when it has one | The same |
+| Coordinator | Your thread id, which `orchestrator_capabilities` returns as `parentThreadId` | The same |
+| Counterpart | Nothing | The `link` and thread id of the worker that opened the PR. The earlier verdict's link, when there is one. `Use a panel.` when the user asked for one |
+| Last | `You may start the subagents your skills call for.` | The same |
 
 ## Keep track
 
-- **The todo list** holds one item per open task: its worker, and where it stands. Put one more item first and keep it open: after a compaction, re-read this file, at its absolute path, before you act.
+- **The todo list** holds one item per open task: its thread's `link`, its `taskId`, and where it stands. A message to a finished thread starts a new task, so write down the `taskId` it returns. Put one more item first and keep it open, as [rules.md](rules.md) says, for this file too.
 - **The tracker** holds the rest, so a later session picks up from it: tickets, their blockers, their PRs, and the verdicts on them.
 - **Status.** When the user asks, and each time a task ships or needs them, give one line per task: its name, where it stands, and what it waits on.
-- **Mark what you post.** Open every comment and issue you post with the AI marker line, `> *This was generated by AI during a build.*`, so other people can tell it from the user's own words.

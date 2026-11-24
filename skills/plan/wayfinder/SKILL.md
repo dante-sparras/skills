@@ -43,7 +43,7 @@ The map is one issue labelled `wayfinder:map`, and its tickets are its child iss
 
 ## Tickets
 
-A ticket is a child issue of the map. Its body is the question, sized to one 100K-token session:
+A ticket is a child issue of the map. Its body is the question, sized to one session:
 
 ```markdown
 ## Question
@@ -52,14 +52,14 @@ A ticket is a child issue of the map. Its body is the question, sized to one 100
 ```
 
 - **Label.** One `wayfinder:<type>` label from the table below. A map and its tickets carry `wayfinder:` labels alone, since they are decisions and not work to grab.
-- **Claim.** A session claims a ticket by assigning it to the dev driving the map, before any work. An open, unassigned ticket is unclaimed.
+- **Claim.** A session claims a ticket by assigning it to the dev driving the map, before any work. An open, unassigned ticket is unclaimed. Unassign a ticket you give up on.
 - **Blocking.** Use the tracker's native dependency relationship, which shows the human what is takeable without opening the map. Fall back to a body convention only where the tracker has none.
 - **Frontier.** The open, unblocked, unclaimed tickets. A ticket is unblocked when every ticket blocking it is closed.
 - **Answer.** Recorded when the ticket resolves, as a comment. Assets made along the way are linked from the issue.
 
 | Type | Driven by | Use when | Resolve by |
 | --- | --- | --- | --- |
-| `research` | Agent | A decision waits on a fact from outside the working directory: docs, a third-party API, a knowledge base | Starting a fresh `explorer` per [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role), with the investigate and write steps from the `research` skill |
+| `research` | Agent | A decision waits on a fact from outside the working directory: docs, a third-party API, a knowledge base | Starting a fresh `explorer` per [Resolve a role](../setup-skills/MODEL-ROLES.md#resolve-a-role), as the `research` skill says. The explorer posts its findings' link as the ticket's answer and closes it |
 | `prototype` | Human and agent | The question is how it should look or behave | Making a cheap, rough thing to react to: an outline, a stub, UI or logic code. Keep it throwaway, on a branch outside main, linked from the ticket |
 | `interview` | Human and agent | The default: the decision needs a conversation | Calling the Skill tool with "interview" |
 | `task` | Either | Manual work blocks a decision: signing up for a service to judge its API, provisioning access, moving data to see its shape | Doing it alone where you can, and handing the human a precise checklist where you cannot. The answer records what was done and the facts later tickets depend on |

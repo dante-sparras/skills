@@ -46,7 +46,7 @@ Work in **vertical slices**: one seam, one test, one minimal implementation per 
 
 For a bug fix, commit the failing test before the fix, so the PR's commits show red then green even when the merge squashes them.
 
-Refactoring belongs to the review stage, in the `code-review` skill, and stays out of the loop.
+Refactoring stays out of the loop. Tidy what you wrote once it is green, and leave a larger refactor as a follow-up.
 
 ## What a good test is
 

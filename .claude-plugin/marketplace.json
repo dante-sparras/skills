@@ -17,14 +17,16 @@
         "./skills/create-verify-skill",
         "./skills/debug",
         "./skills/deepen-modules",
+        "./skills/factory",
         "./skills/glossary",
         "./skills/interview",
-        "./skills/plan",
         "./skills/pr",
+        "./skills/prove",
         "./skills/research",
         "./skills/review-pr",
-        "./skills/setup-skills",
+        "./skills/spec",
         "./skills/tdd",
+        "./skills/ticket",
         "./skills/triage",
         "./skills/writing-for-agents"
       ]

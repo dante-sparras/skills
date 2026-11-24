@@ -1,0 +1,5 @@
+interface:
+  display_name: "Factory"
+  short_description: "Set up and run the factory"
+policy:
+  allow_implicit_invocation: false

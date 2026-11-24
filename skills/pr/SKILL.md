@@ -72,7 +72,7 @@ A call-tree change as a `diff` block:
 
 ## Evidence
 
-Show that the change works, before and after.
+Show that the change works, before and after, with what the `prove` skill captured.
 
 - **A visual change**: screenshots or a short video, when the environment can take them. Reference each file in the body by its local path, as `![the login error state](./after.png)`, and upload it with `gh pr edit <number> --body-file <body file> --attach ./before.png --attach ./after.png`. `gh` uploads each file and rewrites the reference to point at it, so nothing is hosted elsewhere or committed. Attach as your last edit to the body: a later `pull_request_update` with a body would put the local paths back. `gh pr edit --help` lists `--attach` when your `gh` has it.
 - **Anything else**: a run. Name the exact test or command and paste the lines of its real output that show the result, failing before the change and passing after.

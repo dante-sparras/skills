@@ -73,7 +73,7 @@ Keep a table in `CODING_STANDARDS.md`, created when the repo has none, that pair
 | Import the database client only from `src/db/index.ts` | `no-restricted-imports` in `eslint.config.js` |
 | Name handlers after the domain event they handle | review |
 
-When the user corrects an agent, fix the mistake and add the rule. A rule already in the table that only review enforces is a repeat, so move it up a level in the same change. Drop a rule once its mistake can't happen, and delete `AGENTS.md` lines that change nothing. Leave the `## Agent skills` block alone: `setup-skills` owns it.
+When the user corrects an agent, fix the mistake and add the rule. A rule already in the table that only review enforces is a repeat, so move it up a level in the same change. Drop a rule once its mistake can't happen, and delete `AGENTS.md` lines that change nothing.
 
 ## Report
 

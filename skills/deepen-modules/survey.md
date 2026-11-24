@@ -8,7 +8,7 @@ Use the vocabulary in [SKILL.md](SKILL.md) for the architecture, and `GLOSSARY.m
    - Take the direction the user named: a module, a subsystem, a pain point.
    - Otherwise walk back through `git log --oneline` for the hot spots, the files and areas that keep coming up. If changes are scattered, widen the net.
 
-2. **Explore.** Read [Resolve a role](../setup-skills/model-roles.md#resolve-a-role) and start a fresh `explorer` to walk the code for friction:
+2. **Explore.** Read [Resolve a role](../factory/model-roles.md#resolve-a-role) and start a fresh `explorer` to walk the code for friction:
    - Understanding one concept means bouncing between many small modules.
    - A module is **shallow**: its interface is nearly as complex as its implementation.
    - Pure functions were extracted for testability, and the real bugs hide in how they are called.
@@ -25,4 +25,4 @@ Use the vocabulary in [SKILL.md](SKILL.md) for the architecture, and `GLOSSARY.m
    - A term is new or sharpened: read [glossary](../glossary/SKILL.md) and follow it, so it lands in `GLOSSARY.md`.
    - The user wants to compare interfaces: follow [design-it-twice.md](design-it-twice.md).
 
-   Done when the user has a design they want built. To have it built, the user types `/plan`, which files it as tickets: say so.
+   Done when the user has a design they want built. To have it built, the user types `/spec`, which writes it up, then `/ticket`: say so.

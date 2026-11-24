@@ -1,0 +1,5 @@
+interface:
+  display_name: "Prove"
+  short_description: "Prove a change on the real artifact"
+policy:
+  allow_implicit_invocation: false

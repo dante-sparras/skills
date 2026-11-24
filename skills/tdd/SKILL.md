@@ -1,12 +1,12 @@
 ---
 name: tdd
-description: "Test-driven development, and proof for the work a test cannot cover. Use when fixing a bug, building domain rules, calculations, parsers, or state transitions, writing a regression or integration test, or when the user mentions TDD or red-green."
+description: "Test-driven development: when the red-green loop runs, and how to write tests worth keeping. Use when fixing a bug, building domain rules, calculations, parsers, or state transitions, writing a regression or integration test, or when the user mentions TDD or red-green."
 disable-model-invocation: true
 ---
 
 # TDD
 
-TDD is the red → green loop. This skill says when the loop runs, how to run it so the tests are worth keeping, and how to prove the work the loop skips.
+TDD is the red → green loop. This skill says when the loop runs, and how to run it so the tests are worth keeping. The `prove` skill covers the work the loop skips.
 
 Read `GLOSSARY.md`, when the repo has one, so test names and interfaces use the project's domain language.
 
@@ -79,13 +79,7 @@ See [tests.md](tests.md) for examples and [mocking.md](mocking.md) for where moc
 
 ## Prove skipped work
 
-Work without a new test still gets an executable check: a targeted script, a reproduction command, browser automation or a screenshot for UI layout, a snapshot comparison, a log assertion, or a focused integration check.
-
-- **Check the real artifact.** Run the feature, read the actual value, inspect the diff. "It compiles", a self-report, and cached output are proxies.
-- **Check a bug fix on the surface where the bug showed up.** A unit test shows branch behavior, not that the bug is gone.
-- **Use the running app when the check needs it** (a UI, CLI, or service flow), through the repo's `verify-<app>` skill. A factory worker uses the one its brief names, and returns `BLOCKED` on the verify skill when it names none. Anyone else reads [create-verify-skill](../create-verify-skill/SKILL.md) and follows it first when the repo has none.
-- **Script the check** when you can, so it reruns the same way.
-- **When a check fails**, suspect the observation method before the system.
+Work without a new test still gets an executable check. Read [prove](../prove/SKILL.md) and follow it. A bug fix gets both: its regression test, and proof on the surface where the bug showed up.
 
 ## Report
 

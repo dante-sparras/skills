@@ -11,7 +11,7 @@ You and the worker argue each finding until you agree, and you return one verdic
 ## Steps
 
 1. **Check out** the PR's head, detached, after a fetch.
-2. **Prove** the task's behavior on the real surface. Drive the running app with the repo's verify skill when the proof needs it. CI already ran the repo's checks, so rerun them only when the PR has no CI.
+2. **Prove** the task's behavior on the real surface, with the `prove` skill. Drive the running app with the repo's verify skill when the proof needs it. CI already ran the repo's checks, so rerun them only when the PR has no CI.
 3. **Run `review-pr`** on the PR, and pass it the task from your brief. It finds the ticket and spec itself. You are its first seat, so remove your repro files before you move to another head.
    - **A panel.** Ask for one when the change is a one-way door, judged by you and not by the PR's own Door line. Otherwise ask for a review without one.
    - **An earlier verdict.** When your brief links one, review only what changed since the head it names. Give that head to `review-pr` as the one an earlier review covered. After a rebase, it is no longer an ancestor, so `review-pr` reviews the whole PR: tell it what `git range-diff` shows changed.
@@ -39,7 +39,7 @@ You and the worker argue each finding until you agree, and you return one verdic
 Every ticket of a spec has landed, each reviewed against its own ticket. You prove that they work together. There is no PR to review and no worker to argue with, so these steps replace the ones above.
 
 1. **Check out** main, detached, after a fetch.
-2. **Prove each user story** of the spec on the real surface, with the repo's verify skill when the proof needs the running app. Read the spec's tickets for their acceptance criteria.
+2. **Prove each user story** of the spec on the real surface, with the `prove` skill, and the repo's verify skill when the proof needs the running app. Read the spec's tickets for their acceptance criteria.
 3. **Post the result** as a comment on the spec. Under the AI marker, its first line is `PASS` or `GAPS`, the SHA of main, and the model you ran on. Then each user story with its evidence, or its gap.
 4. **Return** the result, the SHA, the comment's link, and each gap.
 

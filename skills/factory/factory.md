@@ -25,12 +25,12 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
 ## What it needs
 
 - T3 Code with **Settings → Labs → Workflows** on. `t3 workflow list` exits 0 when it is.
-- A GitHub repo set up by `setup-skills`, with `gh` signed in. The factory reads blockers, comments, and sub-issues, and merges, through `gh`.
+- A GitHub repo with the labels the `factory` skill creates, and `gh` signed in. The factory reads blockers, comments, and sub-issues, and merges, through `gh`.
 - The skills installed side by side, since workers reach them by relative paths.
 
 ## Install
 
-`setup-skills` does this, under [Install the factory](../SKILL.md#6-install-the-factory).
+The `factory` skill runs these steps, under [Install the factory](SKILL.md#4-install-the-factory).
 
 1. **Copy** `factory.ts` to `skills-factory.ts` in the `workflows` folder of T3 home: `~/.t3/workflows/` by default. T3 reloads the folder on its own. Copy it again after the skills update, since T3 does not see changes to the original. A run keeps the workflow version it started with, so copy an update when no run is open, or keep the old file's body registered until its runs end.
 2. **Register the repo** in the workflow store, under `skills-factory/projects/<owner>/<repo>`:
@@ -43,11 +43,8 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
    | --- | --- |
    | `project` | The repo's folder, as an absolute path, or its T3 project id |
    | `repository` | `<owner>/<repo>` |
-   | `skillsFolder` | The absolute path of the folder that holds the `setup-skills` folder, with every other skill beside it |
+   | `skillsFolder` | The absolute path of the folder that holds the `factory` folder, with every other skill beside it |
    | `defaultBranch` | The name after `origin/` in `git symbolic-ref --short refs/remotes/origin/HEAD` |
-   | `readyLabel` | The `ready-for-agent` label in `docs/agents/triage-labels.md` |
-   | `needsTriageLabel` | The `needs-triage` label there, for the follow-ups it files |
-   | `specLabel`, `bugLabel`, `enhancementLabel` | Optional. The `spec`, `bug`, and `enhancement` labels there, when they differ from those names |
    | `verifySkill` | The verify skill's path from the repo root, or `null` to use the first `.claude/skills/verify-*` folder on main |
    | `maxActive` | How many runs may hold an agent at once, spec checks included. `4` is a good start |
    | `mergeMethod` | `squash`, `merge`, or `rebase`, by the repo's settings |
@@ -65,4 +62,21 @@ On each pass, the dispatcher reads the checks on main's newest commit. When one 
 
 ## Where issues come from
 
-The factory builds only what an issue already settles, one PR per issue. The skills a person types file those issues: `debug` for a bug, `plan` for a change or a feature, after `interview` when a decision is still open, and `triage` for what is already on the tracker. Each follows [handoff.md](handoff.md).
+The factory builds only what an issue already settles, one PR per issue. The skills a person types file those issues: `debug` for a bug, `ticket` for a change that fits one PR, `spec` and then `ticket` for a feature, and `triage` for what is already on the tracker. Each follows [handoff.md](handoff.md).
+
+## The files
+
+The factory lives in the `factory` skill's folder, so it installs with the skills.
+
+| File | Who reads it | What it holds |
+| --- | --- | --- |
+| [factory.ts](factory.ts) | T3 Code | The factory itself |
+| [SKILL.md](SKILL.md) | The agent you type `/factory` to | How to set a repo up, and where to go to run the factory |
+| This file | You, and that agent | What the factory runs, how to install it, and how to retry or stop a run |
+| [model-roles.md](model-roles.md) | Any skill that starts an agent | Which model each role runs on, and how to set the roles |
+| [handoff.md](handoff.md) | Any agent that files an issue for the factory | The checks before an issue goes to `ready-for-agent` |
+| [agent-brief.md](agent-brief.md) | The same agents, and workers | The one shape of an issue the factory builds |
+| [tracker.md](tracker.md) | Every agent that touches the tracker | The labels, and the `gh` commands for issues and PRs |
+| [worker.md](worker.md) | Every worker | How to build an issue in one PR and settle its review |
+| [reviewer.md](reviewer.md) | The reviewer of a PR, or of a finished spec | How to review a PR and argue each finding with its worker, and how to check a spec |
+| [rules.md](rules.md) | Workers and reviewers | Trust, the AI marker, results, messages, git, PR tools, and how to run a skill |

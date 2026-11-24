@@ -143,6 +143,16 @@ def skill_problems(skill_dir, user_invoked):
         )
 
 
+def invocation_problems(skill_dir, user_invoked):
+    """Yield (path, line, problem) for a skill an agent could trigger on its own."""
+    if skill_dir.name not in user_invoked:
+        yield skill_dir / "SKILL.md", 2, (
+            "can be triggered by an agent on its own, at the wrong moment. Add "
+            "disable-model-invocation: true to its frontmatter. The flow sends agents to each "
+            "skill's file, and a person can still type its name."
+        )
+
+
 def shape_problems(skill_dir):
     """Yield (path, line, problem) where a skill departs from the shape every skill shares."""
     skill_md = skill_dir / "SKILL.md"
@@ -258,6 +268,8 @@ def main():
 
     for skill_dir in skill_dirs:
         for path, line, problem in skill_problems(skill_dir, user_invoked):
+            report(path, line, problem)
+        for path, line, problem in invocation_problems(skill_dir, user_invoked):
             report(path, line, problem)
         for path, line, problem in shape_problems(skill_dir):
             report(path, line, problem)

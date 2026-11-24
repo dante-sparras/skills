@@ -1,6 +1,7 @@
 ---
 name: to-pr
 description: "PR title and body template. Use when opening a pull request, writing or rewriting a PR description, or updating one after the change grew."
+disable-model-invocation: true
 ---
 
 # To PR

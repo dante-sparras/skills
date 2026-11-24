@@ -1,3 +1,5 @@
 interface:
   display_name: "Review Changes"
   short_description: "Adversarial multi-model review of a diff"
+policy:
+  allow_implicit_invocation: false

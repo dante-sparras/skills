@@ -21,8 +21,8 @@ Use the vocabulary in [SKILL.md](SKILL.md) for the architecture, and `GLOSSARY.m
 
    Propose no interfaces yet. Ask: "Which of these would you like to explore?"
 
-4. **Interview.** Once the user picks, call the Skill tool with "interview" and walk the decision tree: constraints, dependencies, the shape of the deepened module, what sits behind the seam, which tests survive. As decisions settle:
-   - A term is new or sharpened: call the Skill tool with "glossary" so it lands in `GLOSSARY.md`.
+4. **Interview.** Once the user picks, read [interview](../interview/SKILL.md), follow it, and walk the decision tree: constraints, dependencies, the shape of the deepened module, what sits behind the seam, which tests survive. As decisions settle:
+   - A term is new or sharpened: read [glossary](../glossary/SKILL.md) and follow it, so it lands in `GLOSSARY.md`.
    - The user wants to compare interfaces: follow [design-it-twice.md](design-it-twice.md).
 
    Done when the user has a design they want built. Say in one line the task that would build it.

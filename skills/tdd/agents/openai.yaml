@@ -1,3 +1,5 @@
 interface:
   display_name: "TDD"
   short_description: "Test first for bugs and core logic, prove the rest"
+policy:
+  allow_implicit_invocation: false

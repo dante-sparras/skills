@@ -66,7 +66,7 @@ List the `ready-for-agent` issues an agent can start now:
 
 3. **Verify the claim** before any interview. Reproduce a bug from the reporter's steps. For a PR, read the diff first. Check it out and run its tests only when the maintainer says to, since an outside contributor's code would run with your access. Report one of three results: confirmed (with the code path), failed, or too little detail to tell, which points to `needs-info`. Keep the exact steps or command and their output, since the brief carries them to the agent that builds the fix.
 
-4. **Interview** when the request needs fleshing out: call the Skill tool with "interview".
+4. **Interview** when the request needs fleshing out: read [interview](../interview/SKILL.md) and follow it.
 
 5. **Apply** the state.
 

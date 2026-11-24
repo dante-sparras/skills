@@ -1,6 +1,7 @@
 ---
 name: create-verify-skill
 description: "Generate a project-local `verify-<app>` skill that launches the real app, drives it the way a user does, and captures evidence. Use when proving a change needs the running app (a UI, CLI, TUI, or service flow) and the repo has no `verify-<app>` skill yet, or when asked to make one."
+disable-model-invocation: true
 ---
 
 # Create Verify Skill

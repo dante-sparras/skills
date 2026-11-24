@@ -144,6 +144,13 @@ class Wiring(unittest.TestCase):
         self.write("skills/alpha/agents/openai.yaml", "policy:\n  allow_implicit_invocation: false\n")
         self.assertEqual(list(wiring.skill_problems(skill, {"alpha"})), [])
 
+    def test_every_skill_is_user_invoked(self):
+        skill = self.skill("alpha")
+        self.assertEqual(list(wiring.invocation_problems(skill, {"alpha"})), [])
+        problems = list(wiring.invocation_problems(skill, set()))
+        self.assertEqual(len(problems), 1)
+        self.assertIn("disable-model-invocation: true", problems[0][2])
+
     def shaped(self, body, display="Alpha"):
         self.write("skills/alpha/SKILL.md", f'---\nname: alpha\ndescription: "X. Use when y."\n---\n\n{body}')
         self.write("skills/alpha/agents/openai.yaml", f'interface:\n  display_name: "{display}"\n')

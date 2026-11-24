@@ -1,6 +1,7 @@
 ---
 name: review-changes
 description: "Adversarial review of the changes since a fixed point: a commit, branch, tag, or merge-base. Use when asked to review a branch, a PR, or work-in-progress changes, or when a finished change needs a review before it lands."
+disable-model-invocation: true
 ---
 
 # Review Changes

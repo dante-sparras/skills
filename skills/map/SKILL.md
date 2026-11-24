@@ -63,7 +63,7 @@ A ticket is a child issue of the map. Its body is the question, sized to one ses
 | --- | --- | --- | --- |
 | `research` | Agent | A decision waits on a fact from outside the working directory: docs, a third-party API, a knowledge base | Starting a fresh `explorer` per [Resolve a role](../setup-skills/model-roles.md#resolve-a-role), as the `research` skill says. When it returns, record the ticket like any other |
 | `prototype` | Human and agent | The question is how it should look or behave | Making a cheap, rough thing to react to: an outline, a stub, UI or logic code. Keep it throwaway, on a branch outside main, linked from the ticket |
-| `interview` | Human and agent | The default: the decision needs a conversation | Calling the Skill tool with "interview" |
+| `interview` | Human and agent | The default: the decision needs a conversation | Reading [interview](../interview/SKILL.md) and following it |
 | `task` | Either | Manual work blocks a decision: signing up for a service to judge its API, provisioning access, moving data to see its shape | Doing it alone where you can, and handing the user a precise checklist where you cannot. The answer records what was done and the facts later tickets depend on |
 
 A ticket driven with the user resolves only through the live exchange. Their side of it is theirs to answer.
@@ -87,7 +87,7 @@ Out-of-scope work never graduates. It returns only as a new effort, when the des
 
 The user brought a loose idea.
 
-1. **Name the destination.** Call the Skill tool with "interview" to pin down what this map leads to: a spec to hand off, a decision to lock, or a change made in place. The destination shapes every ticket, so settle it first.
+1. **Name the destination.** Read [interview](../interview/SKILL.md) and follow it, to pin down what this map leads to: a spec to hand off, a decision to lock, or a change made in place. The destination shapes every ticket, so settle it first.
 2. **Map the frontier.** Interview again, breadth-first: fan out across the whole space, surfacing the open decisions and the steps takeable now. If this finds no fog, the work needs no map. Stop and ask the user how to proceed.
 3. **Create the map** with Destination and Notes filled in, Decisions so far empty, and the fog sketched under Not yet specified.
 4. **Create the tickets** you can specify now as child issues. Wire blockers and cross-references in a second pass, with real ids, since a placeholder `#<n>` links to an unrelated issue.
@@ -101,6 +101,6 @@ The user brought a map, and maybe a ticket.
 
 1. **Load the map**, not every ticket body.
 2. **Choose** the ticket the user named, or the first one on the frontier. Claim it.
-3. **Resolve** it as its `map:<type>` label says. Fetch the body of any related or closed ticket when you need it, and call the Skill tool for each skill the map's Notes name. When in doubt, call the Skill tool with "interview".
+3. **Resolve** it as its `map:<type>` label says. Fetch the body of any related or closed ticket when you need it, and read and follow each skill the map's Notes name. When in doubt, read [interview](../interview/SKILL.md) and follow it.
 4. **Record.** Post the answer as a comment, close the issue, and add its line to Decisions so far.
 5. **Update the map.** Add the tickets the answer surfaced, graduate the fog it made specifiable, rule out of scope any ticket it showed to sit past the destination, and update or delete the tickets it invalidated.

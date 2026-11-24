@@ -92,49 +92,11 @@ The plugin manifest does not list `coordinate`, so a Claude plugin install leave
 
 Run `python3 scripts/check.py` before you push, or `python scripts/check.py` on Windows. CI runs the same command.
 
-## Upstream
+## Credits
 
-The skills below started as copies of [mattpocock/skills](https://github.com/mattpocock/skills) at commit [`5863806dd4e15c63174bee4e7515a4256792ecfa`](https://github.com/mattpocock/skills/tree/5863806dd4e15c63174bee4e7515a4256792ecfa) and have been edited since. Each one lives in `skills/<name>/`.
-
-- [debug](./skills/debug/SKILL.md)
-- [deepen](./skills/deepen/SKILL.md)
-- [glossary](./skills/glossary/SKILL.md)
-- [interrogate](./skills/interrogate/SKILL.md)
-- [interview](./skills/interview/SKILL.md)
-- [map](./skills/map/SKILL.md)
-- [plan](./skills/plan/SKILL.md)
-- [pr-body](./skills/pr-body/SKILL.md)
-- [research](./skills/research/SKILL.md)
-- [setup-skills](./skills/setup-skills/SKILL.md)
-- [tdd](./skills/tdd/SKILL.md)
-- [triage](./skills/triage/SKILL.md)
-- [writing-for-agents](./skills/writing-for-agents/SKILL.md)
-
-### pstack
-
-These skills started from pstack, or are new here and built on its ideas:
-
-- [coordinate](./skills/coordinate/SKILL.md)
-- [guardrail](./skills/guardrail/SKILL.md)
-- [new-verify-skill](./skills/new-verify-skill/SKILL.md)
-
-[guardrail](./skills/guardrail/SKILL.md) started as a copy of the `correct` skill in Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/pstack) at commit [`e5136d82418d2db3165ea1050d17577cd618cc05`](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/pstack/skills/correct). It also absorbs the upstream `retro` skill from mattpocock/skills.
-
-[interrogate](./skills/interrogate/SKILL.md) takes its adversarial reviewer panel from the `interrogate` skill in pstack at commit [`ab1f702ce8e8b6557edb56b09f52cde8bfb83f17`](https://github.com/cursor/plugins/tree/ab1f702ce8e8b6557edb56b09f52cde8bfb83f17/pstack/skills/interrogate): the adversary brief, picking reviewers from different model families, and rerunning each finding before it is reported.
-
-[tdd](./skills/tdd/SKILL.md) takes its test-first rules from pstack at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/tdd): the bug-fix loop that sees red before the fix, when to skip a test, the closest checks that prove skipped work, the guardrails, and the evidence report. It also takes the two imagined edits that judge a test from [`principle-test-behavior-not-implementation`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-test-behavior-not-implementation), real-artifact proof from [`principle-prove-it-works`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-prove-it-works), and the red-then-green commit order and same-surface verification from the [Bug fix playbook](https://github.com/cursor/plugins/blob/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks/bug-fix.md). Seams, vertical slices, and the mocking and test examples stay from mattpocock/skills.
-
-[new-verify-skill](./skills/new-verify-skill/SKILL.md) started as a copy of the `create-verification-skill` skill in pstack at commit [`e58dd043600587dbaf58ba315e7f2b38373eeb43`](https://github.com/cursor/plugins/tree/e58dd043600587dbaf58ba315e7f2b38373eeb43/pstack/skills/create-verification-skill), including its feature map example.
-
-[coordinate](./skills/coordinate/SKILL.md) takes its entry point from the `poteto-mode` skill in pstack at commit [`7a583913eb1b8d1a0ee76753d1a2cf072e7b54f9`](https://github.com/cursor/plugins/tree/7a583913eb1b8d1a0ee76753d1a2cf072e7b54f9/pstack/skills/poteto-mode): one user-invoked skill a person starts every task with, and a `worker.md` that opens every subagent's brief, since the rules reach a subagent no other way. Its build flow follows the poteto-mode playbooks at commit [`35a90942a7f02e1ebbc2443643179815f2147954`](https://github.com/cursor/plugins/tree/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/poteto-mode/playbooks): one worker and one PR per task off trunk, an independent verdict before a PR lands, the forge-approval guardrail, and the hand-off mode. The coordinator loop and the worker's sizing table are new here.
-
-[setup-skills](./skills/setup-skills/SKILL.md) takes its model role configuration from Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack).
-
-### Other credits
-
-[pr-body](./skills/pr-body/SKILL.md) adapts its visual examples and placement guidance from Dex Horthy's [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md).
-
-[deepen](./skills/deepen/DESIGN-IT-TWICE.md) uses John Ousterhout's Design It Twice method.
+- [mattpocock/skills](https://github.com/mattpocock/skills) by Matt Pocock
+- [pstack](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan
+- [humanlayer/skills](https://github.com/humanlayer/skills) by Dex Horthy
 
 ## License
 

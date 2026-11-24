@@ -19,12 +19,13 @@
         "./skills/deepen-modules",
         "./skills/glossary",
         "./skills/interview",
-        "./skills/plan",
         "./skills/pr",
         "./skills/research",
         "./skills/review-pr",
         "./skills/setup-skills",
+        "./skills/spec",
         "./skills/tdd",
+        "./skills/tickets",
         "./skills/triage",
         "./skills/writing-for-agents"
       ]

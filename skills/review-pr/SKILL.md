@@ -23,8 +23,8 @@ A Breakage or Spec finding survives when you rerun its command and the output sh
    - The commits are `git log <fixed-point>..HEAD --oneline`.
    - **A re-review.** When your caller names a head an earlier review covered, and that head is an ancestor of the PR's head, make it the fixed point, so the seats review only what changed since.
 
-2. **Find the ticket and the spec.** The ticket is the contract, and the spec says what the ticket is for. Fetch both, with their comments, per `docs/agents/issue-tracker.md`. If that file is missing, say that `/setup-skills` has not run in this repo.
-   - **The ticket** is each issue the PR's body closes: a `Closes`, `Fixes`, or `Resolves` line. Its agent brief or its acceptance criteria is what the PR must deliver.
+2. **Find the ticket and the spec.** The ticket is the contract, and the spec says what the ticket is for. Fetch both, with their comments, as [tracker.md](../setup-skills/factory/tracker.md) says.
+   - **The ticket** is each issue the PR's body closes: a `Closes`, `Fixes`, or `Resolves` line. Its agent brief is what the PR must deliver.
    - **The spec** is the ticket's parent: its parent issue, or the issue its `## Parent` section names. Its user stories and decisions are what the ticket serves. A ticket with no parent has no spec, and the ticket alone is the bar.
    - **A ticket your caller passed** joins these, such as the task in a factory reviewer's brief.
    - **No ticket at all.** Ask the user which issue the PR is for. With none, the seats skip the Spec axis, and the report says "no ticket".

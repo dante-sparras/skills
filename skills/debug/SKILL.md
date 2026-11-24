@@ -61,7 +61,7 @@ Done when every remaining element is load-bearing: removing any one turns the lo
 
 A red, minimised loop is enough for another agent to finish the job unattended. What you do next depends on whose bug it is.
 
-- **A person brought you the bug**, in a repo the factory ships for, which step 1 of [handoff.md](../setup-skills/factory/handoff.md) tells you. Hand it off as that file says: file it with the `bug` label, in `ready-for-agent`, with an agent brief as its body. Its **Reproduction** holds the Phase 1 command, the full contents of any file the command needs, and the redacted output, since the worker starts from a fresh checkout. Give it the route `bug`, or `change` when the repro already names the cause. A worker runs the remaining phases and ships the fix in a PR the factory reviews. Then stop, and delete your loop's files.
+- **A person brought you the bug**, in a repo the factory ships for, which step 1 of [handoff.md](../setup-skills/factory/handoff.md) tells you. Hand it off as that file says: file it with the `bug` label, in `ready-for-agent`, with an agent brief as its body, per [agent-brief.md](../setup-skills/factory/agent-brief.md). Its **Reproduction** holds the Phase 1 command, the full contents of any file the command needs, and the redacted output, since the worker starts from a fresh checkout. Give it the route `bug`, or `change` when the repro already names the cause. A worker runs the remaining phases and ships the fix in a PR the factory reviews. Then stop, and delete your loop's files.
 - **The bug is yours.** You are a factory worker, the bug blocks the task you are on, the repo has no factory, or the person says to fix it here. Go on to Phase 3.
 
 ## Phase 3: Hypothesise

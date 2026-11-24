@@ -25,4 +25,4 @@ Use the vocabulary in [SKILL.md](SKILL.md) for the architecture, and `GLOSSARY.m
    - A term is new or sharpened: read [glossary](../glossary/SKILL.md) and follow it, so it lands in `GLOSSARY.md`.
    - The user wants to compare interfaces: follow [design-it-twice.md](design-it-twice.md).
 
-   Done when the user has a design they want built. To have it built, the user types `/plan`, which files it as tickets: say so.
+   Done when the user has a design they want built. To have it built, the user types `/spec`, which writes it up, then `/tickets`: say so.

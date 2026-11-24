@@ -6,15 +6,19 @@ The **factory** is a T3 Code workflow, [factory.ts](factory.ts), that ships the 
 2. **Checks.** The run waits for the PR's checks. A red check or a conflict wakes the worker on its own thread.
 3. **Comments.** A comment or review from a collaborator wakes the worker with it, as a request to weigh. A collaborator's request for changes holds the merge until they approve, or until you add the `approved` label. A comment from anyone else never reaches the worker and never holds the PR: the factory lists it in its note on the PR, and you pass on what matters by commenting yourself. Bots are left out.
 4. **A reviewer** reviews the head, briefed with `rules.md` and `reviewer.md`, and argues each finding with the worker until they agree, for at most three rounds.
-5. **Your review.** A PR the reviewer passed waits for you, and the factory asks nothing: not whether to open it, and not whether to merge it.
-   - **How you say go.** Add the `approved` label to the PR. GitHub does not let you approve a PR your own account opened, and the factory opens every PR as you, so the label is your approval. On a PR from another account, a collaborator's approving review of the head counts too. The factory looks every minute at first, and less often as time passes.
-   - **How you say no.** Comment or ask for changes, and the worker picks it up. Close the PR, and the run stops. Merge it yourself, and the run finishes up after you.
+5. **Your review.** A PR the reviewer passed waits for you, and the factory asks nothing: not whether to open it, and not whether to merge it. The run ends here. No run is open while the PR waits, so it can wait as long as you like, and it holds none of the repo's slots.
+   - **How you say go.** Add the `approved` label to the PR. GitHub does not let you approve a PR your own account opened, and the factory opens every PR as you, so the label is your approval. With `approver` set, only a label that account put on counts. On a PR from another account, an approving review of the head counts too.
+   - **How you say no.** Comment or ask for changes, and the worker picks it up. Close the PR, and the issue comes back to you in `needs-triage`. Merge it yourself, and the factory finishes up after you.
    - **What your go covers.** The commits that were there when you gave it. The factory notes the moment each new commit appears, and only a label put on after that merges it. It takes an older label off, and tells you again that the PR is ready. A comment of yours that changes no code leaves your go in place.
    - **How you hear of it.** The factory comments on the PR, and the worker's thread says so and stays in your list until the PR merges. Every other thread settles itself when its turn ends, so the threads you still see are the ones that need you.
+   - **How soon it merges.** For a quarter of an hour after a PR becomes ready the factory looks every minute. After that each pass looks, which is every ten minutes.
    - **Without your review.** A repo whose settings set `autoMerge` to `two-way` merges a PR that the reviewer passed and judged a two-way door: cheap to roll back. The factory says so in a comment on the PR. A PR the two disagreed on, and one a collaborator holds, still wait for you.
-   - **A pause.** The factory reads `enabled` and `autoMerge` again at the moment of each merge. A repo you paused merges nothing, and a run that started before you turned `autoMerge` off waits for your review like any other.
+   - **A pause.** The factory reads the repo's settings again at each step of a run, and before each merge. A repo you paused gets no more work from its agents and merges nothing, and a PR that was ready before you turned `autoMerge` off waits for your review like any other.
    - **A question.** A `NO AGREEMENT` verdict waits on your ruling: accept the PR as it is, send your rulings to the worker, or stop. Accepting it settles the findings, and the PR then waits for your review like any other. After your rulings a reviewer always looks again, whether or not the worker pushed. A worker may need a decision too. Those are asked in the worker's thread, with the agent's question tool, so T3 shows that thread as waiting on you. A thread that cannot ask leaves its question in T3 Code's Workflows page.
-6. **The merge** goes through `gh pr merge --match-head-commit`, so GitHub refuses it if the head moved after the review. A moved head goes back through checks and review.
+6. **The merge** is the work of a short run of its own, `skills-factory-land`. It goes through `gh pr merge --match-head-commit`, so GitHub refuses it if the head moved after the review.
+   - **The worker is needed again** when a commit appeared, a collaborator commented, a check went red, or the branch conflicts with main or fell behind it. The next pass starts a run that goes on in the worker's own thread, and the PR comes back to you once a reviewer has passed it.
+   - **GitHub lets only you merge it** when a rule on the branch asks for a review the label cannot give. The factory says so on the PR, and finishes up after you merged it by hand.
+   - **A merge queue** takes a PR without merging it yet. Nothing that follows a merge happens until GitHub says the PR is in.
 
 Workers and reviewers return their results as data, which T3 checks against a schema, so a result with a field missing is sent back to the agent to fix. A worker that needs you to decide something returns its question as data too: the factory has the worker ask you in its own thread, and wakes it with your answer. A run survives a restart of T3 Code. It picks up at the step it was on.
 
@@ -48,7 +52,7 @@ The factory lives in the `factory` skill's folder, so it installs with the skill
 
 | File | Who reads it | What it holds |
 | --- | --- | --- |
-| [factory.ts](factory.ts) | T3 Code | The factory itself |
+| [factory.ts](factory.ts) | T3 Code | The factory itself: `ship` builds an issue up to a reviewed PR, `land` merges it, `spec` checks a finished spec, and `dispatch` is the pass that starts them |
 | [SKILL.md](SKILL.md) | The agent you type `/factory` to | How to set a repo up, its settings, what waits on you, and how to retry, stop, or pause a run |
 | This file | You | What the factory runs, and what happens after a run |
 | [model-roles.md](model-roles.md) | Any skill that starts an agent | Which model each role runs on, and how to set the roles |

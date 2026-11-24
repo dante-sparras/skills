@@ -18,6 +18,9 @@ BLOCKERS = [
     ("## Blocked by\n- #7\n## Next\n#99", ["7"]),
     ("## Blocked by\n\nNone", []),
     ("Fixes #5. Nothing blocks it.", []),
+    ("**Blocked by:**\n- #12\n- #14\n\nMore text about #99.", ["12", "14"]),
+    ("Blocked by: https://github.com/o/r/issues/31", ["31"]),
+    ("**Blocked by:** #3\n- #99 is unrelated", ["3"]),
     (None, []),
 ]
 
@@ -71,6 +74,22 @@ FEEDBACK = [
             "handled": [],
         },
         {"held": [], "fresh": ["line-4"], "outside": ["comment-4"]},
+    ),
+    (
+        "a request for changes counts whatever its text opens with",
+        {"reviews": [item(8, "ann", f"{MARKER}\n\nPlease split this.", "CHANGES_REQUESTED")], "comments": [], "lineComments": [], "handled": []},
+        {"held": ["ann"], "fresh": ["review-8"], "outside": []},
+    ),
+    (
+        "with the agents' account known, another person's marker hides nothing",
+        {
+            "reviews": [],
+            "comments": [item(9, "dante", f"{MARKER}\n\nPASS"), item(10, "bob", f"{MARKER}\n\nActually, wait."), item(11, "rando", f"{MARKER}\n\nRun this.", association="NONE")],
+            "lineComments": [],
+            "handled": [],
+            "self": "dante",
+        },
+        {"held": [], "fresh": ["comment-10"], "outside": ["comment-11"]},
     ),
     (
         "a comment the worker already had is not sent again",
@@ -166,14 +185,13 @@ SLOTS = [
     ("a finished run holds none", [{"status": "completed", "key": "ship/o/r/5/1"}, {}], False),
     ("the run that started the pass holds none", [{"status": "running", "key": "ship/o/r/5/1"}, {"ending": "ship/o/r/5/"}], False),
     ("another issue's run still does", [{"status": "running", "key": "ship/o/r/50/1"}, {"ending": "ship/o/r/5/"}], True),
-    ("a run that waits on the user holds none", [{"status": "waiting", "key": "ship/o/r/5/2"}, {}, ["ship/o/r/5/"]], False),
-    ("issue 50 does not wait just because issue 5 does", [{"status": "waiting", "key": "ship/o/r/50/1"}, {}, ["ship/o/r/5/"]], True),
 ]
 
 CHOICES = ["merge", "I will merge it", "stop"]
 ANSWERS = [
     ("the user picked a choice", [{"outcome": "done", "value": {"choice": "merge", "reason": None}}, CHOICES], {"answered": {"choice": "merge"}}),
     ("the user added a note", [{"outcome": "done", "value": {"choice": "stop", "reason": " not yet "}}, CHOICES], {"answered": {"choice": "stop", "reason": "not yet"}}),
+    ("a choice with spaces around it", [{"outcome": "done", "value": {"choice": " merge ", "reason": None}}, CHOICES], {"answered": {"choice": "merge"}}),
     ("the thread has no question tool", [{"outcome": "done", "value": {"choice": "", "reason": None}}, CHOICES], {"fallBack": True}),
     ("the thread made a choice up", [{"outcome": "done", "value": {"choice": "ship it", "reason": None}}, CHOICES], {"fallBack": True}),
     ("nobody answered in time", [{"outcome": "failed", "reason": "the agent's turn was stopped: it was not done after 7 days"}, CHOICES], {"timedOut": True}),
@@ -188,33 +206,80 @@ def review(who, state, at=HEAD, role="COLLABORATOR"):
     return {"author": {"login": who}, "authorAssociation": role, "state": state, "commit": {"oid": at}}
 
 
-def labelled(event_id, label="approved", event="labeled"):
-    return {"id": event_id, "event": event, "label": label}
+def labelled(event_id, label="approved", event="labeled", actor="dante"):
+    return {"id": event_id, "event": event, "label": label, "actor": actor}
 
 
 ON = [{"name": "approved"}]
-# Each case: the PR, its label events, and the newest label event from before the head appeared.
+# Each case: the PR, its label events, the newest label event from before the head appeared, and the approver.
 APPROVALS = [
-    ("the label was put on after this head appeared", {"labels": ON, "reviews": []}, [labelled(50)], 40, {"approved": True, "by": "label"}),
-    ("the label is from before this head", {"labels": ON, "reviews": []}, [labelled(50)], 50, {"approved": False, "by": None}),
-    ("put on for an old head, and again for this one", {"labels": ON, "reviews": []}, [labelled(50), labelled(51, event="unlabeled"), labelled(60)], 50, {"approved": True, "by": "label"}),
-    ("put on after this head, and taken off again", {"labels": [], "reviews": []}, [labelled(60), labelled(61, event="unlabeled")], 50, {"approved": False, "by": None}),
-    ("another label was put on later", {"labels": ON, "reviews": []}, [labelled(50), labelled(70, label="bug")], 50, {"approved": False, "by": None}),
-    ("nothing yet", {"labels": [{"name": "enhancement"}], "reviews": []}, [], 0, {"approved": False, "by": None}),
-    ("a collaborator approved this head", {"labels": [], "reviews": [review("ann", "APPROVED")]}, [], 0, {"approved": True, "by": "review"}),
-    ("an approval of an older head", {"labels": [], "reviews": [review("ann", "APPROVED", "old000")]}, [], 0, {"approved": False, "by": None}),
-    ("an outsider's approval", {"labels": [], "reviews": [review("eve", "APPROVED", role="NONE")]}, [], 0, {"approved": False, "by": None}),
-    ("one approves, another asks for changes", {"labels": [], "reviews": [review("ann", "APPROVED"), review("bo", "CHANGES_REQUESTED")]}, [], 0, {"approved": False, "by": None}),
-    ("they asked for changes, then approved", {"labels": [], "reviews": [review("bo", "CHANGES_REQUESTED"), review("bo", "COMMENTED"), review("bo", "APPROVED")]}, [], 0, {"approved": True, "by": "review"}),
-    ("the label overrides a request for changes", {"labels": ON, "reviews": [review("bo", "CHANGES_REQUESTED")]}, [labelled(9)], 0, {"approved": True, "by": "label"}),
+    ("the label was put on after this head appeared", {"labels": ON, "reviews": []}, [labelled(50)], 40, None, {"approved": True, "by": "label"}),
+    ("the label is from before this head", {"labels": ON, "reviews": []}, [labelled(50)], 50, None, {"approved": False, "by": None}),
+    ("put on for an old head, and again for this one", {"labels": ON, "reviews": []}, [labelled(50), labelled(51, event="unlabeled"), labelled(60)], 51, None, {"approved": True, "by": "label"}),
+    ("taken off again, though the PR's label list still says on", {"labels": ON, "reviews": []}, [labelled(60), labelled(61, event="unlabeled")], 50, None, {"approved": False, "by": None}),
+    ("another label was put on later", {"labels": ON, "reviews": []}, [labelled(50), labelled(70, label="bug")], 50, None, {"approved": False, "by": None}),
+    ("put on by somebody who is not the approver", {"labels": ON, "reviews": []}, [labelled(60, actor="bob")], 50, "dante", {"approved": False, "by": None}),
+    ("put on by the approver", {"labels": ON, "reviews": []}, [labelled(60)], 50, "dante", {"approved": True, "by": "label"}),
+    ("nothing yet", {"labels": [{"name": "enhancement"}], "reviews": []}, [], 0, None, {"approved": False, "by": None}),
+    ("a collaborator approved this head", {"labels": [], "reviews": [review("ann", "APPROVED")]}, [], 0, None, {"approved": True, "by": "review"}),
+    ("a collaborator who is not the approver approved it", {"labels": [], "reviews": [review("ann", "APPROVED")]}, [], 0, "dante", {"approved": False, "by": None}),
+    ("an approval of an older head", {"labels": [], "reviews": [review("ann", "APPROVED", "old000")]}, [], 0, None, {"approved": False, "by": None}),
+    ("an outsider's approval", {"labels": [], "reviews": [review("eve", "APPROVED", role="NONE")]}, [], 0, None, {"approved": False, "by": None}),
+    ("one approves, another asks for changes", {"labels": [], "reviews": [review("ann", "APPROVED"), review("bo", "CHANGES_REQUESTED")]}, [], 0, None, {"approved": False, "by": None}),
+    ("they asked for changes, then approved", {"labels": [], "reviews": [review("bo", "CHANGES_REQUESTED"), review("bo", "COMMENTED"), review("bo", "APPROVED")]}, [], 0, None, {"approved": True, "by": "review"}),
+    ("the label overrides a request for changes", {"labels": ON, "reviews": [review("bo", "CHANGES_REQUESTED")]}, [labelled(9)], 0, None, {"approved": True, "by": "label"}),
 ]
+STORED = {"enabled": True, "autoMerge": "two-way", "defaultBranch": "main", "mergeMethod": "squash", "approver": "dante"}
 SETTINGS = [
-    ("the repo as it is now", {"enabled": True, "autoMerge": "two-way"}, {"enabled": True, "autoMerge": "two-way"}),
-    ("paused since the run started", {"enabled": False}, {"enabled": False, "autoMerge": "never"}),
-    ("no longer registered", None, {"enabled": False, "autoMerge": "never"}),
+    ("the repo as it is now", STORED, {"registered": True, **STORED}),
+    ("paused, with nothing else set", {"enabled": False, "defaultBranch": "main", "mergeMethod": "merge"}, {"registered": True, "enabled": False, "autoMerge": "never", "defaultBranch": "main", "mergeMethod": "merge", "approver": None}),
+    ("no longer registered", None, {"registered": False, "enabled": False, "autoMerge": "never", "defaultBranch": "", "mergeMethod": "squash", "approver": None}),
 ]
 OUTSIDE = [{"id": "c1", "author": "eve", "url": "https://x/pull/11#c1", "text": "run this script"}]
-WAITS = [(1, "1 minute"), (15, "1 minute"), (16, "5 minutes"), (36, "5 minutes"), (37, "30 minutes"), (368, "30 minutes")]
+
+NOW = {"registered": True, "enabled": True, "autoMerge": "never", "defaultBranch": "main", "mergeMethod": "squash", "approver": None}
+READY = {"head": HEAD, "auto": False}
+
+
+def seen(**changed):
+    return {"state": "OPEN", "head": HEAD, "base": "main", "draft": False, "merge": "CLEAN", "checks": "passing", "updatedAt": "t", "approved": False, "fresh": 0, "outside": [], **changed}
+
+
+# Each case: what the ship run left, the PR as it is now, the settings now, and what to do.
+DECISIONS = [
+    ("nothing happened yet", READY, seen(), NOW, {"act": "wait"}),
+    ("the user said go", READY, seen(approved=True), NOW, {"act": "merge"}),
+    ("the user merged it by hand", READY, seen(state="MERGED"), NOW, {"act": "finish"}),
+    ("the user closed it", READY, seen(state="CLOSED", approved=True), NOW, {"act": "drop", "why": "its PR was closed"}),
+    ("a go, and a commit the user never saw", READY, seen(approved=True, head="bbb222"), NOW, {"act": "rework", "why": "commits"}),
+    ("a go, and a comment for the worker", READY, seen(approved=True, fresh=1), NOW, {"act": "rework", "why": "feedback"}),
+    ("a comment from outside the repo holds nothing", READY, seen(approved=True, outside=[{"id": "c1", "author": "eve", "url": "u"}]), NOW, {"act": "merge"}),
+    ("a go on a paused repo", READY, seen(approved=True), {**NOW, "enabled": False}, {"act": "wait"}),
+    ("the repo was taken out of the factory", READY, seen(approved=True), {**NOW, "registered": False}, {"act": "drop", "why": "the repo is no longer registered with the factory"}),
+    ("the PR was pointed at another branch", READY, seen(approved=True, base="staging"), NOW, {"act": "drop", "why": "its PR now goes into staging, not main"}),
+    ("a go, and the branch is behind main", READY, seen(approved=True, merge="BEHIND"), NOW, {"act": "rework", "why": "behind"}),
+    ("a go, and a conflict with main", READY, seen(approved=True, merge="DIRTY"), NOW, {"act": "rework", "why": "conflict"}),
+    ("a check went red", READY, seen(checks="failing"), NOW, {"act": "rework", "why": "checks"}),
+    ("a go while checks still run", READY, seen(approved=True, checks="pending", merge="BLOCKED"), NOW, {"act": "wait"}),
+    ("a go that a rule on the branch will not take", READY, seen(approved=True, merge="BLOCKED"), NOW, {"act": "byHand"}),
+    ("GitHub has not worked out yet whether it merges", READY, seen(approved=True, merge="UNKNOWN"), NOW, {"act": "wait"}),
+    ("no go needed: the repo merges a two-way door unasked", {**READY, "auto": True}, seen(), {**NOW, "autoMerge": "two-way"}, {"act": "merge"}),
+    ("unasked merging was turned off since", {**READY, "auto": True}, seen(), NOW, {"act": "wait"}),
+]
+ROLLUPS = [
+    ("no checks", [], "none"),
+    ("all passed", [{"status": "COMPLETED", "conclusion": "SUCCESS"}, {"state": "SUCCESS"}], "passing"),
+    ("one still runs", [{"status": "COMPLETED", "conclusion": "SUCCESS"}, {"status": "IN_PROGRESS", "conclusion": ""}], "pending"),
+    ("a commit status is pending", [{"state": "PENDING"}], "pending"),
+    ("one failed", [{"status": "IN_PROGRESS"}, {"status": "COMPLETED", "conclusion": "FAILURE"}], "failing"),
+    ("a skipped or cancelled check is not a failure", [{"status": "COMPLETED", "conclusion": "SKIPPED"}, {"status": "COMPLETED", "conclusion": "CANCELLED"}], "passing"),
+]
+HEADS = [("aaa111bbb222", "aaa111bbb222", True), ("aaa111bbb222", "AAA111B", True), ("aaa111bbb222", " aaa111b\n", True), ("aaa111bbb222", "aaa1", False), ("aaa111bbb222", "ccc333d", False), ("aaa111bbb222", None, False)]
+CLAIMS = [
+    ("a fresh claim", "claimed 2026-01-01T10:00:00.000Z by r1", "2026-01-01T10:20:00.000Z", False),
+    ("a claim its run never finished", "claimed 2026-01-01T10:00:00.000Z by r1", "2026-01-01T10:31:00.000Z", True),
+    ("an issue's link is no claim", "https://x/issues/9", "2026-01-01T12:00:00.000Z", False),
+]
 
 CASES = (
     [["blockersInBody", body] for body, _ in BLOCKERS]
@@ -232,14 +297,20 @@ CASES = (
     + [["holdsSlot", *args] for _, args, _ in SLOTS]
     + [["answerOf", *args] for _, args, _ in ANSWERS]
     + [["askBrief", QUESTION]]
-    + [["approvalOf", pr, HEAD, events, after] for _, pr, events, after, _ in APPROVALS]
-    + [["reviewWait", checks] for checks, _ in WAITS]
-    + [["readyNote", "aaa111bbb222"], ["readyBrief", "https://x/pull/11", "https://x/pull/11#issuecomment-1"]]
+    + [["approvalOf", pr, HEAD, events, after, approver] for _, pr, events, after, approver, _ in APPROVALS]
+    + [["readyNote", "aaa111bbb222"], ["readyBrief", "https://x/pull/11", "https://x/pull/11#issuecomment-1"], ["readyBrief", "https://x/pull/11", None, False]]
     + [["releaseBrief", "https://x/pull/11", "merged"]]
     + [["lastApproval", [labelled(5), labelled(9, label="bug"), labelled(7), labelled(8, event="unlabeled")]], ["lastApproval", []]]
-    + [["mergeSettings", now] for _, now, _ in SETTINGS]
+    + [["settingsOf", now] for _, now, _ in SETTINGS]
     + [["runsThatSaw", [{"run": "r1"}, {"run": "r1"}, {"run": "r2"}]]]
-    + [["readyNote", "aaa111bbb222", False, OUTSIDE], ["stoppedNote", "#7"]]
+    + [["readyNote", "aaa111bbb222", False, OUTSIDE], ["byHandNote", "branch rule"]]
+    + [["decide", ready, now_seen, settings] for _, ready, now_seen, settings, _ in DECISIONS]
+    + [["checksOf", rollup] for _, rollup, _ in ROLLUPS]
+    + [["sameHead", head, given] for head, given, _ in HEADS]
+    + [["claimIsStale", claim, now] for _, claim, now, _ in CLAIMS]
+    + [["newestLabelEvent", [labelled(5), labelled(9, label="bug"), labelled(8, event="unlabeled")]]]
+    + [["againBrief", "behind", "https://x/pull/11", "main"], ["againBrief", "feedback", "https://x/pull/11", "main"]]
+    + [["commentId", "https://github.com/o/r/pull/11#issuecomment-7139463334\n"], ["commentId", ""]]
 )
 
 
@@ -271,19 +342,26 @@ class Factory(unittest.TestCase):
         cls.answers = [next(results) for _ in ANSWERS]
         cls.ask_brief = next(results)
         cls.approvals = [next(results) for _ in APPROVALS]
-        cls.waits = [next(results) for _ in WAITS]
         cls.ready_note = next(results)
         cls.ready_brief = next(results)
+        cls.accepted_brief = next(results)
         cls.release_brief = next(results)
         cls.last_approvals = [next(results) for _ in range(2)]
         cls.settings = [next(results) for _ in SETTINGS]
         cls.runs_that_saw = next(results)
         cls.accepted_note = next(results)
-        cls.stopped_note = next(results)
+        cls.by_hand_note = next(results)
+        cls.decisions = [next(results) for _ in DECISIONS]
+        cls.rollups = [next(results) for _ in ROLLUPS]
+        cls.heads = [next(results) for _ in HEADS]
+        cls.claims = [next(results) for _ in CLAIMS]
+        cls.newest_event = next(results)
+        cls.again = [next(results) for _ in range(2)]
+        cls.comment_ids = [next(results) for _ in range(2)]
 
     def test_registers_every_workflow(self):
         # The factory skill, factory.md and the factory's own `start` calls name these. Rename them together.
-        self.assertEqual(self.registered, ["skills-factory-ship", "skills-factory-spec", "skills-factory-dispatch"])
+        self.assertEqual(self.registered, ["skills-factory-ship", "skills-factory-land", "skills-factory-spec", "skills-factory-dispatch"])
 
     def test_finds_blockers_in_an_issue_body(self):
         for (body, want), got in zip(BLOCKERS, self.blockers):
@@ -342,9 +420,9 @@ class Factory(unittest.TestCase):
     def test_no_step_name_is_written_twice_in_a_workflow(self):
         # T3 pauses a run the moment two of its steps share a name, so a clash only shows live.
         text = FACTORY.read_text(encoding="utf-8")
-        starts = [text.index(f"const {name} = workflow(") for name in ["ship", "specCheck", "dispatch"]]
-        call = re.compile(r"\b(?:step\.try|step|ask|askUser|agent\.try|hire|wake|pullRequests\.wait|sleep|headNow|setIdle|gone)\(\s*([`\"])([^`\"]+)\1")
-        for name, begin, end in zip(["ship", "spec", "dispatch"], starts, starts[1:] + [len(text)]):
+        starts = [text.index(f"const {name} = workflow(") for name in ["ship", "land", "specCheck", "dispatch"]]
+        call = re.compile(r"\b(?:step\.try|step|ask|askUser|agent\.try|hire|wake|pullRequests\.wait|sleep|headNow|keepHandled)\(\s*([`\"])([^`\"]+)\1")
+        for name, begin, end in zip(["ship", "land", "spec", "dispatch"], starts, starts[1:] + [len(text)]):
             names = [found.group(2) for found in call.finditer(text, begin, end)]
             with self.subTest(workflow=name):
                 self.assertTrue(names, "found no step names, so the pattern no longer fits the file")
@@ -361,10 +439,12 @@ class Factory(unittest.TestCase):
                 self.assertIn(line, self.ask_brief)
 
     def test_the_users_go_is_for_one_head(self):
-        for (name, _, _, _, want), got in zip(APPROVALS, self.approvals):
+        for (name, _, _, _, _, want), got in zip(APPROVALS, self.approvals):
             with self.subTest(name):
                 self.assertEqual(got, want)
-        self.assertEqual(self.last_approvals, [7, 0])
+        # The newest event of the label took it off, so there is no go. It is still the mark for a new head.
+        self.assertEqual(self.last_approvals, [0, 0])
+        self.assertEqual(self.newest_event, 8)
 
     def test_a_merge_obeys_the_settings_as_they_are_now(self):
         for (name, _, want), got in zip(SETTINGS, self.settings):
@@ -374,23 +454,39 @@ class Factory(unittest.TestCase):
     def test_one_run_is_one_sighting_however_often_it_reports(self):
         self.assertEqual(self.runs_that_saw, 2)
 
-    def test_the_user_is_shown_what_outsiders_wrote_and_told_when_nobody_watches(self):
+    def test_the_user_is_shown_what_outsiders_wrote_and_told_when_only_they_can_merge(self):
         for line in ["you accepted it with the reviewer's findings open", "eve: https://x/pull/11#c1", "The worker has not seen"]:
             with self.subTest(line=line):
                 self.assertIn(line, self.accepted_note)
         self.assertNotIn("run this script", self.accepted_note)
-        for line in ["no longer merges it", "`ready-for-agent` back on #7"]:
+        for line in ["branch rule", "Merge it by hand"]:
             with self.subTest(line=line):
-                self.assertIn(line, self.stopped_note)
+                self.assertIn(line, self.by_hand_note)
+        self.assertIn("The user accepted your PR with the reviewer's findings open", self.accepted_brief)
+        self.assertNotIn("The reviewer passed your PR", self.accepted_brief)
 
-    def test_looks_for_the_review_often_at_first_and_for_seven_days_in_all(self):
-        self.assertEqual(self.waits, [want for _, want in WAITS])
-        minutes = {"1 minute": 1, "5 minutes": 5, "30 minutes": 30}
-        text = FACTORY.read_text(encoding="utf-8")
-        checks = int(re.search(r"const MAX_REVIEW_CHECKS = (\d+);", text).group(1))
-        total = 15 * 1 + 21 * 5 + (checks - 36) * 30
-        self.assertEqual(total, 7 * 24 * 60)
-        self.assertEqual(minutes[self.waits[-1]], 30)
+    def test_what_to_do_with_a_pr_that_waits_for_review(self):
+        for (name, _, _, _, want), got in zip(DECISIONS, self.decisions):
+            with self.subTest(name):
+                self.assertEqual(got, want)
+
+    def test_what_a_prs_checks_come_to(self):
+        for (name, _, want), got in zip(ROLLUPS, self.rollups):
+            with self.subTest(name):
+                self.assertEqual(got, want)
+
+    def test_a_short_sha_names_its_head(self):
+        self.assertEqual(self.heads, [want for _, _, want in HEADS])
+
+    def test_a_claim_nobody_finished_goes_stale(self):
+        for (name, _, _, want), got in zip(CLAIMS, self.claims):
+            with self.subTest(name):
+                self.assertEqual(got, want)
+
+    def test_a_run_that_picks_a_pr_up_again_says_why_only_when_its_loop_cannot_see_it(self):
+        self.assertIn("Rebase it onto origin/main", self.again[0])
+        self.assertIsNone(self.again[1])
+        self.assertEqual(self.comment_ids, ["7139463334", None])
 
     def test_the_user_is_told_how_to_say_go_and_no_agent_may_say_it(self):
         self.assertTrue(self.ready_note.startswith(MARKER + "\n\n"))

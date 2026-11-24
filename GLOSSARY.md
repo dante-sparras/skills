@@ -12,6 +12,10 @@ _Avoid_: Operator, owner
 The T3 Code workflow in `factory/factory.ts` that ships each issue labelled `ready-for-agent`: it starts a worker, sends a reviewer to the PR, and merges once the user has approved it. It also checks each spec once its tickets land, and files a guardrail issue for friction that repeats.
 _Avoid_: Pipeline, automation, bot
 
+**Land run**:
+The short run that acts on one PR that waits for the user's review: it merges it once they have said go, finishes up after a merge they made by hand, or hands the PR back when its worker is needed again.
+_Avoid_: Merge job, watcher
+
 **Task**:
 One issue in `ready-for-agent`. One worker carries it, and it lands through one PR.
 _Avoid_: Unit, job

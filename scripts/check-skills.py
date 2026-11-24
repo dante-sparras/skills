@@ -1,4 +1,3 @@
-import json
 import posixpath
 import re
 import sys
@@ -11,7 +10,6 @@ HEADING = re.compile(r"^#{1,6}\s+(.*?)\s*#*\s*$")
 SKILL_CALL = re.compile(r"Skill tool(?: twice,)? (?:with|for) ((?:[`\"][a-z][a-z0-9-]*[`\"](?:,? (?:and |or )?)?)+)")
 SKILL_TOKEN = re.compile(r"[`\"]([a-z][a-z0-9-]*)[`\"]")
 EXTERNAL = ("http://", "https://", "mailto:")
-MANIFEST = ".claude-plugin/marketplace.json"
 DISPLAY_NAME = re.compile(r"^\s*display_name:\s*[\"']?(.*?)[\"']?\s*$", re.M)
 REFERENCE_NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*\.md$")
 REPORT_HEADING = re.compile(r"^#{1,6}\s+(?:\d+\.\s+)?(?:Reply|Report|Reporting|Output)\s*$", re.I)
@@ -214,38 +212,6 @@ def layout_problems(skills_root):
         )
 
 
-def manifest_problems(repo, skill_dirs):
-    manifest = repo / MANIFEST
-    if not manifest.is_file():
-        yield "is missing. Add it with one plugin that lists every skill."
-        return
-    try:
-        plugins = json.loads(manifest.read_text(encoding="utf-8")).get("plugins", [])
-    except json.JSONDecodeError as error:
-        yield f"is not valid JSON ({error}). Fix the syntax."
-        return
-    listed = {}
-    for plugin in plugins:
-        group = plugin.get("name")
-        for entry in plugin.get("skills", []):
-            parts = entry.split("/")
-            if len(parts) != 3 or parts[0] != "." or parts[1] != "skills":
-                yield f"lists {entry!r} under {group!r}. Write each skill as ./skills/<name>."
-                continue
-            name = parts[2]
-            if not (repo / "skills" / name / "SKILL.md").is_file():
-                yield f"lists {entry!r}, which has no SKILL.md. Fix the path or remove the entry."
-            if name in listed:
-                yield f"lists the skill {name!r} under both {listed[name]!r} and {group!r}. Keep it in one plugin."
-            listed[name] = group
-    for skill_dir in skill_dirs:
-        if skill_dir.name not in listed:
-            yield (
-                f"does not list ./skills/{skill_dir.name}. "
-                "Add it to the plugin's skills, so a plugin install includes it."
-            )
-
-
 def main():
     repo = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
     skills_root = repo / "skills"
@@ -271,9 +237,6 @@ def main():
             "does not exist, but MODEL_INVOKED in scripts/check-skills.py lists the skill. "
             "Remove it there, or fix the name."
         ))
-
-    for problem in manifest_problems(repo, skill_dirs):
-        report(repo / MANIFEST, 1, problem)
 
     for skill_dir in skill_dirs:
         for path, line, problem in skill_problems(skill_dir, user_invoked):
@@ -301,7 +264,7 @@ def main():
     if found:
         print(f"\n{found} wiring problem(s) across {len(skill_dirs)} skills.")
         return 1
-    print(f"Layout, names, shape, invocation flags, the manifest, links, and skill calls agree across {len(skill_dirs)} skills.")
+    print(f"Layout, names, shape, invocation flags, links, and skill calls agree across {len(skill_dirs)} skills.")
     return 0
 
 

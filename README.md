@@ -3,17 +3,33 @@ Dante's agent skills
 
 ## Quick start
 
+You need T3 Code with **Settings → Labs → Workflows** on, a GitHub repo, and `gh` signed in.
+
 1. Install every skill: `npx skills add dante-sparras/skills`.
-2. Type `/setup-skills` once in each repo you work in.
+2. Type `/setup-skills` once in each repo you work in. It writes the repo's settings and installs the factory.
 3. Type `/coordinate` and hand it your work.
+4. Answer what the factory asks in T3 Code's **Workflows** page.
 
 ## How the skills fit together
 
 Work moves in two halves: you shape it into issues with an agent, and the **factory** ships each issue on its own.
 
 1. **Shape.** Type [`/coordinate`](./skills/coordinate/SKILL.md) and hand it your work, one thing or several: bugs, features, issues, questions, PRs. The agent you typed it to is the **coordinator**. It answers questions itself. Everything else becomes an issue in `ready-for-agent` that an agent can build in one PR, through `triage`, `interview`, `to-spec-and-tickets`, or `map`, with you in the conversation.
-2. **Ship.** The [factory](./skills/coordinate/factory.md) is a T3 Code workflow. Every ten minutes it starts a **worker** for each ready issue whose blockers are closed. The worker opens a PR. Once its checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges. A disagreement waits on your ruling.
+2. **Ship.** The [factory](./skills/coordinate/factory.md) is a T3 Code workflow. Every ten minutes it starts a **worker** for each ready issue whose blockers are closed, up to a limit per repo. The worker opens a PR, and wakes again for a red check, a conflict, or a collaborator's comment. Once the checks are green, the factory sends a **reviewer**, and the two argue each finding until they agree, for at most three rounds. Then the factory asks you before it merges.
 3. **Learn.** When a spec's last ticket lands, a reviewer proves the spec's user stories on main, and each gap becomes a ticket. Friction that repeats across runs becomes an issue the factory fixes with `add-guardrail`. Follow-ups land in `needs-triage`, ready for step 1.
+
+### What waits on you
+
+The factory never merges, rules, or decides for you. Everything it needs from you waits in one of two places.
+
+| Where | What waits there |
+| --- | --- |
+| T3 Code's **Workflows** page | Each merge. Your ruling when the reviewer and the worker disagree. A worker's question, with the answers it suggests. A collaborator's request for changes that holds a PR. Comments from people outside the repo, which reach the worker only if you send them |
+| `needs-triage` on the tracker | Follow-ups agents returned. Issues the factory stopped on, each with a comment that says why. Put `ready-for-agent` back on one to retry it |
+
+### When main is red
+
+The factory checks main on every pass. When a check fails there, it files one `bug` issue for the fix and starts nothing else in that repo until the issue closes, so no worker builds on a broken base.
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -29,6 +45,12 @@ sequenceDiagram
     C->>You: Answers, and questions to settle what to build
     C->>F: Issues in ready-for-agent
     F->>W: One issue per worker
+    opt The worker needs a decision
+        W->>F: A question, with answers to pick from
+        F->>You: The question, in the Workflows page
+        You->>F: Your answer
+        F->>W: Your answer, in the worker's thread
+    end
     W->>F: A PR
     Note over F: Waits for green checks
     F->>R: Review this PR

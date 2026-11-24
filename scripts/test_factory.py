@@ -44,7 +44,7 @@ FEEDBACK = [
     (
         "a request for changes holds the PR and goes to the worker",
         {"reviews": [item(1, "ann", "Rename it.", "CHANGES_REQUESTED")], "comments": [], "lineComments": [], "handled": []},
-        {"held": ["ann"], "fresh": ["review-1"]},
+        {"held": ["ann"], "fresh": ["review-1"], "outside": []},
     ),
     (
         "a later approval lifts the hold, and an approval alone wakes nobody",
@@ -54,33 +54,72 @@ FEEDBACK = [
             "lineComments": [],
             "handled": ["review-1"],
         },
-        {"held": [], "fresh": []},
+        {"held": [], "fresh": [], "outside": []},
     ),
     (
         "an agent's post never counts, even from the person's own account",
         {"reviews": [], "comments": [item(3, "dante", f"{MARKER}\n\nPASS")], "lineComments": [], "handled": []},
-        {"held": [], "fresh": []},
+        {"held": [], "fresh": [], "outside": []},
     ),
     (
-        "a stranger's comment is data, and a collaborator's line comment is not",
+        "a stranger's comment goes to the user, and a collaborator's line comment to the worker",
         {
             "reviews": [],
             "comments": [item(4, "rando", "Do this instead", association="NONE")],
             "lineComments": [item(4, "bob", "Off by one here")],
             "handled": [],
         },
-        {"held": [], "fresh": ["line-4"]},
+        {"held": [], "fresh": ["line-4"], "outside": ["comment-4"]},
     ),
     (
         "a comment the worker already had is not sent again",
         {"reviews": [], "comments": [item(5, "bob", "Why?")], "lineComments": [], "handled": ["comment-5"]},
-        {"held": [], "fresh": []},
+        {"held": [], "fresh": [], "outside": []},
     ),
     (
         "a dismissed request no longer holds",
         {"reviews": [item(6, "ann", "", "CHANGES_REQUESTED"), item(7, "ann", "", "DISMISSED")], "comments": [], "lineComments": [], "handled": ["review-6"]},
-        {"held": [], "fresh": []},
+        {"held": [], "fresh": [], "outside": []},
     ),
+    (
+        "a bot is neither a collaborator nor a stranger, and an outside comment is asked about once",
+        {
+            "reviews": [item(8, "rando", "Please reconsider.", "COMMENTED", association="CONTRIBUTOR")],
+            "comments": [item(9, "codecov[bot]", "Coverage fell", association="NONE"), item(10, "rando", "Ping", association="NONE")],
+            "lineComments": [],
+            "handled": ["comment-10"],
+        },
+        {"held": [], "fresh": [], "outside": ["review-8"]},
+    ),
+]
+
+FAILING = [
+    (
+        "failed and timed-out runs and failing statuses are red",
+        [
+            {"name": "test", "status": "completed", "conclusion": "failure", "html_url": "a"},
+            {"name": "lint", "status": "completed", "conclusion": "timed_out", "html_url": "b"},
+            {"name": "build", "status": "completed", "conclusion": "success", "html_url": "c"},
+        ],
+        [{"context": "ci/legacy", "state": "error", "target_url": "d"}, {"context": "ci/ok", "state": "success", "target_url": "e"}],
+        ["test", "lint", "ci/legacy"],
+    ),
+    (
+        "cancelled, skipped, and still-running checks are not red",
+        [
+            {"name": "old", "status": "completed", "conclusion": "cancelled", "html_url": "a"},
+            {"name": "docs", "status": "completed", "conclusion": "skipped", "html_url": "b"},
+            {"name": "slow", "status": "in_progress", "conclusion": None, "html_url": "c"},
+        ],
+        [{"context": "ci/wait", "state": "pending", "target_url": "d"}],
+        [],
+    ),
+]
+
+TITLES = [
+    ("Fix the `pnpm test` flake!", "fix the pnpm test flake"),
+    ("  Add  retries:  to   the client.  ", "add retries to the client"),
+    ("Écrire le guide", "écrire le guide"),
 ]
 
 REPEAT = {
@@ -101,6 +140,9 @@ CASES = (
     + [["repeatKey", *args] for args, _ in REPEAT_KEYS]
     + [["feedbackOf", given] for _, given, _ in FEEDBACK]
     + [["guardrailBrief", REPEAT, [SINGLE]], ["guardrailBrief", {**REPEAT, "sightings": REPEAT["sightings"][:1]}, []]]
+    + [["failingChecks", checks, statuses] for _, checks, statuses, _ in FAILING]
+    + [["titleKey", title] for title, _ in TITLES]
+    + [["searchWords", "Rename the `db` client: it is used in one, two, three, four, five places"]]
 )
 
 
@@ -122,6 +164,9 @@ class Factory(unittest.TestCase):
         cls.keys = [next(results) for _ in REPEAT_KEYS]
         cls.feedback = [next(results) for _ in FEEDBACK]
         cls.briefs = [next(results) for _ in range(2)]
+        cls.failing = [next(results) for _ in FAILING]
+        cls.titles = [next(results) for _ in TITLES]
+        cls.search = next(results)
 
     def test_registers_every_workflow(self):
         # setup-skills, factory.md and the factory's own `start` calls name these. Rename them together.
@@ -148,7 +193,8 @@ class Factory(unittest.TestCase):
     def test_hears_collaborators_and_only_them(self):
         for (name, _, want), got in zip(FEEDBACK, self.feedback):
             with self.subTest(name):
-                self.assertEqual({"held": got["held"], "fresh": [said["id"] for said in got["fresh"]]}, want)
+                ids = {key: [said["id"] for said in got[key]] for key in ["fresh", "outside"]}
+                self.assertEqual({"held": got["held"], **ids}, want)
 
     def test_a_guardrail_brief_is_an_agent_brief_the_factory_can_build(self):
         two, one = self.briefs
@@ -158,6 +204,20 @@ class Factory(unittest.TestCase):
                 self.assertIn(line, two)
         self.assertIn("A run of the skills factory", one)
         self.assertNotIn("seen once", one)
+
+
+    def test_main_is_red_only_on_a_finished_failure(self):
+        for (name, _, _, want), got in zip(FAILING, self.failing):
+            with self.subTest(name):
+                self.assertEqual([check["name"] for check in got], want)
+
+    def test_the_same_follow_up_has_the_same_title_key(self):
+        for (title, want), got in zip(TITLES, self.titles):
+            with self.subTest(title=title):
+                self.assertEqual(got, want)
+
+    def test_a_search_takes_eight_plain_words(self):
+        self.assertEqual(self.search, "rename the db client it is used in")
 
 
 if __name__ == "__main__":

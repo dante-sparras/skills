@@ -146,7 +146,7 @@ const Verdict = Schema.Struct({
   ),
   checkable: described(
     Schema.Array(Friction),
-    "Each finding review-changes marked as a candidate for a check, as kind wrong-code, with the file or rule it is about as its target. Empty when none.",
+    "Each finding the review-pr skill marked as a candidate for a check, as kind wrong-code, with the file or rule it is about as its target. Empty when none.",
   ),
   followUps: FOLLOW_UPS,
   friction: FRICTION,
@@ -222,7 +222,7 @@ const blockersInBody = (body) => {
   return [...found];
 };
 
-/** The issue number in a ticket's `## Parent` section, as to-spec-and-tickets writes it, or null. */
+/** The issue number in a ticket's `## Parent` section, as the `plan` skill writes it, or null. */
 const parentInBody = (body) => {
   const lines = String(body ?? "").split(/\r?\n/);
   const at = lines.findIndex((line) => /^#{1,6}\s*parent\s*$/i.test(line));
@@ -309,7 +309,7 @@ const searchWords = (title) => titleKey(title).split(" ").filter(Boolean).slice(
 const sightingLine = (s) =>
   `- ${s.detail} (run \`${s.run}\` on ${s.task}${s.pr ? `, PR ${s.pr}` : ""}${s.thread ? `, thread \`${s.thread}\`` : ""})`;
 
-/** The body of a guardrail issue: an agent brief the factory's worker builds with add-guardrail. */
+/** The body of a guardrail issue: an agent brief the factory's worker builds with the `correct` skill. */
 const guardrailBrief = (repeat, singles) =>
   [
     AI_MARKER,
@@ -318,7 +318,7 @@ const guardrailBrief = (repeat, singles) =>
     "",
     "**Category:** enhancement",
     "**Route:** change",
-    `**Summary:** Agents keep hitting the same ${repeat.kind} friction at \`${repeat.target}\`. Run the \`add-guardrail\` skill on it.`,
+    `**Summary:** Agents keep hitting the same ${repeat.kind} friction at \`${repeat.target}\`. Run the \`correct\` skill on it.`,
     "",
     "**Current behavior:**",
     `${repeat.sightings.length === 1 ? "A run" : `${repeat.sightings.length} runs`} of the skills factory hit this:`,
@@ -326,7 +326,7 @@ const guardrailBrief = (repeat, singles) =>
     ...repeat.sightings.map(sightingLine),
     "",
     "**Desired behavior:**",
-    "The next agent cannot make this mistake, or a check fails and its error names the fix. Fix it at the highest level `add-guardrail` allows.",
+    "The next agent cannot make this mistake, or a check fails and its error names the fix. Fix it at the highest level the `correct` skill allows.",
     "",
     "**Acceptance criteria:**",
     "- [ ] The PR's evidence shows the new check failing on the past mistake, or says why no check can catch it",

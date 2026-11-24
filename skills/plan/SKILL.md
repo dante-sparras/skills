@@ -1,10 +1,10 @@
 ---
-name: to-spec-and-tickets
+name: plan
 description: "Turn the current conversation, or a written plan, into a spec and its tracer-bullet tickets on the issue tracker, with one approval and no interview. Use when a person has talked a feature through and wants it written up and split into tickets that workers can build."
 disable-model-invocation: true
 ---
 
-# To Spec and Tickets
+# Plan
 
 Write the **spec** from what this conversation and the codebase already hold, slice it into **tickets**, and publish both after one approval. Synthesize: the interview already happened.
 

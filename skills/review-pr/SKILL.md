@@ -1,10 +1,10 @@
 ---
-name: review-changes
+name: review-pr
 description: "Adversarial review of the changes since a fixed point: a commit, branch, tag, or merge-base. Use when asked to review a branch, a PR, or work-in-progress changes, or when a finished change needs a review before it lands."
 disable-model-invocation: true
 ---
 
-# Review Changes
+# Review PR
 
 Adversaries try to break the diff between `HEAD` and a fixed point. Each reports on three axes:
 
@@ -55,7 +55,7 @@ A Breakage or Spec finding survives when you rerun its command and the output sh
    - Rerun each Breakage and Spec finding's command yourself, in the seat's worktree when it still exists, or after writing the reported repro file into a checkout of `HEAD`. Keep a finding when the output shows the failure, and the failure breaks the intent or the spec, or is a regression: the same command passes at the fixed point. Keep a mutation finding when the tests still pass with its patch applied. Keep a finding no command can show, such as a wrong line of config, a migration, or a doc, when it cites the exact hunk, what it breaks, and why it cannot be run.
    - Keep each Standards finding that cites a real rule, or names a smell against a real hunk. These are not rerun.
    - Merge findings that share a root cause, and list every seat that found each.
-   - Mark each mechanical finding (a fixed syntax pattern, a banned API, an import shape, a file-location rule) as a candidate for the `add-guardrail` skill to turn into a check.
+   - Mark each mechanical finding (a fixed syntax pattern, a banned API, an import shape, a file-location rule) as a candidate for the `correct` skill to turn into a check.
 
 ## Report
 

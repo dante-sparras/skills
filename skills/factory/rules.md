@@ -37,7 +37,7 @@ Open every comment and issue you post with a line that starts `> *This was gener
 
 ## Pull requests
 
-Use T3's PR tools, not `gh`: `pull_request_create`, `pull_request_update`, `pull_request_respond` to comment, `ci_logs` for a failed check, and `pull_request_read` with the PR's `number` and an `include` of what you need: `checks`, `comments`, `threads`. Those tools take text only, so an image or video is the one exception: attach it with `gh pr edit <number> --attach <file>`, as the `to-pr` skill says. Issues go through `docs/agents/issue-tracker.md`.
+Use T3's PR tools, not `gh`: `pull_request_create`, `pull_request_update`, `pull_request_respond` to comment, `ci_logs` for a failed check, and `pull_request_read` with the PR's `number` and an `include` of what you need: `checks`, `comments`, `threads`. Those tools take text only, so an image or video is the one exception: attach it with `gh pr edit <number> --attach <file>`, as the `pr` skill says. Issues go through `docs/agents/issue-tracker.md`.
 
 ## Skills
 

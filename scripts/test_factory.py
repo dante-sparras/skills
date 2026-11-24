@@ -199,7 +199,7 @@ class Factory(unittest.TestCase):
     def test_a_guardrail_brief_is_an_agent_brief_the_factory_can_build(self):
         two, one = self.briefs
         self.assertTrue(two.startswith(MARKER))
-        for line in ["**Route:** change", "`add-guardrail`", "2 runs", "Searched 4 folders", "PR https://x/pull/2", "`docs/`: No index"]:
+        for line in ["**Route:** change", "`correct`", "2 runs", "Searched 4 folders", "PR https://x/pull/2", "`docs/`: No index"]:
             with self.subTest(line=line):
                 self.assertIn(line, two)
         self.assertIn("A run of the skills factory", one)

@@ -12,7 +12,7 @@ The agent you type `/factory` to runs on its own thread's model and has no role 
 | Role | Default | Backup |
 | --- | --- | --- |
 | `worker` | The strongest coding model in the catalog | The strongest coding model from another model family |
-| `reviewer` | The strongest coding model from another family than `worker`, so a review is independent of the worker | The `worker` model, so an `review-changes` panel still gets two families |
+| `reviewer` | The strongest coding model from another family than `worker`, so a review is independent of the worker | The `worker` model, so a `review-pr` panel still gets two families |
 | `explorer` | A fast, low-cost model, for quick lookups | A fast model from another model family |
 
 Both files use a `roles` object keyed by role name. Each role holds a default and backup with `providerInstanceId`, `model`, and `effort`. Store the catalog's exact provider and model IDs and the chosen effort value.

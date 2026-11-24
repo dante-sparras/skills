@@ -96,7 +96,8 @@ Every skill lives at `skills/<name>/`, the same layout it installs to. The skill
 | | [glossary](./skills/glossary/SKILL.md) | Keeps the project's domain terms in `GLOSSARY.md` |
 | **Plan**: write it down as issues | [spec](./skills/spec/SKILL.md) | Turns a conversation into a spec, asking about whatever is still open |
 | | [ticket](./skills/ticket/SKILL.md) | Slices a spec, or a change that fits one PR, into tickets the factory builds |
-| **Build**: make the change and prove it works | [tdd](./skills/tdd/SKILL.md) | Test-first for bug fixes and core logic, and proof for everything else |
+| **Build**: make the change and prove it works | [tdd](./skills/tdd/SKILL.md) | Test-first for bug fixes and core logic, with tests worth keeping |
+| | [prove](./skills/prove/SKILL.md) | Proves a change on the real artifact, and captures the evidence |
 | | [debug](./skills/debug/SKILL.md) | Reproduces a bug or a slowdown and files it, or finds the cause and fixes it with a regression test |
 | | [deepen-modules](./skills/deepen-modules/SKILL.md) | The deep-module vocabulary, and a survey that finds modules worth deepening |
 | **Review**: get the change reviewed | [pr](./skills/pr/SKILL.md) | Writes a PR description: a summary diagram, evidence, and merge danger |

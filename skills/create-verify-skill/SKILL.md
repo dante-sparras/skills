@@ -31,12 +31,7 @@ Write `verify-<app>/SKILL.md` with YAML frontmatter: `name: verify-<app>` and a 
 - **Launch:** the exact command that starts the app for verification, how to tell it is ready, and teardown. Launch reaches a usable state from an empty data dir, including migrations and seed data. Ready means usable, such as a log line after init or a prompt, not a process that answers. A database health check can pass while its init scripts still run. For a short-lived CLI or TUI, launch means build the binary or install deps once, then start each drive in its own isolated PTY or tmux session.
 - **Doctor:** one read-only check that answers "is this instance worth driving?": process up, right version or build, port owned by this run, auth valid. An agent runs it first whenever anything looks off.
 - **Drive:** the harness recipe with real selectors and commands from this repo, not examples. Prefer stable handles (ARIA labels, data attributes, prompt strings, route paths) over coordinates and tab order.
-- **Evidence:** what to capture for a proof and where it goes, with these proof standards:
-  - Exercise the real user path, not internal setters or test-only endpoints.
-  - Capture the action and the resulting state, not only the final screen.
-  - Verify side effects (files written, rows inserted, messages sent) alongside what is visible.
-  - Mock only where a production boundary already isolates the external system.
-  - When the safe path is a dry run or test mode, observe what it skips (files, network, git refs) instead of trusting its name. Some dry runs still touch the network or open a browser.
+- **Evidence:** what to capture for a proof and where it goes. Write out the [standards](../prove/SKILL.md#standards) of the `prove` skill in full, since the agent that reads the generated skill may not have that one.
 - **Cleanup:** how to tear down the instances and scratch state the run created. Kill what you started, never by process name. Evidence survives cleanup, in a location the skill names.
 - **Helpers:** every script the skill ships is executable, and the skill body shows how to invoke it.
 
